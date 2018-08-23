@@ -525,6 +525,31 @@ static void regions_delete(struct region_info *region) {
     }
 }
 
+static void pre_fork(void) {
+    pthread_mutex_lock(&regions_lock);
+    for (unsigned i = 0; i < N_SIZE_CLASSES; i++) {
+        pthread_mutex_lock(&size_class_metadata[i].mutex);
+    }
+}
+
+static void post_fork_parent(void) {
+    pthread_mutex_unlock(&regions_lock);
+    for (unsigned i = 0; i < N_SIZE_CLASSES; i++) {
+        pthread_mutex_unlock(&size_class_metadata[i].mutex);
+    }
+}
+
+static void post_fork_child(void) {
+    if (pthread_mutex_init(&regions_lock, NULL)) {
+        fatal_error("mutex initialization failed");
+    }
+    for (unsigned i = 0; i < N_SIZE_CLASSES; i++) {
+        if (pthread_mutex_init(&size_class_metadata[i].mutex, NULL)) {
+            fatal_error("mutex initialization failed");
+        }
+    }
+}
+
 COLD static void init_slow_path(void) {
     static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -534,6 +559,8 @@ COLD static void init_slow_path(void) {
         pthread_mutex_unlock(&mutex);
         return;
     }
+
+    pthread_atfork(pre_fork, post_fork_parent, post_fork_child);
 
     struct random_state rng;
     random_state_init(&rng);
