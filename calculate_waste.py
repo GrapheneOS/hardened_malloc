@@ -11,11 +11,23 @@ size_classes = [
     10240, 12288, 14336, 16384
 ]
 
+print("size class", "worst case internal fragmentation", sep=", ")
+
+print(16, "100%", sep=", ")
+for i in range(len(size_classes) - 1):
+    size_class = size_classes[i + 1]
+
+    worst_case = size_classes[i] + 1
+    used = worst_case / size_class
+    print(size_class, str(100 - used * 100) + "%", sep=", ")
+
 def page_align(size):
     return (size + 4095) & ~4095
 
 max_bits = 256
 max_page_span = 16
+
+print()
 
 print("maximum bitmap size is {}-bit".format(max_bits))
 print("maximum page span size is {} ({})".format(max_page_span, max_page_span * 4096))
