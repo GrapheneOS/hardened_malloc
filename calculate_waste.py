@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from sys import argv
+
 size_classes = [
     16, 32, 48, 64, 80, 96, 112, 128,
     160, 192, 224, 256,
@@ -9,6 +11,17 @@ size_classes = [
     2560, 3072, 3584, 4096,
     5120, 6144, 7168, 8192,
     10240, 12288, 14336, 16384
+]
+
+size_class_slots = [
+    256, 128, 128, 64, 51, 42, 36, 64,
+    51, 64, 64, 64,
+    64, 64, 64, 64,
+    64, 64, 64, 64,
+    16, 16, 16, 16,
+    8, 8, 8, 8,
+    8, 8, 8, 8,
+    5, 6, 4, 4
 ]
 
 print("size class", "worst case internal fragmentation", sep=", ")
@@ -23,6 +36,16 @@ for i in range(len(size_classes) - 1):
 
 def page_align(size):
     return (size + 4095) & ~4095
+
+print()
+print("size class", "slab slots", "worst case internal fragmentation for slabs", sep=", ")
+for size, slots in zip(size_classes, size_class_slots):
+    used = size * slots
+    real = page_align(used)
+    print(size, slots, str(100 - used / real * 100) + "%", sep=", ")
+
+if len(argv) < 2:
+    exit()
 
 max_bits = 256
 max_page_span = 16
