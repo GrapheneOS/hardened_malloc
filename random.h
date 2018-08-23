@@ -1,8 +1,13 @@
 #ifndef RANDOM_H
 #define RANDOM_H
 
+#include <stdint.h>
+
+#define RANDOM_CACHE_SIZE 4096
+
 struct random_state {
-    char unused;
+    size_t index;
+    uint8_t cache[RANDOM_CACHE_SIZE];
 };
 
 void get_random_seed(void *buf, size_t size);

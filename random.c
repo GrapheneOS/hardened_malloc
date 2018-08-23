@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <string.h>
 
 #include <sys/random.h>
 
@@ -22,12 +23,27 @@ void get_random_seed(void *buf, size_t size) {
     }
 }
 
-void random_state_init(UNUSED struct random_state *state) {
+void random_state_init(struct random_state *state) {
+    state->index = RANDOM_CACHE_SIZE;
 }
 
-// TODO: add ChaCha20-based CSPRNG, for now avoid using this other than during initialization...
-void get_random_bytes(UNUSED struct random_state *state, void *buf, size_t size) {
-    get_random_seed(buf, size);
+void get_random_bytes(struct random_state *state, void *buf, size_t size) {
+    if (size > RANDOM_CACHE_SIZE / 2) {
+        get_random_seed(buf, size);
+        return;
+    }
+
+    while (size) {
+        if (state->index == RANDOM_CACHE_SIZE) {
+            state->index = 0;
+            get_random_seed(state->cache, RANDOM_CACHE_SIZE);
+        }
+        size_t remaining = RANDOM_CACHE_SIZE - state->index;
+        size_t copy_size = size < remaining ? size : remaining;
+        memcpy(buf, state->cache + state->index, copy_size);
+        state->index += copy_size;
+        size -= copy_size;
+    }
 }
 
 size_t get_random_size(struct random_state *state) {
