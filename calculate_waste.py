@@ -38,11 +38,11 @@ def page_align(size):
     return (size + 4095) & ~4095
 
 print()
-print("size class", "slab slots", "worst case internal fragmentation for slabs", sep=", ")
+print("size class", "slab slots", "slab size", "worst case internal fragmentation for slabs", sep=", ")
 for size, slots in zip(size_classes, size_class_slots):
     used = size * slots
     real = page_align(used)
-    print(size, slots, str(100 - used / real * 100) + "%", sep=", ")
+    print(size, slots, real, str(100 - used / real * 100) + "%", sep=", ")
 
 if len(argv) < 2:
     exit()
