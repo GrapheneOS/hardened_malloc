@@ -21,7 +21,7 @@ size_class_slots = [
     16, 16, 16, 16,
     8, 8, 8, 8,
     8, 8, 8, 8,
-    5, 6, 4, 4
+    6, 6, 4, 4
 ]
 
 print("size class", "worst case internal fragmentation", sep=", ")

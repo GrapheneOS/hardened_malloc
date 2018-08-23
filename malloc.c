@@ -158,7 +158,7 @@ static const uint16_t size_class_slots[] = {
     /* 256 */ 16, 16, 16, 16,
     /* 512 */ 8, 8, 8, 8,
     /* 1024 */ 8, 8, 8, 8,
-    /* 2048 */ 5, 6, 4, 4
+    /* 2048 */ 6, 6, 4, 4
 };
 
 #define N_SIZE_CLASSES (sizeof(size_classes) / sizeof(size_classes[0]))
