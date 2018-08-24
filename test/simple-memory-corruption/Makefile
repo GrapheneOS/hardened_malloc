@@ -1,6 +1,8 @@
 EXECUTABLES := \
     double_free_large \
+    double_free_large_delayed \
     double_free_small \
+    double_free_small_delayed \
     unaligned_free_large \
     unaligned_free_small \
     read_after_free_large \
