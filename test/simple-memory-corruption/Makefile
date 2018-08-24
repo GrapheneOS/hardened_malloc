@@ -1,4 +1,4 @@
-all: \
+EXECUTABLES := \
     double_free_large \
     double_free_small \
     unaligned_free_large \
@@ -16,3 +16,8 @@ all: \
     uninitialized_free \
     uninitialized_realloc \
     uninitialized_malloc_usable_size \
+
+all: $(EXECUTABLES)
+
+clean:
+	rm -f $(EXECUTABLES)
