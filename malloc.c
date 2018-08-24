@@ -387,6 +387,10 @@ static void slab_free(void *p) {
         fatal_error("invalid unaligned free");
     }
 
+    if (!get_slot(metadata, slot)) {
+        fatal_error("double free");
+    }
+
     if (!has_free_slots(slots, metadata)) {
         metadata->next = c->partial_slabs;
         metadata->prev = NULL;
@@ -397,9 +401,6 @@ static void slab_free(void *p) {
         c->partial_slabs = metadata;
     }
 
-    if (!get_slot(metadata, slot)) {
-        fatal_error("double free");
-    }
     clear_slot(metadata, slot);
     memset(p, 0, size);
 
