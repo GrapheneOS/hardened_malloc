@@ -364,7 +364,7 @@ static void *slab_allocate(size_t requested_size) {
 
 static size_t slab_size_class(void *p) {
     size_t offset = (char *)p - (char *)ro.slab_region_start;
-    return offset / class_region_size;
+    return offset / real_class_region_size;
 }
 
 static size_t slab_usable_size(void *p) {
@@ -597,8 +597,9 @@ COLD static void init_slow_path(void) {
             fatal_error("mutex initialization failed");
         }
 
-        size_t gap = (get_random_size_uniform(&rng, (real_class_region_size - class_region_size) / PAGE_SIZE) + 1) * PAGE_SIZE;
-        c->class_region_start = (char *)ro.slab_region_start + class_region_size * i + gap;
+        size_t bound = (real_class_region_size - class_region_size) / PAGE_SIZE - 1;
+        size_t gap = (get_random_size_uniform(&rng, bound) + 1) * PAGE_SIZE;
+        c->class_region_start = (char *)ro.slab_region_start + real_class_region_size * i + gap;
 
         size_t size = size_classes[i];
         if (size == 0) {
