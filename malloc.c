@@ -276,6 +276,10 @@ static void *get_slab(struct size_class *c, size_t slab_size, struct slab_metada
 static struct slab_metadata *get_metadata(struct size_class *c, size_t slab_size, void *p) {
     size_t offset = (char *)p - (char *)c->class_region_start;
     size_t index = offset / slab_size;
+    // still caught without this check either as a read access violation or "double free"
+    if (index >= c->metadata_allocated) {
+        fatal_error("invalid free within a slab yet to be used");
+    }
     return c->slab_info + index;
 }
 
