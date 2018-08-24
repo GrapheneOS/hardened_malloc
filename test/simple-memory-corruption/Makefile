@@ -9,3 +9,6 @@ all: \
     write_after_free_small \
     read_zero_size \
     write_zero_size \
+    invalid_free_protected \
+    invalid_free_unprotected \
+    invalid_free_small_region \
