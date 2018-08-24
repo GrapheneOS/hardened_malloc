@@ -276,6 +276,10 @@ static struct slab_metadata *get_metadata(struct size_class *c, size_t slab_size
     return c->slab_info + index;
 }
 
+static void *slot_pointer(size_t size, void *slab, size_t slot) {
+    return (char *)slab + slot * size;
+}
+
 static void *slab_allocate(size_t requested_size) {
     struct size_info info = get_size_info(requested_size);
     size_t size = info.size;
@@ -347,7 +351,7 @@ static void *slab_allocate(size_t requested_size) {
     }
 
     void *slab = get_slab(c, slab_size, metadata);
-    void *p = (char *)slab + slot * size;
+    void *p = slot_pointer(size, slab, slot);
 
     pthread_mutex_unlock(&c->mutex);
     return p;
@@ -373,6 +377,13 @@ static void slab_free(void *p) {
     pthread_mutex_lock(&c->mutex);
 
     struct slab_metadata *metadata = get_metadata(c, slab_size, p);
+    void *slab = get_slab(c, slab_size, metadata);
+    size_t slot = ((char *)p - (char *)slab) / size;
+
+    if (slot_pointer(size, slab, slot) != p) {
+        fatal_error("invalid unaligned free");
+    }
+
     if (!has_free_slots(slots, metadata)) {
         metadata->next = c->partial_slabs;
         metadata->prev = NULL;
@@ -383,8 +394,6 @@ static void slab_free(void *p) {
         c->partial_slabs = metadata;
     }
 
-    void *slab = get_slab(c, slab_size, metadata);
-    size_t slot = ((char *)p - (char *)slab) / size;
     if (!get_slot(metadata, slot)) {
         fatal_error("double free");
     }
