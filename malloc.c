@@ -26,8 +26,6 @@ static_assert(sizeof(void *) == 8, "64-bit only");
 #define MIN_ALIGN 16
 #define ALIGNMENT_CEILING(s, alignment) (((s) + (alignment - 1)) & ((~(alignment)) + 1))
 
-static const size_t guard_size = PAGE_SIZE;
-
 // TODO: can be removed once the work is further along
 COLD static noreturn void unimplemented(void) {
     fatal_error("unimplemented");
@@ -49,7 +47,7 @@ static int memory_unmap(void *ptr, size_t size) {
     return ret;
 }
 
-static void *allocate_pages(size_t usable_size, bool unprotect) {
+static void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotect) {
     usable_size = PAGE_CEILING(usable_size);
 
     size_t real_size;
@@ -68,13 +66,13 @@ static void *allocate_pages(size_t usable_size, bool unprotect) {
     return usable;
 }
 
-static void deallocate_pages(void *usable, size_t usable_size) {
+static void deallocate_pages(void *usable, size_t usable_size, size_t guard_size) {
     usable_size = PAGE_CEILING(usable_size);
 
     memory_unmap((char *)usable - guard_size, usable_size + guard_size * 2);
 }
 
-static void *allocate_pages_aligned(size_t usable_size, size_t alignment) {
+static void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t guard_size) {
     usable_size = PAGE_CEILING(usable_size);
 
     size_t alloc_size;
@@ -460,7 +458,7 @@ static int regions_grow(void) {
     size_t newsize = newtotal * sizeof(struct region_info);
     size_t mask = newtotal - 1;
 
-    struct region_info *p = allocate_pages(newsize, true);
+    struct region_info *p = allocate_pages(newsize, PAGE_SIZE, true);
     if (p == NULL) {
         return 1;
     }
@@ -476,7 +474,7 @@ static int regions_grow(void) {
         }
     }
 
-    deallocate_pages(regions, regions_total * sizeof(struct region_info));
+    deallocate_pages(regions, regions_total * sizeof(struct region_info), PAGE_SIZE);
     regions_free = regions_free + regions_total;
     regions_total = newtotal;
     regions = p;
@@ -579,7 +577,7 @@ COLD static void init_slow_path(void) {
     struct random_state rng;
     random_state_init(&rng);
 
-    regions = allocate_pages(regions_total * sizeof(struct region_info), true);
+    regions = allocate_pages(regions_total * sizeof(struct region_info), PAGE_SIZE, true);
     if (regions == NULL) {
         fatal_error("failed to set up allocator");
     }
@@ -607,7 +605,7 @@ COLD static void init_slow_path(void) {
         }
         size_t slots = size_class_slots[i];
         size_t metadata_max = get_metadata_max(get_slab_size(slots, size));
-        c->slab_info = allocate_pages(metadata_max * sizeof(struct slab_metadata), false);
+        c->slab_info = allocate_pages(metadata_max * sizeof(struct slab_metadata), PAGE_SIZE, false);
         if (c->slab_info == NULL) {
             fatal_error("failed to allocate slab metadata");
         }
@@ -645,7 +643,7 @@ static void *allocate(size_t size) {
         return slab_allocate(size);
     }
 
-    void *p = allocate_pages(size, true);
+    void *p = allocate_pages(size, PAGE_SIZE, true);
     if (p == NULL) {
         return NULL;
     }
@@ -653,7 +651,7 @@ static void *allocate(size_t size) {
     pthread_mutex_lock(&regions_lock);
     if (regions_insert(p, size)) {
         pthread_mutex_unlock(&regions_lock);
-        deallocate_pages(p, size);
+        deallocate_pages(p, size, PAGE_SIZE);
         return NULL;
     }
     pthread_mutex_unlock(&regions_lock);
@@ -676,7 +674,7 @@ static void deallocate(void *p) {
     regions_delete(region);
     pthread_mutex_unlock(&regions_lock);
 
-    deallocate_pages(p, size);
+    deallocate_pages(p, size, PAGE_SIZE);
 }
 
 EXPORT void *h_malloc(size_t size) {
@@ -756,12 +754,12 @@ static int alloc_aligned(void **memptr, size_t alignment, size_t size, size_t mi
         return 0;
     }
 
-    void *p = allocate_pages_aligned(size, alignment);
+    void *p = allocate_pages_aligned(size, alignment, PAGE_SIZE);
     if (p == NULL) {
         return ENOMEM;
     }
     if (regions_insert(p, size)) {
-        deallocate_pages(p, size);
+        deallocate_pages(p, size, PAGE_SIZE);
         return ENOMEM;
     }
     *memptr = p;
