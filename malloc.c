@@ -24,7 +24,7 @@ static_assert(sizeof(void *) == 8, "64-bit only");
 #define PAGE_CEILING(s) (((s) + PAGE_MASK) & ~PAGE_MASK)
 
 #define MIN_ALIGN 16
-#define ALIGNMENT_CEILING(s, alignment)	(((s) + (alignment - 1)) & ((~(alignment)) + 1))
+#define ALIGNMENT_CEILING(s, alignment) (((s) + (alignment - 1)) & ((~(alignment)) + 1))
 
 static const size_t guard_size = PAGE_SIZE;
 
