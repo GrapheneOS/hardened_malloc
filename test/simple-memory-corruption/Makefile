@@ -12,3 +12,6 @@ all: \
     invalid_free_protected \
     invalid_free_unprotected \
     invalid_free_small_region \
+    uninitialized_free \
+    uninitialized_realloc \
+    uninitialized_malloc_usable_size \
