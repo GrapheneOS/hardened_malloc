@@ -1,0 +1,11 @@
+all: \
+    double_free_large \
+    double_free_small \
+    unaligned_free_large \
+    unaligned_free_small \
+    read_after_free_large \
+    read_after_free_small \
+    write_after_free_large \
+    write_after_free_small \
+    read_zero_size \
+    write_zero_size \
