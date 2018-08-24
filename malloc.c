@@ -140,6 +140,7 @@ struct slab_metadata {
 static const size_t max_slab_size_class = 16384;
 
 static const uint16_t size_classes[] = {
+    /* 0 */ 0,
     /* 16 */ 16, 32, 48, 64, 80, 96, 112, 128,
     /* 32 */ 160, 192, 224, 256,
     /* 64 */ 320, 384, 448, 512,
@@ -151,6 +152,7 @@ static const uint16_t size_classes[] = {
 };
 
 static const uint16_t size_class_slots[] = {
+    /* 0 */ 256,
     /* 16 */ 256, 128, 85, 64, 51, 42, 36, 64,
     /* 32 */ 51, 64, 54, 64,
     /* 64 */ 64, 64, 64, 64,
@@ -169,7 +171,10 @@ struct size_info {
 };
 
 static struct size_info get_size_info(size_t size) {
-    for (size_t i = 0; i < N_SIZE_CLASSES; i++) {
+    if (size == 0) {
+        return (struct size_info){16, 0};
+    }
+    for (size_t i = 1; i < N_SIZE_CLASSES; i++) {
         size_t real_size = size_classes[i];
         if (size <= real_size) {
             return (struct size_info){real_size, i};
@@ -318,7 +323,7 @@ static void *slab_allocate(size_t requested_size) {
         }
 
         void *slab = get_slab(c, slab_size, metadata);
-        if (mprotect(slab, slab_size, PROT_READ|PROT_WRITE)) {
+        if (requested_size != 0 && mprotect(slab, slab_size, PROT_READ|PROT_WRITE)) {
             metadata->next = c->free_slabs;
             if (c->free_slabs) {
                 c->free_slabs->prev = metadata;
@@ -596,6 +601,9 @@ COLD static void init_slow_path(void) {
         c->class_region_start = (char *)ro.slab_region_start + class_region_size * i + gap;
 
         size_t size = size_classes[i];
+        if (size == 0) {
+            size = 16;
+        }
         size_t slots = size_class_slots[i];
         size_t metadata_max = get_metadata_max(get_slab_size(slots, size));
         c->slab_info = allocate_pages(metadata_max * sizeof(struct slab_metadata), false);
