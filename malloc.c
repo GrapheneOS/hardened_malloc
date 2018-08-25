@@ -193,6 +193,7 @@ static struct size_class {
     struct slab_metadata *free_slabs;
     struct slab_metadata *slab_info;
     pthread_mutex_t mutex;
+    struct random_state rng;
 } size_class_metadata[N_SIZE_CLASSES];
 
 static const size_t class_region_size = 128ULL * 1024 * 1024 * 1024;
@@ -440,6 +441,7 @@ struct region_info {
 
 static const size_t initial_region_table_size = 256;
 
+static struct random_state regions_rng;
 static struct region_info *regions;
 static size_t regions_total = initial_region_table_size;
 static size_t regions_free = initial_region_table_size;
@@ -560,10 +562,13 @@ static void post_fork_child(void) {
     if (pthread_mutex_init(&regions_lock, NULL)) {
         fatal_error("mutex initialization failed");
     }
+    random_state_init(&regions_rng);
     for (unsigned i = 0; i < N_SIZE_CLASSES; i++) {
-        if (pthread_mutex_init(&size_class_metadata[i].mutex, NULL)) {
+        struct size_class *c = &size_class_metadata[i];
+        if (pthread_mutex_init(&c->mutex, NULL)) {
             fatal_error("mutex initialization failed");
         }
+        random_state_init(&c->rng);
     }
 }
 
@@ -586,6 +591,7 @@ COLD static void init_slow_path(void) {
     if (regions == NULL) {
         fatal_error("failed to set up allocator");
     }
+    random_state_init(&regions_rng);
 
     ro.slab_region_start = memory_map(slab_region_size);
     if (ro.slab_region_start == NULL) {
@@ -599,6 +605,8 @@ COLD static void init_slow_path(void) {
         if (pthread_mutex_init(&c->mutex, NULL)) {
             fatal_error("mutex initialization failed");
         }
+
+        random_state_init(&c->rng);
 
         size_t bound = (real_class_region_size - class_region_size) / PAGE_SIZE - 1;
         size_t gap = (get_random_size_uniform(&rng, bound) + 1) * PAGE_SIZE;
