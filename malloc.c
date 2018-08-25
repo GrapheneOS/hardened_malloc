@@ -264,11 +264,11 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, struct slab_
     // randomize start location for linear search (uniform random choice is too slow)
     uint64_t random_split = ~0UL >> get_random_size_uniform(rng, slots);
 
-    size_t slot = __builtin_ffsl(~(masked | random_split));
+    size_t slot = ffzl(masked | random_split);
     if (slot) {
         return slot - 1;
     } else {
-        return __builtin_ffsl(~masked) - 1;
+        return ffzl(masked) - 1;
     }
 }
 

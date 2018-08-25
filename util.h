@@ -10,6 +10,10 @@
 #define UNUSED __attribute__((unused))
 #define EXPORT __attribute__((visibility("default")))
 
+static inline int ffzl(long x) {
+    return __builtin_ffsl(~x);
+}
+
 COLD noreturn void fatal_error(const char *s);
 
 #endif
