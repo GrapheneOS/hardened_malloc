@@ -248,19 +248,35 @@ static bool get_slot(struct slab_metadata *metadata, size_t index) {
 }
 
 static uint64_t get_mask(size_t slots) {
-    if (slots > 64) return 0; // TODO: implement multi-word bitmaps
     return slots < 64 ? ~0UL << slots : 0;
 }
 
-static size_t first_free_slot(size_t slots, struct slab_metadata *metadata) {
+static size_t get_free_slot(struct random_state *rng, size_t slots, struct slab_metadata *metadata) {
+    if (slots > 64) {
+        slots = 64;
+    }
+
     uint64_t masked = metadata->bitmap | get_mask(slots);
     if (masked == ~0UL) {
         fatal_error("no zero bits");
     }
-    return __builtin_ffsl(~masked) - 1;
+
+    // randomize start location for linear search (uniform random choice is too slow)
+    uint64_t random_split = ~0UL >> get_random_size_uniform(rng, slots);
+
+    size_t slot = __builtin_ffsl(~(masked | random_split));
+    if (slot) {
+        return slot - 1;
+    } else {
+        return __builtin_ffsl(~masked) - 1;
+    }
 }
 
 static bool has_free_slots(size_t slots, struct slab_metadata *metadata) {
+    if (slots > 64) {
+        slots = 64;
+    }
+
     uint64_t masked = metadata->bitmap | get_mask(slots);
     return masked != ~0UL;
 }
@@ -348,7 +364,7 @@ static void *slab_allocate(size_t requested_size) {
     }
 
     struct slab_metadata *metadata = c->partial_slabs;
-    size_t slot = first_free_slot(slots, metadata);
+    size_t slot = get_free_slot(&c->rng, slots, metadata);
     set_slot(metadata, slot);
 
     if (!has_free_slots(slots, metadata)) {
