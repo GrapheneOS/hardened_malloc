@@ -379,6 +379,10 @@ static void slab_free(void *p) {
 
     struct size_class *c = &size_class_metadata[class];
     size_t size = size_classes[class];
+    bool is_zero_size = size == 0;
+    if (is_zero_size) {
+        size = 16;
+    }
     size_t slots = size_class_slots[class];
     size_t slab_size = get_slab_size(slots, size);
 
@@ -407,7 +411,9 @@ static void slab_free(void *p) {
     }
 
     clear_slot(metadata, slot);
-    memset(p, 0, size);
+    if (!is_zero_size) {
+        memset(p, 0, size);
+    }
 
     if (is_free_slab(metadata)) {
         if (metadata->prev) {
