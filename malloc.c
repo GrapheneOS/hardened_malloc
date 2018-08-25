@@ -206,7 +206,7 @@ static size_t get_metadata_max(size_t slab_size) {
 }
 
 static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_size) {
-    if (c->metadata_count == c->metadata_allocated) {
+    if (unlikely(c->metadata_count == c->metadata_allocated)) {
         size_t metadata_max = get_metadata_max(slab_size);
         if (c->metadata_count == metadata_max) {
             return NULL;
@@ -649,7 +649,7 @@ COLD static void init_slow_path(void) {
         if (c->slab_info == NULL) {
             fatal_error("failed to allocate slab metadata");
         }
-        c->metadata_allocated = 32;
+        c->metadata_allocated = PAGE_SIZE / sizeof(struct slab_metadata);
         if (mprotect(c->slab_info, c->metadata_allocated * sizeof(struct slab_metadata), PROT_READ|PROT_WRITE)) {
             fatal_error("failed to allocate initial slab info");
         }
