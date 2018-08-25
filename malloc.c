@@ -26,11 +26,6 @@ static_assert(sizeof(void *) == 8, "64-bit only");
 #define MIN_ALIGN 16
 #define ALIGNMENT_CEILING(s, alignment) (((s) + (alignment - 1)) & ((~(alignment)) + 1))
 
-// TODO: can be removed once the work is further along
-COLD static noreturn void unimplemented(void) {
-    fatal_error("unimplemented");
-}
-
 static void *memory_map(size_t size) {
     void *p = mmap(NULL, size, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
     if (p == MAP_FAILED) {
@@ -348,15 +343,7 @@ static void *slab_allocate(size_t requested_size) {
 
         void *slab = get_slab(c, slab_size, metadata);
         if (requested_size != 0 && mprotect(slab, slab_size, PROT_READ|PROT_WRITE)) {
-            metadata->next = c->free_slabs;
-            if (c->free_slabs) {
-                c->free_slabs->prev = metadata;
-            }
-            c->free_slabs = metadata;
-
-            // TODO: implement memory protected free slabs
-            unimplemented();
-
+            c->metadata_count--;
             pthread_mutex_unlock(&c->mutex);
             return NULL;
         }
