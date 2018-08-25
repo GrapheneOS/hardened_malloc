@@ -16,7 +16,7 @@ static ssize_t getrandom(void *buf, size_t buflen, unsigned int flags) {
 }
 #endif
 
-void get_random_seed(void *buf, size_t size) {
+static void get_random_seed(void *buf, size_t size) {
     while (size > 0) {
         ssize_t r;
 
@@ -56,23 +56,45 @@ void get_random_bytes(struct random_state *state, void *buf, size_t size) {
     }
 }
 
-size_t get_random_size(struct random_state *state) {
-    size_t size;
-    get_random_bytes(state, &size, sizeof(size));
-    return size;
+uint16_t get_random_u16(struct random_state *state) {
+    uint16_t value;
+    get_random_bytes(state, &value, sizeof(value));
+    return value;
 }
 
 // based on OpenBSD arc4random_uniform
-size_t get_random_size_uniform(struct random_state *state, size_t bound) {
+uint16_t get_random_u16_uniform(struct random_state *state, uint16_t bound) {
     if (bound < 2) {
         return 0;
     }
 
-    size_t min = -bound % bound;
+    uint16_t min = (uint16_t)-bound % bound;
 
-    size_t r;
+    uint16_t r;
     do {
-        r = get_random_size(state);
+        r = get_random_u16(state);
+    } while (r < min);
+
+    return r % bound;
+}
+
+uint64_t get_random_u64(struct random_state *state) {
+    uint64_t value;
+    get_random_bytes(state, &value, sizeof(value));
+    return value;
+}
+
+// based on OpenBSD arc4random_uniform
+uint64_t get_random_u64_uniform(struct random_state *state, uint64_t bound) {
+    if (bound < 2) {
+        return 0;
+    }
+
+    uint64_t min = -bound % bound;
+
+    uint64_t r;
+    do {
+        r = get_random_u64(state);
     } while (r < min);
 
     return r % bound;

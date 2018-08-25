@@ -257,7 +257,7 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, struct slab_
     }
 
     // randomize start location for linear search (uniform random choice is too slow)
-    uint64_t random_split = ~(~0UL << get_random_size_uniform(rng, slots));
+    uint64_t random_split = ~(~0UL << get_random_u16_uniform(rng, slots));
 
     size_t slot = ffzl(masked | random_split);
     if (slot) {
@@ -628,7 +628,7 @@ COLD static void init_slow_path(void) {
         random_state_init(&c->rng);
 
         size_t bound = (real_class_region_size - class_region_size) / PAGE_SIZE - 1;
-        size_t gap = (get_random_size_uniform(&rng, bound) + 1) * PAGE_SIZE;
+        size_t gap = (get_random_u64_uniform(&rng, bound) + 1) * PAGE_SIZE;
         c->class_region_start = (char *)ro.slab_region_start + real_class_region_size * i + gap;
 
         size_t size = size_classes[i];
