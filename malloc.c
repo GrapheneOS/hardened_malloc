@@ -253,7 +253,7 @@ static uint64_t get_mask(size_t slots) {
 }
 
 static size_t first_free_slot(size_t slots, struct slab_metadata *metadata) {
-    size_t masked = metadata->bitmap | get_mask(slots);
+    uint64_t masked = metadata->bitmap | get_mask(slots);
     if (masked == ~0UL) {
         fatal_error("no zero bits");
     }
@@ -261,7 +261,7 @@ static size_t first_free_slot(size_t slots, struct slab_metadata *metadata) {
 }
 
 static bool has_free_slots(size_t slots, struct slab_metadata *metadata) {
-    size_t masked = metadata->bitmap | get_mask(slots);
+    uint64_t masked = metadata->bitmap | get_mask(slots);
     return masked != ~0UL;
 }
 
