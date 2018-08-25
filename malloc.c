@@ -330,9 +330,12 @@ static void *slab_allocate(size_t requested_size) {
             c->partial_slabs = metadata;
 
             void *slab = get_slab(c, slab_size, metadata);
-            set_slot(metadata, 0);
+            size_t slot = get_free_slot(&c->rng, slots, metadata);
+            set_slot(metadata, slot);
+            void *p = slot_pointer(size, slab, slot);
+
             pthread_mutex_unlock(&c->mutex);
-            return slab;
+            return p;
         }
 
         struct slab_metadata *metadata = alloc_metadata(c, slab_size);
@@ -349,10 +352,12 @@ static void *slab_allocate(size_t requested_size) {
         }
 
         c->partial_slabs = metadata;
-        set_slot(metadata, 0);
+        size_t slot = get_free_slot(&c->rng, slots, metadata);
+        set_slot(metadata, slot);
+        void *p = slot_pointer(size, slab, slot);
 
         pthread_mutex_unlock(&c->mutex);
-        return slab;
+        return p;
     }
 
     struct slab_metadata *metadata = c->partial_slabs;
