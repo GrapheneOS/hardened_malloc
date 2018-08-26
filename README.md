@@ -40,7 +40,7 @@ allocation and then unmapped on free.
     * Divided up into isolated inner regions for each size class, with a high
       entropy random base for each one
     * No deterministic offsets from one size class to another
-    * Metadata is completely outside the slab allocation
+    * Metadata is completely outside the slab allocation region
 * Fine-grained randomization within memory regions
     * Randomly sized guard regions for large allocations
     * Random slot selection within slabs
