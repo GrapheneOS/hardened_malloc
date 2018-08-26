@@ -7,3 +7,116 @@ Debian stable determines the most ancient set of supported dependencies:
 However, using more recent releases is highly recommended. Older versions of
 the dependencies may be compatible at the moment but are not tested and will
 explicitly not be supported.
+
+# Basic design
+
+The current design is very simple and will become a bit more sophisticated as
+the basic features are completed and the implementation is hardened and
+optimized. The allocator is exclusive to 64-bit platforms in order to take full
+advantage of the abundant address space without being constrained by needing to
+keep the design compatible with 32-bit.
+
+Small allocations are always located in a large memory region reserved for slab
+allocations. It can be determined that an allocation is one of the small size
+classes from the address range. Each small size class has a separate reserved
+region within the larger region, and the size of a small allocation can simply
+be determined from the range. Each small size class has a separate out-of-line
+metadata array outside of the overall allocation region, with the index of the
+metadata struct within the array mapping to the index of the slab within the
+dedicated size class region. Slabs are a multiple of the page size and are
+paged aligned. The entire small size class region starts out memory protected
+and becomes readable / writable as it gets allocated, with idle slabs beyond
+the cache limit having their pages dropped and the memory protected again.
+
+Large allocations are tracked via a global hash table mapping their address to
+their size and guard size. They're simply memory mappings and get mapped on
+allocation and then unmapped on free.
+
+# Security properties
+
+* Fully out-of-line metadata
+* Deterministic detection of any invalid free (unallocated, unaligned, etc.)
+* Isolated memory region for slab allocations
+    * Divided up into isolated inner regions for each size class, with a high
+      entropy random base for each one
+    * No deterministic offsets from one size class to another
+    * Metadata is completely outside the slab allocation
+* Fine-grained randomization within memory regions
+    * Randomly sized guard regions for large allocations
+    * Random slot selection within slabs
+    * [in-progress] Randomized delayed free for slab allocations
+    * [in-progress] Randomized allocation of slabs
+    * [more randomization coming as the implementation is matured]
+* Slab allocations are zeroed on free and large allocations are unmapped
+* [in-progress] Detection of write-after-free by verifying zero filling is
+  intact
+* Memory in fresh allocations is consistently zeroed
+* [in-progress] Delayed free via a combination of FIFO and randomization for
+  slab allocations
+* [in-progress] Random canaries placed after each slab allocation to *absorb*
+  and then later detect overflows/underflows
+    * High entropy per-slab random values
+    * Mangled into a unique value per slab slot (although not with a strong
+      keyed hash due to performance limitations)
+* [in-progress] Some slab locations are skipped and remain memory protected,
+  leaving slab size class regions interspersed with guard pages
+* Zero size allocations are memory protected
+* [mostly in-progress] Protected allocator metadata
+* [in-progress] Extension for retrieving the size of allocations with fallback
+  to a sentinel for pointers not managed by the allocator
+    * Can also return accurate values for pointers *within* small allocations
+    * The same applies to pointers within the first page of large allocations,
+      otherwise it currently has to return a sentinel
+
+# Size classes
+
+The zero byte size class is a special case of the smallest regular size class. It's allocated in a
+separate region with the memory left non-readable and non-writable.
+
+The slab slot count for each size class is not yet finely tuned beyond choosing values avoiding
+internal fragmentation for slabs (i.e. avoiding wasted space due to page size rounding).
+
+The choice of size classes is the same as jemalloc:
+
+> size classes are multiples of the quantum [16], spaced such that there are four size classes for
+> each doubling in size, which limits internal fragmentation to approximately 20% for all but the
+> smallest size classes
+
+| size class | worst case internal fragmentation | slab slots | slab size | worst case internal fragmentation for slabs |
+| - | - | - | - | - |
+| 16 | 100% | 256 | 4096 | 0.0% |
+| 32 | 46.875% | 128 | 4096 | 0.0% |
+| 48 | 31.25% | 85 | 4096 | 0.390625% |
+| 64 | 23.4375% | 64 | 4096 | 0.0% |
+| 80 | 18.75% | 51 | 4096 | 0.390625% |
+| 96 | 15.625% | 42 | 4096 | 1.5625% |
+| 112 | 13.392857142857139% | 36 | 4096 | 1.5625% |
+| 128 | 11.71875% | 64 | 8192 | 0.0% |
+| 160 | 19.375% | 51 | 8192 | 0.390625% |
+| 192 | 16.145833333333343% | 64 | 12288 | 0.0% |
+| 224 | 13.839285714285708% | 54 | 12288 | 1.5625% |
+| 256 | 12.109375% | 64 | 16384 | 0.0% |
+| 320 | 19.6875% | 64 | 20480 | 0.0% |
+| 384 | 16.40625% | 64 | 24576 | 0.0% |
+| 448 | 14.0625% | 64 | 28672 | 0.0% |
+| 512 | 12.3046875% | 64 | 32768 | 0.0% |
+| 640 | 19.84375% | 64 | 40960 | 0.0% |
+| 768 | 16.536458333333343% | 64 | 49152 | 0.0% |
+| 896 | 14.174107142857139% | 64 | 57344 | 0.0% |
+| 1024 | 12.40234375% | 64 | 65536 | 0.0% |
+| 1280 | 19.921875% | 16 | 20480 | 0.0% |
+| 1536 | 16.6015625% | 16 | 24576 | 0.0% |
+| 1792 | 14.229910714285708% | 16 | 28672 | 0.0% |
+| 2048 | 12.451171875% | 16 | 32768 | 0.0% |
+| 2560 | 19.9609375% | 8 | 20480 | 0.0% |
+| 3072 | 16.634114583333343% | 8 | 24576 | 0.0% |
+| 3584 | 14.2578125% | 8 | 28672 | 0.0% |
+| 4096 | 12.4755859375% | 8 | 32768 | 0.0% |
+| 5120 | 19.98046875% | 8 | 40960 | 0.0% |
+| 6144 | 16.650390625% | 8 | 49152 | 0.0% |
+| 7168 | 14.271763392857139% | 8 | 57344 | 0.0% |
+| 8192 | 12.48779296875% | 8 | 65536 | 0.0% |
+| 10240 | 19.990234375% | 6 | 61440 | 0.0% |
+| 12288 | 16.658528645833343% | 5 | 61440 | 0.0% |
+| 14336 | 14.278738839285708% | 4 | 57344 | 0.0% |
+| 16384 | 12.493896484375% | 4 | 65536 | 0.0% |
