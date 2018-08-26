@@ -456,6 +456,7 @@ static void slab_free(void *p) {
 struct region_info {
     void *p;
     size_t size;
+    size_t guard_size;
 };
 
 static const size_t initial_region_table_size = 256;
@@ -507,7 +508,7 @@ static int regions_grow(void) {
     return 0;
 }
 
-static int regions_insert(void *p, size_t size) {
+static int regions_insert(void *p, size_t size, size_t guard_size) {
     if (regions_free * 4 < regions_total) {
         if (regions_grow()) {
             return 1;
@@ -523,6 +524,7 @@ static int regions_insert(void *p, size_t size) {
     }
     regions[index].p = p;
     regions[index].size = size;
+    regions[index].guard_size = guard_size;
     regions_free--;
     return 0;
 }
@@ -670,20 +672,28 @@ static void enforce_init(void) {
     }
 }
 
+static size_t get_guard_size(struct random_state *state, size_t size) {
+    return (get_random_u64_uniform(state, size / PAGE_SIZE / 8) + 1) * PAGE_SIZE;
+}
+
 static void *allocate(size_t size) {
     if (size <= max_slab_size_class) {
         return slab_allocate(size);
     }
 
-    void *p = allocate_pages(size, PAGE_SIZE, true);
+    pthread_mutex_lock(&regions_lock);
+    size_t guard_size = get_guard_size(&regions_rng, size);
+    pthread_mutex_unlock(&regions_lock);
+
+    void *p = allocate_pages(size, guard_size, true);
     if (p == NULL) {
         return NULL;
     }
 
     pthread_mutex_lock(&regions_lock);
-    if (regions_insert(p, size)) {
+    if (regions_insert(p, size, guard_size)) {
         pthread_mutex_unlock(&regions_lock);
-        deallocate_pages(p, size, PAGE_SIZE);
+        deallocate_pages(p, size, guard_size);
         return NULL;
     }
     pthread_mutex_unlock(&regions_lock);
@@ -703,10 +713,11 @@ static void deallocate(void *p) {
         fatal_error("invalid free");
     }
     size_t size = region->size;
+    size_t guard_size = region->guard_size;
     regions_delete(region);
     pthread_mutex_unlock(&regions_lock);
 
-    deallocate_pages(p, size, PAGE_SIZE);
+    deallocate_pages(p, size, guard_size);
 }
 
 EXPORT void *h_malloc(size_t size) {
@@ -786,15 +797,19 @@ static int alloc_aligned(void **memptr, size_t alignment, size_t size, size_t mi
         return 0;
     }
 
-    void *p = allocate_pages_aligned(size, alignment, PAGE_SIZE);
+    pthread_mutex_lock(&regions_lock);
+    size_t guard_size = get_guard_size(&regions_rng, size);
+    pthread_mutex_unlock(&regions_lock);
+
+    void *p = allocate_pages_aligned(size, alignment, guard_size);
     if (p == NULL) {
         return ENOMEM;
     }
 
     pthread_mutex_lock(&regions_lock);
-    if (regions_insert(p, size)) {
+    if (regions_insert(p, size, guard_size)) {
         pthread_mutex_unlock(&regions_lock);
-        deallocate_pages(p, size, PAGE_SIZE);
+        deallocate_pages(p, size, guard_size);
         return ENOMEM;
     }
     pthread_mutex_unlock(&regions_lock);
