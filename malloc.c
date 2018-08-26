@@ -790,10 +790,15 @@ static int alloc_aligned(void **memptr, size_t alignment, size_t size, size_t mi
     if (p == NULL) {
         return ENOMEM;
     }
+
+    pthread_mutex_lock(&regions_lock);
     if (regions_insert(p, size)) {
+        pthread_mutex_unlock(&regions_lock);
         deallocate_pages(p, size, PAGE_SIZE);
         return ENOMEM;
     }
+    pthread_mutex_unlock(&regions_lock);
+
     *memptr = p;
     return 0;
 }
