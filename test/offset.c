@@ -29,10 +29,10 @@ int main(void) {
         if (!q) {
             return 1;
         }
-        printf("%zu to %zu: %zd\n", size, size, q - p[i]);
         if (i != 0) {
             printf("%zu to %zu: %zd\n", size_classes[i - 1], size, p[i - 1] - p[i]);
         }
+        printf("%zu to %zu: %zd\n", size, size, q - p[i]);
     }
     return 0;
 }
