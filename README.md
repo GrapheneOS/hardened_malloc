@@ -76,7 +76,8 @@ separate region with the memory left non-readable and non-writable.
 The slab slot count for each size class is not yet finely tuned beyond choosing values avoiding
 internal fragmentation for slabs (i.e. avoiding wasted space due to page size rounding).
 
-The choice of size classes is the same as jemalloc:
+The choice of size classes is the same as jemalloc, but with a much different approach to the
+slabs containing them:
 
 > size classes are multiples of the quantum [16], spaced such that there are four size classes for
 > each doubling in size, which limits internal fragmentation to approximately 20% for all but the
