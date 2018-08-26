@@ -24,25 +24,26 @@ size_class_slots = [
     6, 5, 4, 4
 ]
 
-print("size class", "worst case internal fragmentation", sep=", ")
+fragmentation = [100]
 
-print(16, "100%", sep=", ")
 for i in range(len(size_classes) - 1):
     size_class = size_classes[i + 1]
-
     worst_case = size_classes[i] + 1
     used = worst_case / size_class
-    print(size_class, str(100 - used * 100) + "%", sep=", ")
+    fragmentation.append(100 - used * 100);
 
 def page_align(size):
     return (size + 4095) & ~4095
 
-print()
-print("size class", "slab slots", "slab size", "worst case internal fragmentation for slabs", sep=", ")
-for size, slots in zip(size_classes, size_class_slots):
+print("| ", end="")
+print("size class", "worst case internal fragmentation", "slab slots", "slab size", "worst case internal fragmentation for slabs", sep=" | ", end=" |\n")
+print("| ", end='')
+print("-", "-", "-", "-", "-", sep=" | ", end=" |\n")
+for size, slots, fragmentation in zip(size_classes, size_class_slots, fragmentation):
     used = size * slots
     real = page_align(used)
-    print(size, slots, real, str(100 - used / real * 100) + "%", sep=", ")
+    print("| ", end='')
+    print(size, str(fragmentation) + "%", slots, real, str(100 - used / real * 100) + "%", sep=" | ", end=" |\n")
 
 if len(argv) < 2:
     exit()
