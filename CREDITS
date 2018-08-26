@@ -1,4 +1,10 @@
-get_random_size_uniform:
+chacha.c is a simple conversion of chacha-merged.c to a keystream-only implementation:
+
+    chacha-merged.c version 20080118
+    D. J. Bernstein
+    Public domain.
+
+random.c (get_random_u16_uniform, get_random_u64_uniform):
 
     Copyright (c) 2008, Damien Miller <djm@openbsd.org>
 
@@ -14,7 +20,7 @@ get_random_size_uniform:
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-open-addressed hash table:
+malloc.c open-addressed hash table (regions_grow, regions_insert, regions_find, regions_delete):
 
     Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
     Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
