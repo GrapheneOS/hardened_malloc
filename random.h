@@ -16,7 +16,6 @@ struct random_state {
 };
 
 void random_state_init(struct random_state *state);
-void get_random_bytes(struct random_state *state, void *buf, size_t size);
 uint16_t get_random_u16(struct random_state *state);
 uint16_t get_random_u16_uniform(struct random_state *state, uint16_t bound);
 uint64_t get_random_u64(struct random_state *state);
