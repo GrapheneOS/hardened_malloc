@@ -3,10 +3,15 @@
 
 #include <stdint.h>
 
-#define RANDOM_CACHE_SIZE 4096
+#include "chacha.h"
+
+#define RANDOM_CACHE_SIZE 256ULL
+#define RANDOM_RESEED_SIZE 256ULL * 1024
 
 struct random_state {
     size_t index;
+    size_t reseed;
+    chacha_ctx ctx;
     uint8_t cache[RANDOM_CACHE_SIZE];
 };
 

@@ -16,6 +16,8 @@ static ssize_t getrandom(void *buf, size_t buflen, unsigned int flags) {
 }
 #endif
 
+#include "chacha.h"
+
 static void get_random_seed(void *buf, size_t size) {
     while (size > 0) {
         ssize_t r;
@@ -33,20 +35,34 @@ static void get_random_seed(void *buf, size_t size) {
     }
 }
 
+#define KEY_SIZE 32
+#define IV_SIZE 8
+
 void random_state_init(struct random_state *state) {
-    state->index = RANDOM_CACHE_SIZE;
+    uint8_t rnd[KEY_SIZE + IV_SIZE];
+    get_random_seed(rnd, sizeof(rnd));
+    chacha_keysetup(&state->ctx, rnd, KEY_SIZE * 8);
+    chacha_ivsetup(&state->ctx, rnd + KEY_SIZE);
+    chacha_keystream_bytes(&state->ctx, state->cache, RANDOM_CACHE_SIZE);
+    state->index = 0;
+    state->reseed = 0;
 }
 
 void get_random_bytes(struct random_state *state, void *buf, size_t size) {
     if (size > RANDOM_CACHE_SIZE / 2) {
-        get_random_seed(buf, size);
+        chacha_keystream_bytes(&state->ctx, state->cache, RANDOM_CACHE_SIZE);
         return;
     }
 
     while (size) {
         if (state->index == RANDOM_CACHE_SIZE) {
-            state->index = 0;
-            get_random_seed(state->cache, RANDOM_CACHE_SIZE);
+            if (state->reseed >= RANDOM_RESEED_SIZE) {
+                random_state_init(state);
+            } else {
+                chacha_keystream_bytes(&state->ctx, state->cache, RANDOM_CACHE_SIZE);
+                state->index = 0;
+                state->reseed += RANDOM_CACHE_SIZE;
+            }
         }
         size_t remaining = RANDOM_CACHE_SIZE - state->index;
         size_t copy_size = size < remaining ? size : remaining;
