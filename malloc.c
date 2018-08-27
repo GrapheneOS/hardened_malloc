@@ -181,14 +181,14 @@ static size_t get_slab_size(size_t slots, size_t size) {
 }
 
 static struct size_class {
+    pthread_mutex_t mutex;
     void *class_region_start;
-    size_t metadata_allocated;
-    size_t metadata_count;
+    struct slab_metadata *slab_info;
     struct slab_metadata *partial_slabs;
     struct slab_metadata *free_slabs;
-    struct slab_metadata *slab_info;
-    pthread_mutex_t mutex;
     struct random_state rng;
+    size_t metadata_allocated;
+    size_t metadata_count;
 } size_class_metadata[N_SIZE_CLASSES];
 
 static const size_t class_region_size = 128ULL * 1024 * 1024 * 1024;
