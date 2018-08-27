@@ -50,7 +50,8 @@ allocation and then unmapped on free.
 * Slab allocations are zeroed on free and large allocations are unmapped
 * [in-progress] Detection of write-after-free by verifying zero filling is
   intact
-* Memory in fresh allocations is consistently zeroed
+* Memory in fresh allocations is consistently zeroed due to it either being
+  fresh pages or zeroed on free after previous usage
 * [in-progress] Delayed free via a combination of FIFO and randomization for
   slab allocations
 * [in-progress] Random canaries placed after each slab allocation to *absorb*
