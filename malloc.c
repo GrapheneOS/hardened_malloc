@@ -637,9 +637,9 @@ COLD static void init_slow_path(void) {
             size = 16;
         }
         c->size_divisor = libdivide_u32_gen(size);
-        c->slab_size_divisor = libdivide_u64_gen(get_slab_size(size_class_slots[i], size));
-        size_t slots = size_class_slots[i];
-        size_t metadata_max = get_metadata_max(get_slab_size(slots, size));
+        size_t slab_size = get_slab_size(size_class_slots[i], size);
+        c->slab_size_divisor = libdivide_u64_gen(slab_size);
+        size_t metadata_max = get_metadata_max(slab_size);
         c->slab_info = allocate_pages(metadata_max * sizeof(struct slab_metadata), PAGE_SIZE, false);
         if (c->slab_info == NULL) {
             fatal_error("failed to allocate slab metadata");
