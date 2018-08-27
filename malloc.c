@@ -12,6 +12,8 @@
 
 #include <malloc.h>
 
+#include "libdivide.h"
+
 #include "malloc.h"
 #include "random.h"
 #include "util.h"
@@ -186,6 +188,8 @@ static struct size_class {
     struct slab_metadata *slab_info;
     struct slab_metadata *partial_slabs;
     struct slab_metadata *free_slabs;
+    struct libdivide_u32_t size_divisor;
+    struct libdivide_u64_t slab_size_divisor;
     struct random_state rng;
     size_t metadata_allocated;
     size_t metadata_count;
@@ -285,14 +289,9 @@ static void *get_slab(struct size_class *c, size_t slab_size, struct slab_metada
     return (char *)c->class_region_start + (index * slab_size);
 }
 
-static struct slab_metadata *get_metadata(struct size_class *c, size_t slab_size, void *p) {
+static struct slab_metadata *get_metadata(struct size_class *c, void *p) {
     size_t offset = (char *)p - (char *)c->class_region_start;
-    size_t index;
-    if (slab_size == PAGE_SIZE) {
-        index = offset >> PAGE_SHIFT;
-    } else {
-        index = offset / slab_size;
-    }
+    size_t index = libdivide_u64_do(offset, &c->slab_size_divisor);
     // still caught without this check either as a read access violation or "double free"
     if (index >= c->metadata_allocated) {
         fatal_error("invalid free within a slab yet to be used");
@@ -401,9 +400,9 @@ static void slab_free(void *p) {
 
     pthread_mutex_lock(&c->mutex);
 
-    struct slab_metadata *metadata = get_metadata(c, slab_size, p);
+    struct slab_metadata *metadata = get_metadata(c, p);
     void *slab = get_slab(c, slab_size, metadata);
-    size_t slot = ((char *)p - (char *)slab) / size;
+    size_t slot = libdivide_u32_do((char *)p - (char *)slab, &c->size_divisor);
 
     if (slot_pointer(size, slab, slot) != p) {
         fatal_error("invalid unaligned free");
@@ -637,6 +636,8 @@ COLD static void init_slow_path(void) {
         if (size == 0) {
             size = 16;
         }
+        c->size_divisor = libdivide_u32_gen(size);
+        c->slab_size_divisor = libdivide_u64_gen(get_slab_size(size_class_slots[i], size));
         size_t slots = size_class_slots[i];
         size_t metadata_max = get_metadata_max(get_slab_size(slots, size));
         c->slab_info = allocate_pages(metadata_max * sizeof(struct slab_metadata), PAGE_SIZE, false);
