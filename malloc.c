@@ -659,7 +659,7 @@ COLD static void init_slow_path(void) {
     pthread_mutex_unlock(&mutex);
 }
 
-static void init(void) {
+static inline void init(void) {
     if (likely(atomic_load_explicit(&ro.initialized, memory_order_acquire))) {
         return;
     }
@@ -667,7 +667,7 @@ static void init(void) {
     init_slow_path();
 }
 
-static void enforce_init(void) {
+static inline void enforce_init(void) {
     if (!atomic_load_explicit(&ro.initialized, memory_order_acquire)) {
         fatal_error("invalid uninitialized allocator usage");
     }
