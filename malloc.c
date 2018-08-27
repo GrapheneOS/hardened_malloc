@@ -303,7 +303,7 @@ static void *slot_pointer(size_t size, void *slab, size_t slot) {
     return (char *)slab + slot * size;
 }
 
-static void *slab_allocate(size_t requested_size) {
+static inline void *slab_allocate(size_t requested_size) {
     struct size_info info = get_size_info(requested_size);
     size_t size = info.size;
     struct size_class *c = &size_class_metadata[info.class];
@@ -386,7 +386,7 @@ static size_t slab_usable_size(void *p) {
     return size_classes[slab_size_class(p)];
 }
 
-static void slab_free(void *p) {
+static inline void slab_free(void *p) {
     size_t class = slab_size_class(p);
 
     struct size_class *c = &size_class_metadata[class];
