@@ -736,6 +736,8 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
     return allocate(total_size);
 }
 
+static const size_t mremap_threshold = 4 * 1024 * 1024;
+
 EXPORT void *h_realloc(void *old, size_t size) {
     if (old == NULL) {
         init();
@@ -768,6 +770,32 @@ EXPORT void *h_realloc(void *old, size_t size) {
             return old;
         }
         pthread_mutex_unlock(&regions_lock);
+
+        size_t copy_size = size < old_size ? size : old_size;
+        if (copy_size >= mremap_threshold) {
+            void *new = allocate(size);
+            if (new == NULL) {
+                return NULL;
+            }
+
+            pthread_mutex_lock(&regions_lock);
+            struct region_info *region = regions_find(old);
+            if (region == NULL) {
+                fatal_error("invalid realloc");
+            }
+            size_t old_guard_size = region->guard_size;
+            regions_delete(region);
+            pthread_mutex_unlock(&regions_lock);
+
+            if (mremap(old, PAGE_CEILING(old_size), PAGE_CEILING(size), MREMAP_MAYMOVE|MREMAP_FIXED, new) == MAP_FAILED) {
+                memcpy(new, old, copy_size);
+                deallocate_pages(old, old_size, old_guard_size);
+            } else {
+                memory_unmap((char *)old - old_guard_size, old_guard_size);
+                memory_unmap((char *)old + PAGE_CEILING(old_size), old_guard_size);
+            }
+            return new;
+        }
     }
 
     void *new = allocate(size);
