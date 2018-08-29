@@ -59,7 +59,8 @@ static void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotec
     usable_size = PAGE_CEILING(usable_size);
 
     size_t real_size;
-    if (__builtin_add_overflow(usable_size, guard_size * 2, &real_size)) {
+    if (unlikely(__builtin_add_overflow(usable_size, guard_size * 2, &real_size))) {
+        errno = ENOMEM;
         return NULL;
     }
     void *real = memory_map(real_size);
@@ -84,12 +85,14 @@ static void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t
     usable_size = PAGE_CEILING(usable_size);
 
     size_t alloc_size;
-    if (__builtin_add_overflow(usable_size, alignment - PAGE_SIZE, &alloc_size)) {
+    if (unlikely(__builtin_add_overflow(usable_size, alignment - PAGE_SIZE, &alloc_size))) {
+        errno = ENOMEM;
         return NULL;
     }
 
     size_t real_alloc_size;
-    if (__builtin_add_overflow(alloc_size, guard_size * 2, &real_alloc_size)) {
+    if (unlikely(__builtin_add_overflow(alloc_size, guard_size * 2, &real_alloc_size))) {
+        errno = ENOMEM;
         return NULL;
     }
 
@@ -219,6 +222,7 @@ static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_si
     if (unlikely(c->metadata_count == c->metadata_allocated)) {
         size_t metadata_max = get_metadata_max(slab_size);
         if (c->metadata_count == metadata_max) {
+            errno = ENOMEM;
             return NULL;
         }
         size_t allocate = c->metadata_allocated * 2;
@@ -741,7 +745,7 @@ EXPORT void *h_malloc(size_t size) {
 
 EXPORT void *h_calloc(size_t nmemb, size_t size) {
     size_t total_size;
-    if (__builtin_mul_overflow(nmemb, size, &total_size)) {
+    if (unlikely(__builtin_mul_overflow(nmemb, size, &total_size))) {
         errno = ENOMEM;
         return NULL;
     }
