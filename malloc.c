@@ -151,7 +151,7 @@ struct size_info {
     size_t class;
 };
 
-static struct size_info get_size_info(size_t size) {
+static inline struct size_info get_size_info(size_t size) {
     if (size == 0) {
         return (struct size_info){16, 0};
     }
