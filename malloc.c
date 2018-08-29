@@ -30,8 +30,6 @@ static_assert(sizeof(void *) == 8, "64-bit only");
 #define ALIGNMENT_CEILING(s, alignment) (((s) + (alignment - 1)) & ((~(alignment)) + 1))
 
 static void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotect) {
-    usable_size = PAGE_CEILING(usable_size);
-
     size_t real_size;
     if (unlikely(__builtin_add_overflow(usable_size, guard_size * 2, &real_size))) {
         errno = ENOMEM;
@@ -50,13 +48,15 @@ static void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotec
 }
 
 static void deallocate_pages(void *usable, size_t usable_size, size_t guard_size) {
-    usable_size = PAGE_CEILING(usable_size);
-
     memory_unmap((char *)usable - guard_size, usable_size + guard_size * 2);
 }
 
 static void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t guard_size) {
     usable_size = PAGE_CEILING(usable_size);
+    if (unlikely(!usable_size)) {
+        errno = ENOMEM;
+        return NULL;
+    }
 
     size_t alloc_size;
     if (unlikely(__builtin_add_overflow(usable_size, alignment - PAGE_SIZE, &alloc_size))) {
