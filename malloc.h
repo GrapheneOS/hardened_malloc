@@ -48,4 +48,12 @@ void *h_valloc(size_t size);
 void *h_pvalloc(size_t size);
 void h_cfree(void *ptr);
 
+// custom extensions
+
+// return an upper bound on object size for any pointer based on malloc metadata
+size_t h_malloc_object_size(void *ptr);
+
+// similar to malloc_object_size, but avoiding locking so the results are much more limited
+size_t h_malloc_object_size_fast(void *ptr);
+
 #endif

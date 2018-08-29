@@ -667,6 +667,10 @@ static inline void enforce_init(void) {
     }
 }
 
+static inline bool is_init(void) {
+    return atomic_load_explicit(&ro.initialized, memory_order_acquire);
+}
+
 static size_t get_guard_size(struct random_state *state, size_t size) {
     return (get_random_u64_uniform(state, size / PAGE_SIZE / 8) + 1) * PAGE_SIZE;
 }
@@ -918,6 +922,35 @@ EXPORT size_t h_malloc_usable_size(void *p) {
     return size;
 }
 
+EXPORT size_t h_malloc_object_size(void *p) {
+    if (p == NULL || !is_init()) {
+        return 0;
+    }
+
+    if (p >= ro.slab_region_start && p < ro.slab_region_end) {
+        return slab_usable_size(p);
+    }
+
+    pthread_mutex_lock(&regions_lock);
+    struct region_info *region = regions_find(p);
+    size_t size = p == NULL ? SIZE_MAX : region->size;
+    pthread_mutex_unlock(&regions_lock);
+
+    return size;
+}
+
+EXPORT size_t h_malloc_object_size_fast(void *p) {
+    if (p == NULL || !is_init()) {
+        return 0;
+    }
+
+    if (p >= ro.slab_region_start && p < ro.slab_region_end) {
+        return slab_usable_size(p);
+    }
+
+    return SIZE_MAX;
+}
+
 EXPORT int h_mallopt(UNUSED int param, UNUSED int value) {
     return 0;
 }
@@ -929,7 +962,7 @@ EXPORT int h_malloc_trim(size_t pad) {
         return 0;
     }
 
-    if (!atomic_load_explicit(&ro.initialized, memory_order_acquire)) {
+    if (!is_init()) {
         return 0;
     }
 
