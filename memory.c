@@ -16,6 +16,17 @@ void *memory_map(size_t size) {
     return p;
 }
 
+int memory_map_fixed(void *ptr, size_t size) {
+    void *p = mmap(ptr, size, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_FIXED, -1, 0);
+    if (unlikely(p == MAP_FAILED)) {
+        if (errno != ENOMEM) {
+            fatal_error("non-ENOMEM mmap failure");
+        }
+        return 1;
+    }
+    return 0;
+}
+
 int memory_unmap(void *ptr, size_t size) {
     int ret = munmap(ptr, size);
     if (unlikely(ret) && errno != ENOMEM) {
