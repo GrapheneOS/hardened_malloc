@@ -10,6 +10,9 @@
 #define UNUSED __attribute__((unused))
 #define EXPORT __attribute__((visibility("default")))
 
+#define stringify(s) #s
+#define ALIAS(f) __attribute__((alias(stringify(f))))
+
 static inline int ffzl(long x) {
     return __builtin_ffsl(~x);
 }

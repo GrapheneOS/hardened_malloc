@@ -897,7 +897,7 @@ EXPORT void h_free(void *p) {
     deallocate(p);
 }
 
-EXPORT void h_cfree(void *ptr) __attribute__((alias("free")));
+EXPORT void h_cfree(void *ptr) ALIAS(h_free);
 
 EXPORT size_t h_malloc_usable_size(void *p) {
     if (p == NULL) {
