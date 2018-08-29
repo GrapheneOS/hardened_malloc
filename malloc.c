@@ -15,6 +15,7 @@
 #include "libdivide.h"
 
 #include "malloc.h"
+#include "memory.h"
 #include "random.h"
 #include "util.h"
 
@@ -27,33 +28,6 @@ static_assert(sizeof(void *) == 8, "64-bit only");
 
 #define MIN_ALIGN 16
 #define ALIGNMENT_CEILING(s, alignment) (((s) + (alignment - 1)) & ((~(alignment)) + 1))
-
-static void *memory_map(size_t size) {
-    void *p = mmap(NULL, size, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-    if (unlikely(p == MAP_FAILED)) {
-        if (errno != ENOMEM) {
-            fatal_error("non-ENOMEM mmap failure");
-        }
-        return NULL;
-    }
-    return p;
-}
-
-static int memory_unmap(void *ptr, size_t size) {
-    int ret = munmap(ptr, size);
-    if (unlikely(ret) && errno != ENOMEM) {
-        fatal_error("non-ENOMEM munmap failure");
-    }
-    return ret;
-}
-
-static int memory_protect(void *ptr, size_t size, int prot) {
-    int ret = mprotect(ptr, size, prot);
-    if (unlikely(ret) && errno != ENOMEM) {
-        fatal_error("non-ENOMEM mprotect failure");
-    }
-    return ret;
-}
 
 static void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotect) {
     usable_size = PAGE_CEILING(usable_size);
