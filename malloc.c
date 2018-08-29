@@ -594,6 +594,10 @@ COLD static void init_slow_path(void) {
         fatal_error("pthread_atfork failed");
     }
 
+    if (sysconf(_SC_PAGESIZE) != PAGE_SIZE) {
+        fatal_error("page size mismatch");
+    }
+
     struct random_state rng;
     random_state_init(&rng);
 
