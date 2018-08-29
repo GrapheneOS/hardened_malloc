@@ -602,7 +602,9 @@ COLD static void init_slow_path(void) {
         return;
     }
 
-    pthread_atfork(pre_fork, post_fork_parent, post_fork_child);
+    if (pthread_atfork(pre_fork, post_fork_parent, post_fork_child)) {
+        fatal_error("pthread_atfork failed");
+    }
 
     struct random_state rng;
     random_state_init(&rng);
