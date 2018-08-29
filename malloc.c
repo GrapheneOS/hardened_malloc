@@ -44,6 +44,14 @@ static int memory_unmap(void *ptr, size_t size) {
     return ret;
 }
 
+static int memory_protect(void *ptr, size_t size, int prot) {
+    int ret = mprotect(ptr, size, prot);
+    if (ret && errno != ENOMEM) {
+        fatal_error("non-ENOMEM mprotect failure");
+    }
+    return ret;
+}
+
 static void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotect) {
     usable_size = PAGE_CEILING(usable_size);
 
@@ -56,7 +64,7 @@ static void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotec
         return NULL;
     }
     void *usable = (char *)real + guard_size;
-    if (unprotect && mprotect(usable, usable_size, PROT_READ|PROT_WRITE)) {
+    if (unprotect && memory_protect(usable, usable_size, PROT_READ|PROT_WRITE)) {
         memory_unmap(real, real_size);
         return NULL;
     }
@@ -93,7 +101,7 @@ static void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t
     size_t trail_size = alloc_size - lead_size - usable_size;
     void *base = (char *)usable + lead_size;
 
-    if (mprotect(base, usable_size, PROT_READ|PROT_WRITE)) {
+    if (memory_protect(base, usable_size, PROT_READ|PROT_WRITE)) {
         memory_unmap(real, real_alloc_size);
         return NULL;
     }
@@ -214,7 +222,7 @@ static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_si
         if (allocate > metadata_max) {
             allocate = metadata_max;
         }
-        if (mprotect(c->slab_info, allocate * sizeof(struct slab_metadata), PROT_READ|PROT_WRITE)) {
+        if (memory_protect(c->slab_info, allocate * sizeof(struct slab_metadata), PROT_READ|PROT_WRITE)) {
             return NULL;
         }
         c->metadata_allocated = allocate;
@@ -344,7 +352,7 @@ static inline void *slab_allocate(size_t requested_size) {
         }
 
         void *slab = get_slab(c, slab_size, metadata);
-        if (requested_size != 0 && mprotect(slab, slab_size, PROT_READ|PROT_WRITE)) {
+        if (requested_size != 0 && memory_protect(slab, slab_size, PROT_READ|PROT_WRITE)) {
             c->metadata_count--;
             pthread_mutex_unlock(&c->mutex);
             return NULL;
@@ -647,14 +655,14 @@ COLD static void init_slow_path(void) {
             fatal_error("failed to allocate slab metadata");
         }
         c->metadata_allocated = PAGE_SIZE / sizeof(struct slab_metadata);
-        if (mprotect(c->slab_info, c->metadata_allocated * sizeof(struct slab_metadata), PROT_READ|PROT_WRITE)) {
+        if (memory_protect(c->slab_info, c->metadata_allocated * sizeof(struct slab_metadata), PROT_READ|PROT_WRITE)) {
             fatal_error("failed to allocate initial slab info");
         }
     }
 
     atomic_store_explicit(&ro.initialized, true, memory_order_release);
 
-    if (mprotect(&ro, sizeof(ro), PROT_READ)) {
+    if (memory_protect(&ro, sizeof(ro), PROT_READ)) {
         fatal_error("failed to protect allocator data");
     }
 
