@@ -778,7 +778,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
             regions_delete(region);
             pthread_mutex_unlock(&regions_lock);
 
-            if (mremap(old, PAGE_CEILING(old_size), PAGE_CEILING(size), MREMAP_MAYMOVE|MREMAP_FIXED, new) == MAP_FAILED) {
+            if (memory_remap_fixed(old, old_size, new, size)) {
                 memcpy(new, old, copy_size);
                 deallocate_pages(old, old_size, old_guard_size);
             } else {
@@ -933,7 +933,7 @@ EXPORT int h_malloc_trim(size_t pad) {
     for (unsigned i = 0; i < N_SIZE_CLASSES; i++) {
         struct size_class *c = &size_class_metadata[i];
         pthread_mutex_lock(&c->mutex);
-        // TODO: purge and mprotect all free slabs
+        // TODO: purge and memory protect all free slabs
         pthread_mutex_unlock(&c->mutex);
     }
 
