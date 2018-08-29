@@ -24,12 +24,20 @@ int memory_unmap(void *ptr, size_t size) {
     return ret;
 }
 
-int memory_protect(void *ptr, size_t size, int prot) {
+static int memory_protect_prot(void *ptr, size_t size, int prot) {
     int ret = mprotect(ptr, size, prot);
     if (unlikely(ret) && errno != ENOMEM) {
         fatal_error("non-ENOMEM mprotect failure");
     }
     return ret;
+}
+
+int memory_protect_rw(void *ptr, size_t size) {
+    return memory_protect_prot(ptr, size, PROT_READ|PROT_WRITE);
+}
+
+int memory_protect_ro(void *ptr, size_t size) {
+    return memory_protect_prot(ptr, size, PROT_READ);
 }
 
 int memory_remap_fixed(void *old, size_t old_size, void *new, size_t new_size) {

@@ -8,7 +8,6 @@
 
 #include <unistd.h>
 #include <pthread.h>
-#include <sys/mman.h>
 
 #include <malloc.h>
 
@@ -40,7 +39,7 @@ static void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotec
         return NULL;
     }
     void *usable = (char *)real + guard_size;
-    if (unprotect && memory_protect(usable, usable_size, PROT_READ|PROT_WRITE)) {
+    if (unprotect && memory_protect_rw(usable, usable_size)) {
         memory_unmap(real, real_size);
         return NULL;
     }
@@ -81,7 +80,7 @@ static void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t
     size_t trail_size = alloc_size - lead_size - usable_size;
     void *base = (char *)usable + lead_size;
 
-    if (memory_protect(base, usable_size, PROT_READ|PROT_WRITE)) {
+    if (memory_protect_rw(base, usable_size)) {
         memory_unmap(real, real_alloc_size);
         return NULL;
     }
@@ -203,7 +202,7 @@ static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_si
         if (allocate > metadata_max) {
             allocate = metadata_max;
         }
-        if (memory_protect(c->slab_info, allocate * sizeof(struct slab_metadata), PROT_READ|PROT_WRITE)) {
+        if (memory_protect_rw(c->slab_info, allocate * sizeof(struct slab_metadata))) {
             return NULL;
         }
         c->metadata_allocated = allocate;
@@ -333,7 +332,7 @@ static inline void *slab_allocate(size_t requested_size) {
         }
 
         void *slab = get_slab(c, slab_size, metadata);
-        if (requested_size != 0 && memory_protect(slab, slab_size, PROT_READ|PROT_WRITE)) {
+        if (requested_size != 0 && memory_protect_rw(slab, slab_size)) {
             c->metadata_count--;
             pthread_mutex_unlock(&c->mutex);
             return NULL;
@@ -636,14 +635,14 @@ COLD static void init_slow_path(void) {
             fatal_error("failed to allocate slab metadata");
         }
         c->metadata_allocated = PAGE_SIZE / sizeof(struct slab_metadata);
-        if (memory_protect(c->slab_info, c->metadata_allocated * sizeof(struct slab_metadata), PROT_READ|PROT_WRITE)) {
+        if (memory_protect_rw(c->slab_info, c->metadata_allocated * sizeof(struct slab_metadata))) {
             fatal_error("failed to allocate initial slab info");
         }
     }
 
     atomic_store_explicit(&ro.initialized, true, memory_order_release);
 
-    if (memory_protect(&ro, sizeof(ro), PROT_READ)) {
+    if (memory_protect_ro(&ro, sizeof(ro))) {
         fatal_error("failed to protect allocator data");
     }
 
