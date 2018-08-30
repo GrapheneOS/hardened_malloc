@@ -173,7 +173,7 @@ static struct size_class {
     void *class_region_start;
     struct slab_metadata *slab_info;
     struct slab_metadata *partial_slabs;
-    struct slab_metadata *free_slabs;
+    struct slab_metadata *empty_slabs;
     struct libdivide_u32_t size_divisor;
     struct libdivide_u64_t slab_size_divisor;
     struct random_state rng;
@@ -300,11 +300,11 @@ static inline void *slab_allocate(size_t requested_size) {
     pthread_mutex_lock(&c->mutex);
 
     if (c->partial_slabs == NULL) {
-        if (c->free_slabs != NULL) {
-            struct slab_metadata *metadata = c->free_slabs;
-            c->free_slabs = c->free_slabs->next;
-            if (c->free_slabs) {
-                c->free_slabs->prev = NULL;
+        if (c->empty_slabs != NULL) {
+            struct slab_metadata *metadata = c->empty_slabs;
+            c->empty_slabs = c->empty_slabs->next;
+            if (c->empty_slabs) {
+                c->empty_slabs->prev = NULL;
             }
 
             metadata->next = c->partial_slabs;
@@ -427,13 +427,13 @@ static inline void slab_free(void *p) {
             metadata->next->prev = metadata->prev;
         }
 
-        metadata->next = c->free_slabs;
+        metadata->next = c->empty_slabs;
         metadata->prev = NULL;
 
-        if (c->free_slabs) {
-            c->free_slabs->prev = metadata;
+        if (c->empty_slabs) {
+            c->empty_slabs->prev = metadata;
         }
-        c->free_slabs = metadata;
+        c->empty_slabs = metadata;
     }
 
     pthread_mutex_unlock(&c->mutex);
