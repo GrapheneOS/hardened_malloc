@@ -168,12 +168,15 @@ static size_t get_slab_size(size_t slots, size_t size) {
     return PAGE_CEILING(slots * size);
 }
 
+static const size_t max_empty_slabs_total = 64 * 1024;
+
 static struct size_class {
     pthread_mutex_t mutex;
     void *class_region_start;
     struct slab_metadata *slab_info;
     struct slab_metadata *partial_slabs;
     struct slab_metadata *empty_slabs;
+    size_t empty_slabs_total;
     struct slab_metadata *free_slabs;
     struct libdivide_u32_t size_divisor;
     struct libdivide_u64_t slab_size_divisor;
@@ -304,6 +307,7 @@ static inline void *slab_allocate(size_t requested_size) {
         if (c->empty_slabs != NULL) {
             struct slab_metadata *metadata = c->empty_slabs;
             c->empty_slabs = c->empty_slabs->next;
+            c->empty_slabs_total -= slab_size;
 
             metadata->next = NULL;
             metadata->prev = NULL;
@@ -321,7 +325,7 @@ static inline void *slab_allocate(size_t requested_size) {
             struct slab_metadata *metadata = c->free_slabs;
 
             void *slab = get_slab(c, slab_size, metadata);
-            if (memory_protect_rw(slab, slab_size)) {
+            if (requested_size != 0 && memory_protect_rw(slab, slab_size)) {
                 pthread_mutex_unlock(&c->mutex);
                 return NULL;
             }
@@ -444,9 +448,21 @@ static inline void slab_free(void *p) {
             metadata->next->prev = metadata->prev;
         }
 
-        metadata->next = c->empty_slabs;
         metadata->prev = NULL;
+
+        if (c->empty_slabs_total + slab_size > max_empty_slabs_total) {
+            if (!memory_map_fixed(slab, slab_size)) {
+                metadata->next = c->free_slabs;
+                c->free_slabs = metadata;
+                pthread_mutex_unlock(&c->mutex);
+                return;
+            }
+            // handle out-of-memory by just putting it into the empty slabs list
+        }
+
+        metadata->next = c->empty_slabs;
         c->empty_slabs = metadata;
+        c->empty_slabs_total += slab_size;
     }
 
     pthread_mutex_unlock(&c->mutex);
@@ -967,7 +983,7 @@ EXPORT int h_mallopt(UNUSED int param, UNUSED int value) {
     return 0;
 }
 
-static const size_t pad_threshold = 16 * 1024 * 1024;
+static const size_t pad_threshold = max_empty_slabs_total * N_SIZE_CLASSES;
 
 EXPORT int h_malloc_trim(size_t pad) {
     if (pad > pad_threshold) {
@@ -995,6 +1011,7 @@ EXPORT int h_malloc_trim(size_t pad) {
 
             struct slab_metadata *trimmed = iterator;
             iterator = iterator->next;
+            c->empty_slabs_total -= slab_size;
 
             trimmed->next = c->free_slabs;
             c->free_slabs = trimmed;
