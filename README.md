@@ -8,6 +8,10 @@ However, using more recent releases is highly recommended. Older versions of
 the dependencies may be compatible at the moment but are not tested and will
 explicitly not be supported.
 
+Ports to Android (Bionic libc) and musl libc will be created later. The initial
+target is glibc for ease of development, since it supports replacing the malloc
+implementation at runtime using dynamic linking including via `LD_PRELOAD`.
+
 # Basic design
 
 The current design is very simple and will become a bit more sophisticated as
@@ -37,10 +41,16 @@ allocation and then unmapped on free.
 * Fully out-of-line metadata
 * Deterministic detection of any invalid free (unallocated, unaligned, etc.)
 * Isolated memory region for slab allocations
-    * Divided up into isolated inner regions for each size class, with a high
-      entropy random base for each one
-    * No deterministic offsets from one size class to another
+    * Divided up into isolated inner regions for each size class
+        * High entropy random base for each size class region
+        * No deterministic / low entropy offsets between allocations with
+          different size classes
     * Metadata is completely outside the slab allocation region
+        * No references to metadata within the slab allocation region
+        * No deterministic / low entropy offsets to metadata
+    * Entire slab region starts out non-readable and non-writable
+    * Slabs beyond the cache limit are purged and become non-readable and
+      non-writable memory again
 * Fine-grained randomization within memory regions
     * Randomly sized guard regions for large allocations
     * Random slot selection within slabs
@@ -63,11 +73,45 @@ allocation and then unmapped on free.
   leaving slab size class regions interspersed with guard pages
 * Zero size allocations are memory protected
 * [mostly in-progress] Protected allocator metadata
-* [in-progress] Extension for retrieving the size of allocations with fallback
+* Extension for retrieving the size of allocations with fallback
   to a sentinel for pointers not managed by the allocator
     * Can also return accurate values for pointers *within* small allocations
     * The same applies to pointers within the first page of large allocations,
       otherwise it currently has to return a sentinel
+* No alignment tricks interfering with ASLR like jemalloc, PartitionAlloc, etc.
+* No usage of the legacy brk heap
+* Aggressive sanity checks
+    * Errors other than ENOMEM from mmap, munmap, mprotect and mremap treated
+      as fatal, which can help to decent memory management gone wrong elsewhere
+      in the program
+
+# Randomness
+
+The current implementation of random number generation for randomization-based
+mitigations is based on generating a keystream from a stream cipher (ChaCha8)
+in small chunks. A separate CSPRNG is used for each small size class, large
+allocations, etc. in order to fit into the existing fine-grained locking model
+without needing to waste memory per thread by having the CSPRNG state in Thread
+Local Storage. Similarly, it's protected via the same approach taken for the
+rest of the metadata. The stream cipher is regularly reseeded from the OS to
+provide backtracking and prediction resistance with a negligible cost. The
+reseed interval simply needs to be adjusted to the point that it stops
+registering as having any significant performance impact. The performance
+impact on recent Linux kernels is primarily from the high cost of system calls
+and locking since the implementation is quite efficient (ChaCha20), especially
+for just generating the key and nonce for another stream cipher (ChaCha8).
+
+ChaCha8 is a great fit because it's extremely fast across platforms without
+relying on hardware support or complex platform-specific code. The security
+margins of ChaCha20 would be completely overkill for the use case. Using
+ChaCha8 avoids needing to resort to a non-cryptographically secure PRNG or
+something without a lot of scrunity. The current implementation is simply the
+reference implementation of ChaCha8 converted into a pure keystream by ripping
+out the XOR of the message into the keystream.
+
+The random range generation functions are a highly optimized implementation
+too. Traditional uniform random number generation within a range is very high
+overhead and can easily dwarf the cost of an efficient CSPRNG.
 
 # Size classes
 
