@@ -11,7 +11,7 @@
 
 #include <malloc.h>
 
-#include "libdivide.h"
+#include "third_party/libdivide.h"
 
 #include "malloc.h"
 #include "memory.h"
