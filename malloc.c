@@ -303,9 +303,6 @@ static inline void *slab_allocate(size_t requested_size) {
         if (c->empty_slabs != NULL) {
             struct slab_metadata *metadata = c->empty_slabs;
             c->empty_slabs = c->empty_slabs->next;
-            if (c->empty_slabs) {
-                c->empty_slabs->prev = NULL;
-            }
 
             metadata->next = c->partial_slabs;
             metadata->prev = NULL;
@@ -429,10 +426,6 @@ static inline void slab_free(void *p) {
 
         metadata->next = c->empty_slabs;
         metadata->prev = NULL;
-
-        if (c->empty_slabs) {
-            c->empty_slabs->prev = metadata;
-        }
         c->empty_slabs = metadata;
     }
 
