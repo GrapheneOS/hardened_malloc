@@ -1,5 +1,5 @@
 CPPFLAGS := -D_GNU_SOURCE
-CFLAGS := -std=c11 -Wall -Wextra -O2 -flto -fPIC -fvisibility=hidden -pedantic -fno-plt
+CFLAGS := -std=c11 -Wall -Wextra -O2 -flto -fPIC -fvisibility=hidden -fno-plt
 LDFLAGS := -Wl,--as-needed,-z,defs,-z,relro,-z,now
 LDLIBS := -lpthread
 OBJECTS := chacha.o malloc.o memory.o random.o util.o

@@ -69,20 +69,20 @@ uint16_t get_random_u16(struct random_state *state) {
     return value;
 }
 
-// based on OpenBSD arc4random_uniform
+// See Fast Random Integer Generation in an Interval by Daniel Lemire
 uint16_t get_random_u16_uniform(struct random_state *state, uint16_t bound) {
-    if (bound < 2) {
-        return 0;
+    uint32_t random = get_random_u16(state);
+    uint32_t multiresult = random * bound;
+    uint16_t leftover = multiresult;
+    if (leftover < bound) {
+        uint16_t threshold = -bound % bound;
+        while (leftover < threshold) {
+            random =  get_random_u16(state);
+            multiresult = random * bound;
+            leftover = (uint16_t)multiresult;
+        }
     }
-
-    uint16_t min = (uint16_t)-bound % bound;
-
-    uint16_t r;
-    do {
-        r = get_random_u16(state);
-    } while (unlikely(r < min));
-
-    return r % bound;
+    return multiresult >> 16;
 }
 
 uint64_t get_random_u64(struct random_state *state) {
@@ -96,18 +96,18 @@ uint64_t get_random_u64(struct random_state *state) {
     return value;
 }
 
-// based on OpenBSD arc4random_uniform
+// See Fast Random Integer Generation in an Interval by Daniel Lemire
 uint64_t get_random_u64_uniform(struct random_state *state, uint64_t bound) {
-    if (bound < 2) {
-        return 0;
+    unsigned __int128 random = get_random_u64(state);
+    unsigned __int128 multiresult = random * bound;
+    uint64_t leftover = multiresult;
+    if (leftover < bound) {
+        uint64_t threshold = -bound % bound;
+        while (leftover < threshold) {
+            random =  get_random_u64(state);
+            multiresult = random * bound;
+            leftover = multiresult;
+        }
     }
-
-    uint64_t min = -bound % bound;
-
-    uint64_t r;
-    do {
-        r = get_random_u64(state);
-    } while (unlikely(r < min));
-
-    return r % bound;
+    return multiresult >> 64;
 }
