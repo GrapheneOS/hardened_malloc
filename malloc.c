@@ -155,10 +155,10 @@ static inline struct size_info get_size_info(size_t size) {
     if (size == 0) {
         return (struct size_info){16, 0};
     }
-    for (size_t i = 1; i < N_SIZE_CLASSES; i++) {
-        size_t real_size = size_classes[i];
+    for (unsigned class = 1; class < N_SIZE_CLASSES; class++) {
+        size_t real_size = size_classes[class];
         if (size <= real_size) {
-            return (struct size_info){real_size, i};
+            return (struct size_info){real_size, class};
         }
     }
     fatal_error("invalid size for slabs");
@@ -582,15 +582,15 @@ static void regions_delete(struct region_info *region) {
 
 static void pre_fork(void) {
     pthread_mutex_lock(&regions_lock);
-    for (unsigned i = 0; i < N_SIZE_CLASSES; i++) {
-        pthread_mutex_lock(&size_class_metadata[i].mutex);
+    for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
+        pthread_mutex_lock(&size_class_metadata[class].mutex);
     }
 }
 
 static void post_fork_parent(void) {
     pthread_mutex_unlock(&regions_lock);
-    for (unsigned i = 0; i < N_SIZE_CLASSES; i++) {
-        pthread_mutex_unlock(&size_class_metadata[i].mutex);
+    for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
+        pthread_mutex_unlock(&size_class_metadata[class].mutex);
     }
 }
 
@@ -599,8 +599,8 @@ static void post_fork_child(void) {
         fatal_error("mutex initialization failed");
     }
     random_state_init(&regions_rng);
-    for (unsigned i = 0; i < N_SIZE_CLASSES; i++) {
-        struct size_class *c = &size_class_metadata[i];
+    for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
+        struct size_class *c = &size_class_metadata[class];
         if (pthread_mutex_init(&c->mutex, NULL)) {
             fatal_error("mutex initialization failed");
         }
@@ -641,8 +641,8 @@ COLD static void init_slow_path(void) {
     }
     ro.slab_region_end = (char *)ro.slab_region_start + slab_region_size;
 
-    for (unsigned i = 0; i < N_SIZE_CLASSES; i++) {
-        struct size_class *c = &size_class_metadata[i];
+    for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
+        struct size_class *c = &size_class_metadata[class];
 
         if (pthread_mutex_init(&c->mutex, NULL)) {
             fatal_error("mutex initialization failed");
@@ -652,14 +652,14 @@ COLD static void init_slow_path(void) {
 
         size_t bound = (real_class_region_size - class_region_size) / PAGE_SIZE - 1;
         size_t gap = (get_random_u64_uniform(&rng, bound) + 1) * PAGE_SIZE;
-        c->class_region_start = (char *)ro.slab_region_start + real_class_region_size * i + gap;
+        c->class_region_start = (char *)ro.slab_region_start + real_class_region_size * class + gap;
 
-        size_t size = size_classes[i];
+        size_t size = size_classes[class];
         if (size == 0) {
             size = 16;
         }
         c->size_divisor = libdivide_u32_gen(size);
-        size_t slab_size = get_slab_size(size_class_slots[i], size);
+        size_t slab_size = get_slab_size(size_class_slots[class], size);
         c->slab_size_divisor = libdivide_u64_gen(slab_size);
         size_t metadata_max = get_metadata_max(slab_size);
         c->slab_info = allocate_pages(metadata_max * sizeof(struct slab_metadata), PAGE_SIZE, false);
