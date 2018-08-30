@@ -174,6 +174,7 @@ static struct size_class {
     struct slab_metadata *slab_info;
     struct slab_metadata *partial_slabs;
     struct slab_metadata *empty_slabs;
+    struct slab_metadata *free_slabs;
     struct libdivide_u32_t size_divisor;
     struct libdivide_u64_t slab_size_divisor;
     struct random_state rng;
@@ -310,6 +311,28 @@ static inline void *slab_allocate(size_t requested_size) {
             c->partial_slabs = metadata;
 
             void *slab = get_slab(c, slab_size, metadata);
+            size_t slot = get_free_slot(&c->rng, slots, metadata);
+            set_slot(metadata, slot);
+            void *p = slot_pointer(size, slab, slot);
+
+            pthread_mutex_unlock(&c->mutex);
+            return p;
+        } else if (c->free_slabs != NULL) {
+            struct slab_metadata *metadata = c->free_slabs;
+
+            void *slab = get_slab(c, slab_size, metadata);
+            if (memory_protect_rw(slab, slab_size)) {
+                pthread_mutex_unlock(&c->mutex);
+                return NULL;
+            }
+
+            c->free_slabs = c->free_slabs->next;
+
+            metadata->next = NULL;
+            metadata->prev = NULL;
+
+            c->partial_slabs = metadata;
+
             size_t slot = get_free_slot(&c->rng, slots, metadata);
             set_slot(metadata, slot);
             void *p = slot_pointer(size, slab, slot);
@@ -955,14 +978,34 @@ EXPORT int h_malloc_trim(size_t pad) {
         return 0;
     }
 
-    for (unsigned i = 0; i < N_SIZE_CLASSES; i++) {
-        struct size_class *c = &size_class_metadata[i];
+    bool is_trimmed = false;
+
+    // skip zero byte size class since there's nothing to change
+    for (unsigned class = 1; class < N_SIZE_CLASSES; class++) {
+        struct size_class *c = &size_class_metadata[class];
+        size_t slab_size = get_slab_size(size_class_slots[class], size_classes[class]);
+
         pthread_mutex_lock(&c->mutex);
-        // TODO: purge and memory protect all free slabs
+        struct slab_metadata *iterator = c->empty_slabs;
+        while (iterator) {
+            void *slab = get_slab(c, slab_size, iterator);
+            if (memory_map_fixed(slab, slab_size)) {
+                break;
+            }
+
+            struct slab_metadata *trimmed = iterator;
+            iterator = iterator->next;
+
+            trimmed->next = c->free_slabs;
+            c->free_slabs = trimmed;
+
+            is_trimmed = true;
+        }
+        c->empty_slabs = iterator;
         pthread_mutex_unlock(&c->mutex);
     }
 
-    return 0;
+    return is_trimmed;
 }
 
 EXPORT void h_malloc_stats(void) {}
