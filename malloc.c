@@ -981,13 +981,7 @@ EXPORT int h_mallopt(UNUSED int param, UNUSED int value) {
     return 0;
 }
 
-static const size_t pad_threshold = max_empty_slabs_total * N_SIZE_CLASSES;
-
-EXPORT int h_malloc_trim(size_t pad) {
-    if (pad > pad_threshold) {
-        return 0;
-    }
-
+EXPORT int h_malloc_trim(UNUSED size_t pad) {
     if (!is_init()) {
         return 0;
     }
