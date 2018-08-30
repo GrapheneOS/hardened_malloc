@@ -9,8 +9,6 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#include <malloc.h>
-
 #include "third_party/libdivide.h"
 
 #include "malloc.h"

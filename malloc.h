@@ -1,6 +1,10 @@
 #ifndef ALLOCATOR_H
 #define ALLOCATOR_H
 
+#include <stdio.h>
+
+#include <malloc.h>
+
 #ifndef H_MALLOC_PREFIX
 #define h_malloc malloc
 #define h_calloc calloc
