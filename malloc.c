@@ -304,12 +304,9 @@ static inline void *slab_allocate(size_t requested_size) {
             struct slab_metadata *metadata = c->empty_slabs;
             c->empty_slabs = c->empty_slabs->next;
 
-            metadata->next = c->partial_slabs;
+            metadata->next = NULL;
             metadata->prev = NULL;
 
-            if (c->partial_slabs) {
-                c->partial_slabs->prev = metadata;
-            }
             c->partial_slabs = metadata;
 
             void *slab = get_slab(c, slab_size, metadata);
