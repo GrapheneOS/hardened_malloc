@@ -72,7 +72,9 @@ allocation and then unmapped on free.
 * [in-progress] Some slab locations are skipped and remain memory protected,
   leaving slab size class regions interspersed with guard pages
 * Zero size allocations are memory protected
-* [mostly in-progress] Protected allocator metadata
+* Protected allocator metadata
+    * Address space for metadata is never used for allocations and vice versa
+    * [implementing stronger protection is in-progress]
 * Extension for retrieving the size of allocations with fallback
   to a sentinel for pointers not managed by the allocator
     * Can also return accurate values for pointers *within* small allocations

@@ -104,6 +104,7 @@ static union {
     struct {
         void *slab_region_start;
         void *slab_region_end;
+        struct region_info *regions[2];
         atomic_bool initialized;
     };
     char padding[PAGE_SIZE];
@@ -502,6 +503,7 @@ struct region_info {
 };
 
 static const size_t initial_region_table_size = 256;
+static const size_t max_region_table_size = class_region_size / PAGE_SIZE;
 
 static struct random_state regions_rng;
 static struct region_info *regions;
@@ -527,8 +529,14 @@ static int regions_grow(void) {
     size_t newsize = newtotal * sizeof(struct region_info);
     size_t mask = newtotal - 1;
 
-    struct region_info *p = allocate_pages(newsize, PAGE_SIZE, true);
-    if (p == NULL) {
+    if (newtotal > max_region_table_size) {
+        return 1;
+    }
+
+    struct region_info *p = regions == ro.regions[0] ?
+        ro.regions[1] : ro.regions[0];
+
+    if (memory_protect_rw(p, newsize)) {
         return 1;
     }
 
@@ -543,7 +551,7 @@ static int regions_grow(void) {
         }
     }
 
-    deallocate_pages(regions, regions_total * sizeof(struct region_info), PAGE_SIZE);
+    memory_map_fixed(regions, regions_total * sizeof(struct region_info));
     regions_free = regions_free + regions_total;
     regions_total = newtotal;
     regions = p;
@@ -656,9 +664,15 @@ COLD static void init_slow_path(void) {
     struct random_state rng;
     random_state_init(&rng);
 
-    regions = allocate_pages(regions_total * sizeof(struct region_info), PAGE_SIZE, true);
-    if (regions == NULL) {
-        fatal_error("failed to set up allocator");
+    for (unsigned i = 0; i < 2; i++) {
+        ro.regions[i] = allocate_pages(max_region_table_size, PAGE_SIZE, false);
+        if (ro.regions[i] == NULL) {
+            fatal_error("failed to reserve memory for regions table");
+        }
+    }
+    regions = ro.regions[0];
+    if (memory_protect_rw(regions, regions_total * sizeof(struct region_info))) {
+        fatal_error("failed to unprotect memory for regions table");
     }
     random_state_init(&regions_rng);
 
