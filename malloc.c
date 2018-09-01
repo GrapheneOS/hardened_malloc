@@ -799,11 +799,6 @@ EXPORT void *h_realloc(void *old, size_t size) {
 
     enforce_init();
 
-    if (size == 0) {
-        deallocate(old);
-        return allocate(size);
-    }
-
     size_t old_size;
     if (old >= ro.slab_region_start && old < ro.slab_region_end) {
         old_size = slab_usable_size(old);
