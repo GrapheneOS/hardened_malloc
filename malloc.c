@@ -18,6 +18,7 @@
 
 static_assert(sizeof(void *) == 8, "64-bit only");
 
+#define CACHELINE_SIZE 64
 #define PAGE_SHIFT 12
 #define PAGE_SIZE ((size_t)1 << PAGE_SHIFT)
 #define PAGE_MASK ((size_t)(PAGE_SIZE - 1))
@@ -196,7 +197,7 @@ static struct size_class {
     struct random_state rng;
     size_t metadata_allocated;
     size_t metadata_count;
-} size_class_metadata[N_SIZE_CLASSES];
+} __attribute__((aligned(CACHELINE_SIZE))) size_class_metadata[N_SIZE_CLASSES];
 
 static const size_t class_region_size = 128ULL * 1024 * 1024 * 1024;
 static const size_t real_class_region_size = class_region_size * 2;
