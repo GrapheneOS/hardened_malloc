@@ -166,16 +166,31 @@ static size_t get_slab_size(size_t slots, size_t size) {
     return PAGE_CEILING(slots * size);
 }
 
+// limit on the number of cached empty slabs before attempting purging instead
 static const size_t max_empty_slabs_total = 64 * 1024;
 
 static struct size_class {
     pthread_mutex_t mutex;
     void *class_region_start;
     struct slab_metadata *slab_info;
+
+    // slabs with at least one allocated slot and at least one free slot
+    //
+    // LIFO doubly-linked list
     struct slab_metadata *partial_slabs;
+
+    // slabs without allocated slots that are cached for near-term usage
+    //
+    // LIFO singly-linked list
     struct slab_metadata *empty_slabs;
-    size_t empty_slabs_total;
-    struct slab_metadata *free_slabs;
+    size_t empty_slabs_total; // length * slab_size
+
+    // slabs without allocated slots that are purged and memory protected
+    //
+    // FIFO singly-linked list
+    struct slab_metadata *free_slabs_head;
+    struct slab_metadata *free_slabs_tail;
+
     struct libdivide_u32_t size_divisor;
     struct libdivide_u64_t slab_size_divisor;
     struct random_state rng;
@@ -319,8 +334,8 @@ static inline void *slab_allocate(size_t requested_size) {
 
             pthread_mutex_unlock(&c->mutex);
             return p;
-        } else if (c->free_slabs != NULL) {
-            struct slab_metadata *metadata = c->free_slabs;
+        } else if (c->free_slabs_head != NULL) {
+            struct slab_metadata *metadata = c->free_slabs_head;
 
             void *slab = get_slab(c, slab_size, metadata);
             if (requested_size != 0 && memory_protect_rw(slab, slab_size)) {
@@ -328,7 +343,10 @@ static inline void *slab_allocate(size_t requested_size) {
                 return NULL;
             }
 
-            c->free_slabs = c->free_slabs->next;
+            c->free_slabs_head = c->free_slabs_head->next;
+            if (c->free_slabs_head == NULL) {
+                c->free_slabs_tail = NULL;
+            }
 
             metadata->next = NULL;
             metadata->prev = NULL;
@@ -392,6 +410,17 @@ static size_t slab_usable_size(void *p) {
     return size_classes[slab_size_class(p)];
 }
 
+static void enqueue_free_slab(struct size_class *c, struct slab_metadata *metadata) {
+    metadata->next = NULL;
+
+    if (c->free_slabs_tail != NULL) {
+        c->free_slabs_tail->next = metadata;
+    } else {
+        c->free_slabs_head = metadata;
+    }
+    c->free_slabs_tail = metadata;
+}
+
 static inline void slab_free(void *p) {
     size_t class = slab_size_class(p);
 
@@ -450,8 +479,7 @@ static inline void slab_free(void *p) {
 
         if (c->empty_slabs_total + slab_size > max_empty_slabs_total) {
             if (!memory_map_fixed(slab, slab_size)) {
-                metadata->next = c->free_slabs;
-                c->free_slabs = metadata;
+                enqueue_free_slab(c, metadata);
                 pthread_mutex_unlock(&c->mutex);
                 return;
             }
@@ -1005,8 +1033,7 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
             iterator = iterator->next;
             c->empty_slabs_total -= slab_size;
 
-            trimmed->next = c->free_slabs;
-            c->free_slabs = trimmed;
+            enqueue_free_slab(c, trimmed);
 
             is_trimmed = true;
         }
