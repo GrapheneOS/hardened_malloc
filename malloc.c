@@ -978,7 +978,7 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
 EXPORT void h_malloc_stats(void) {}
 
 EXPORT struct mallinfo h_mallinfo(void) {
-    return (struct mallinfo){0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    return (struct mallinfo){0};
 }
 
 EXPORT int h_malloc_info(UNUSED int options, UNUSED FILE *fp) {
@@ -993,3 +993,35 @@ COLD EXPORT void *h_malloc_get_state(void) {
 COLD EXPORT int h_malloc_set_state(UNUSED void *state) {
     return -2;
 }
+
+#ifdef __ANDROID__
+EXPORT size_t __mallinfo_narenas(void) {
+    return 0;
+}
+
+EXPORT size_t __mallinfo_nbins(void) {
+    return 0;
+}
+
+EXPORT struct mallinfo __mallinfo_arena_info(UNUSED size_t arena) {
+    return (struct mallinfo){0};
+}
+
+EXPORT struct mallinfo __mallinfo_bin_info(UNUSED size_t arena, UNUSED size_t bin) {
+    return (struct mallinfo){0};
+}
+
+COLD EXPORT int h_iterate(UNUSED uintptr_t base, UNUSED size_t size,
+                          UNUSED void (*callback)(uintptr_t ptr, size_t size, void *arg),
+                          UNUSED void *arg) {
+    fatal_error("not implemented");
+}
+
+COLD EXPORT void h_malloc_disable(void) {
+    fatal_error("not implemented");
+}
+
+COLD EXPORT void h_malloc_enable(void) {
+    fatal_error("not implemented");
+}
+#endif

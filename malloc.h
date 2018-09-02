@@ -52,6 +52,18 @@ void *h_valloc(size_t size);
 void *h_pvalloc(size_t size);
 void h_cfree(void *ptr);
 
+// Android extensions
+#ifdef __ANDROID__
+size_t __mallinfo_narenas(void);
+size_t __mallinfo_nbins(void);
+struct mallinfo __mallinfo_arena_info(size_t arena);
+struct mallinfo __mallinfo_bin_info(size_t arena, size_t bin);
+int h_iterate(uintptr_t base, size_t size, void (*callback)(uintptr_t ptr, size_t size, void *arg),
+              void *arg);
+void h_malloc_disable(void);
+void h_malloc_enable(void);
+#endif
+
 // custom extensions
 
 // return an upper bound on object size for any pointer based on malloc metadata
