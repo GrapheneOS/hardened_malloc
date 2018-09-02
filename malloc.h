@@ -9,21 +9,31 @@
 #define h_malloc malloc
 #define h_calloc calloc
 #define h_realloc realloc
-#define h_posix_memalign posix_memalign
 #define h_aligned_alloc aligned_alloc
-#define h_memalign memalign
-#define h_valloc valloc
-#define h_pvalloc pvalloc
 #define h_free free
+
+#define h_posix_memalign posix_memalign
+
 #define h_malloc_usable_size malloc_usable_size
 #define h_mallopt mallopt
 #define h_malloc_trim malloc_trim
 #define h_malloc_stats malloc_stats
 #define h_mallinfo mallinfo
 #define h_malloc_info malloc_info
+
+#define h_memalign memalign
+#define h_valloc valloc
+#define h_pvalloc pvalloc
 #define h_cfree cfree
 #define h_malloc_get_state malloc_get_state
 #define h_malloc_set_state malloc_set_state
+
+#define h_iterate iterate
+#define h_malloc_disable malloc_disable
+#define h_malloc_enable malloc_enable
+
+#define h_malloc_object_size malloc_object_size
+#define h_malloc_object_size_fast malloc_object_size_fast
 #endif
 
 // C standard
