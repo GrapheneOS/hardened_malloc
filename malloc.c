@@ -651,6 +651,12 @@ static inline void init(void) {
     init_slow_path();
 }
 
+// trigger early initialization to set up pthread_atfork and protect state as soon as possible
+COLD __attribute__((constructor(101))) static void trigger_early_init(void) {
+    // avoid calling init directly to skip it if this isn't the malloc implementation
+    h_free(h_malloc(16));
+}
+
 static inline void enforce_init(void) {
     if (!atomic_load_explicit(&ro.initialized, memory_order_acquire)) {
         fatal_error("invalid uninitialized allocator usage");
