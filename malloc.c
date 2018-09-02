@@ -564,12 +564,22 @@ static void post_fork_child(void) {
     }
 }
 
+static inline bool is_init(void) {
+    return atomic_load_explicit(&ro.initialized, memory_order_acquire);
+}
+
+static inline void enforce_init(void) {
+    if (!is_init()) {
+        fatal_error("invalid uninitialized allocator usage");
+    }
+}
+
 COLD static void init_slow_path(void) {
     static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
     pthread_mutex_lock(&mutex);
 
-    if (atomic_load_explicit(&ro.initialized, memory_order_acquire)) {
+    if (is_init()) {
         pthread_mutex_unlock(&mutex);
         return;
     }
@@ -644,7 +654,7 @@ COLD static void init_slow_path(void) {
 }
 
 static inline void init(void) {
-    if (likely(atomic_load_explicit(&ro.initialized, memory_order_acquire))) {
+    if (likely(is_init())) {
         return;
     }
 
@@ -655,16 +665,6 @@ static inline void init(void) {
 COLD __attribute__((constructor(101))) static void trigger_early_init(void) {
     // avoid calling init directly to skip it if this isn't the malloc implementation
     h_free(h_malloc(16));
-}
-
-static inline void enforce_init(void) {
-    if (!atomic_load_explicit(&ro.initialized, memory_order_acquire)) {
-        fatal_error("invalid uninitialized allocator usage");
-    }
-}
-
-static inline bool is_init(void) {
-    return atomic_load_explicit(&ro.initialized, memory_order_acquire);
 }
 
 static size_t get_guard_size(struct random_state *state, size_t size) {
