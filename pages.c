@@ -14,11 +14,11 @@ void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotect) {
         return NULL;
     }
     void *real = memory_map(real_size);
-    if (real == NULL) {
+    if (unlikely(real == NULL)) {
         return NULL;
     }
     void *usable = (char *)real + guard_size;
-    if (unprotect && memory_protect_rw(usable, usable_size)) {
+    if (unprotect && unlikely(memory_protect_rw(usable, usable_size))) {
         memory_unmap(real, real_size);
         return NULL;
     }
@@ -49,7 +49,7 @@ void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t guard_
     }
 
     void *real = memory_map(real_alloc_size);
-    if (real == NULL) {
+    if (unlikely(real == NULL)) {
         return NULL;
     }
 
@@ -59,20 +59,20 @@ void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t guard_
     size_t trail_size = alloc_size - lead_size - usable_size;
     void *base = (char *)usable + lead_size;
 
-    if (memory_protect_rw(base, usable_size)) {
+    if (unlikely(memory_protect_rw(base, usable_size))) {
         memory_unmap(real, real_alloc_size);
         return NULL;
     }
 
     if (lead_size) {
-        if (memory_unmap(real, lead_size)) {
+        if (unlikely(memory_unmap(real, lead_size))) {
             memory_unmap(real, real_alloc_size);
             return NULL;
         }
     }
 
     if (trail_size) {
-        if (memory_unmap((char *)base + usable_size + guard_size, trail_size)) {
+        if (unlikely(memory_unmap((char *)base + usable_size + guard_size, trail_size))) {
             memory_unmap(real, real_alloc_size);
             return NULL;
         }
@@ -80,4 +80,3 @@ void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t guard_
 
     return base;
 }
-
