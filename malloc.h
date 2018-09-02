@@ -21,9 +21,9 @@
 #define h_malloc_stats malloc_stats
 #define h_mallinfo mallinfo
 #define h_malloc_info malloc_info
+#define h_cfree cfree
 #define h_malloc_get_state malloc_get_state
 #define h_malloc_set_state malloc_set_state
-#define h_cfree cfree
 #endif
 
 // C standard
@@ -43,14 +43,14 @@ int h_malloc_trim(size_t pad);
 void h_malloc_stats(void);
 struct mallinfo h_mallinfo(void);
 int h_malloc_info(int options, FILE *fp);
-void *h_malloc_get_state(void);
-int h_malloc_set_state(void *state);
 
 // obsolete glibc extensions
 void *h_memalign(size_t alignment, size_t size);
 void *h_valloc(size_t size);
 void *h_pvalloc(size_t size);
 void h_cfree(void *ptr);
+void *h_malloc_get_state(void);
+int h_malloc_set_state(void *state);
 
 // Android extensions
 #ifdef __ANDROID__
