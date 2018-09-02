@@ -19,6 +19,9 @@
 
 static_assert(sizeof(void *) == 8, "64-bit only");
 
+// either sizeof(uint64_t) or 0
+static const size_t canary_size = sizeof(uint64_t);
+
 #define CACHELINE_SIZE 64
 
 static union {
@@ -37,6 +40,7 @@ struct slab_metadata {
     uint64_t bitmap;
     struct slab_metadata *next;
     struct slab_metadata *prev;
+    uint64_t canary_value;
 };
 
 static const size_t max_slab_size_class = 16384;
@@ -148,6 +152,7 @@ static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_si
     }
 
     struct slab_metadata *metadata = c->slab_info + c->metadata_count;
+    metadata->canary_value = get_random_u64(&c->rng);
     c->metadata_count++;
     return metadata;
 }
@@ -230,6 +235,12 @@ static void *slot_pointer(size_t size, void *slab, size_t slot) {
     return (char *)slab + slot * size;
 }
 
+static void set_canary(struct slab_metadata *metadata, void *p, size_t size, size_t requested_size) {
+    if (requested_size != 0) {
+        memcpy((char *)p + size - canary_size, &metadata->canary_value, canary_size);
+    }
+}
+
 static inline void *slab_allocate(size_t requested_size) {
     struct size_info info = get_size_info(requested_size);
     size_t size = info.size;
@@ -254,6 +265,7 @@ static inline void *slab_allocate(size_t requested_size) {
             size_t slot = get_free_slot(&c->rng, slots, metadata);
             set_slot(metadata, slot);
             void *p = slot_pointer(size, slab, slot);
+            set_canary(metadata, p, size, requested_size);
 
             pthread_mutex_unlock(&c->mutex);
             return p;
@@ -279,6 +291,7 @@ static inline void *slab_allocate(size_t requested_size) {
             size_t slot = get_free_slot(&c->rng, slots, metadata);
             set_slot(metadata, slot);
             void *p = slot_pointer(size, slab, slot);
+            set_canary(metadata, p, size, requested_size);
 
             pthread_mutex_unlock(&c->mutex);
             return p;
@@ -301,6 +314,7 @@ static inline void *slab_allocate(size_t requested_size) {
         size_t slot = get_free_slot(&c->rng, slots, metadata);
         set_slot(metadata, slot);
         void *p = slot_pointer(size, slab, slot);
+        set_canary(metadata, p, size, requested_size);
 
         pthread_mutex_unlock(&c->mutex);
         return p;
@@ -319,6 +333,7 @@ static inline void *slab_allocate(size_t requested_size) {
 
     void *slab = get_slab(c, slab_size, metadata);
     void *p = slot_pointer(size, slab, slot);
+    set_canary(metadata, p, size, requested_size);
 
     pthread_mutex_unlock(&c->mutex);
     return p;
@@ -370,6 +385,18 @@ static inline void slab_free(void *p) {
         fatal_error("double free");
     }
 
+    if (!is_zero_size) {
+        memset(p, 0, size - canary_size);
+
+        if (canary_size) {
+            uint64_t canary_value;
+            memcpy(&canary_value, (char *)p + size - canary_size, canary_size);
+            if (unlikely(canary_value != metadata->canary_value)) {
+                fatal_error("canary corrupted");
+            }
+        }
+    }
+
     if (!has_free_slots(slots, metadata)) {
         metadata->next = c->partial_slabs;
         metadata->prev = NULL;
@@ -381,9 +408,6 @@ static inline void slab_free(void *p) {
     }
 
     clear_slot(metadata, slot);
-    if (!is_zero_size) {
-        memset(p, 0, size);
-    }
 
     if (is_free_slab(metadata)) {
         if (metadata->prev) {
@@ -715,8 +739,16 @@ static void deallocate(void *p) {
     deallocate_pages(p, size, guard_size);
 }
 
+static size_t adjust_size_for_canaries(size_t size) {
+    if (size > 0 && size <= max_slab_size_class) {
+        return size + canary_size;
+    }
+    return size;
+}
+
 EXPORT void *h_malloc(size_t size) {
     init();
+    size = adjust_size_for_canaries(size);
     return allocate(size);
 }
 
@@ -727,6 +759,7 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
         return NULL;
     }
     init();
+    total_size = adjust_size_for_canaries(total_size);
     return allocate(total_size);
 }
 
@@ -735,10 +768,12 @@ static const size_t mremap_threshold = 4 * 1024 * 1024;
 EXPORT void *h_realloc(void *old, size_t size) {
     if (old == NULL) {
         init();
+        size = adjust_size_for_canaries(size);
         return allocate(size);
     }
 
     enforce_init();
+    size = adjust_size_for_canaries(size);
 
     size_t old_size;
     if (old >= ro.slab_region_start && old < ro.slab_region_end) {
@@ -792,6 +827,9 @@ EXPORT void *h_realloc(void *old, size_t size) {
         return NULL;
     }
     size_t copy_size = size < old_size ? size : old_size;
+    if (size > 0 && size <= max_slab_size_class) {
+        copy_size -= canary_size;
+    }
     memcpy(new, old, copy_size);
     deallocate(old);
     return new;
@@ -848,6 +886,7 @@ static void *alloc_aligned_simple(size_t alignment, size_t size) {
 
 EXPORT int h_posix_memalign(void **memptr, size_t alignment, size_t size) {
     init();
+    size = adjust_size_for_canaries(size);
     return alloc_aligned(memptr, alignment, size, sizeof(void *));
 }
 
@@ -857,16 +896,19 @@ EXPORT void *h_aligned_alloc(size_t alignment, size_t size) {
         return NULL;
     }
     init();
+    size = adjust_size_for_canaries(size);
     return alloc_aligned_simple(alignment, size);
 }
 
 EXPORT void *h_memalign(size_t alignment, size_t size) {
     init();
+    size = adjust_size_for_canaries(size);
     return alloc_aligned_simple(alignment, size);
 }
 
 EXPORT void *h_valloc(size_t size) {
     init();
+    size = adjust_size_for_canaries(size);
     return alloc_aligned_simple(PAGE_SIZE, size);
 }
 
@@ -877,6 +919,7 @@ EXPORT void *h_pvalloc(size_t size) {
         return NULL;
     }
     init();
+    size = adjust_size_for_canaries(size);
     return alloc_aligned_simple(PAGE_SIZE, rounded);
 }
 
@@ -899,7 +942,8 @@ EXPORT size_t h_malloc_usable_size(void *p) {
     enforce_init();
 
     if (p >= ro.slab_region_start && p < ro.slab_region_end) {
-        return slab_usable_size(p);
+        size_t size = slab_usable_size(p);
+        return size ? size - canary_size : 0;
     }
 
     pthread_mutex_lock(&regions_lock);
@@ -919,7 +963,8 @@ EXPORT size_t h_malloc_object_size(void *p) {
     }
 
     if (p >= ro.slab_region_start && p < ro.slab_region_end) {
-        return slab_usable_size(p);
+        size_t size = slab_usable_size(p);
+        return size ? size - canary_size : 0;
     }
 
     pthread_mutex_lock(&regions_lock);
@@ -936,7 +981,8 @@ EXPORT size_t h_malloc_object_size_fast(void *p) {
     }
 
     if (p >= ro.slab_region_start && p < ro.slab_region_end) {
-        return slab_usable_size(p);
+        size_t size = slab_usable_size(p);
+        return size ? size - canary_size : 0;
     }
 
     return SIZE_MAX;
