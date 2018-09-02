@@ -1,3 +1,9 @@
+This project currently aims to support Android, musl and glibc. It may support
+other non-Linux operating systems in the future. For Android and musl, there
+will be custom integration and other hardening features. The glibc support will
+be limited to replacing the malloc implementation because musl is a much more
+robust and cleaner base to build on and can cover the same use cases.
+
 Debian stable determines the most ancient set of supported dependencies:
 
 * glibc 2.24
@@ -8,9 +14,17 @@ However, using more recent releases is highly recommended. Older versions of
 the dependencies may be compatible at the moment but are not tested and will
 explicitly not be supported.
 
-Ports to Android (Bionic libc) and musl libc will be created later. The initial
-target is glibc for ease of development, since it supports replacing the malloc
-implementation at runtime using dynamic linking including via `LD_PRELOAD`.
+Major releases of Android will be supported until tags stop being pushed to
+the Android Open Source Project (AOSP). Google supports each major release
+with security patches for 3 years, but tagged releases of the Android Open
+Source Project are more than just security patches and are no longer pushed
+once no officially supported devices are using them anymore. For example, at
+the time of writing (September 2018), AOSP only has tagged releases for 8.1
+(Nexus 5X, Nexus 5X, Pixel C) and 9.0 (Pixel, Pixel XL, Pixel 2, Pixel 2 XL).
+There are ongoing security patches for 6.0, 6.0.1, 7.0, 7.1.1, 7.1.2, 8.0, 8.1
+and 9.0 but only the active AOSP branches (8.1 and 9.0) are supported by this
+project and it doesn't make much sense to use much older releases with far
+less privacy and security hardening.
 
 # Basic design
 
