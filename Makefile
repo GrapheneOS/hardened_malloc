@@ -1,7 +1,6 @@
 CPPFLAGS := -D_GNU_SOURCE
 CFLAGS := -std=c11 -Wall -Wextra -O2 -flto -fPIC -fvisibility=hidden -fno-plt
-LDFLAGS := -Wl,--as-needed,-z,defs,-z,relro,-z,now
-LDLIBS := -lpthread
+LDFLAGS := -Wl,-z,defs,-z,relro,-z,now
 OBJECTS := chacha.o malloc.o memory.o pages.o random.o util.o
 
 hardened_malloc.so: $(OBJECTS)
