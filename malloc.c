@@ -413,9 +413,6 @@ static inline void slab_free(void *p) {
         if (metadata->prev) {
             metadata->prev->next = metadata->next;
         } else {
-            if (c->partial_slabs != metadata) {
-                fatal_error("not good");
-            }
             c->partial_slabs = metadata->next;
         }
         if (metadata->next) {
