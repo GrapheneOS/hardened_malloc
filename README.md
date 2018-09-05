@@ -78,11 +78,11 @@ allocation and then unmapped on free.
   fresh pages or zeroed on free after previous usage
 * [in-progress] Delayed free via a combination of FIFO and randomization for
   slab allocations
-* [in-progress] Random canaries placed after each slab allocation to *absorb*
+* Random canaries placed after each slab allocation to *absorb*
   and then later detect overflows/underflows
     * High entropy per-slab random values
-    * Mangled into a unique value per slab slot (although not with a strong
-      keyed hash due to performance limitations)
+    * [in-progress] Mangled into a unique value per slab slot (although not
+      with a strong keyed hash due to performance limitations)
 * [in-progress] Some slab locations are skipped and remain memory protected,
   leaving slab size class regions interspersed with guard pages
 * Zero size allocations are memory protected
