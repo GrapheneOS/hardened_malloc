@@ -614,9 +614,7 @@ COLD static void init_slow_path(void) {
         fatal_error("page size mismatch");
     }
 
-    struct random_state rng;
-    random_state_init(&rng);
-
+    random_state_init(&regions_rng);
     for (unsigned i = 0; i < 2; i++) {
         ro.regions[i] = allocate_pages(max_region_table_size, PAGE_SIZE, false);
         if (ro.regions[i] == NULL) {
@@ -627,7 +625,6 @@ COLD static void init_slow_path(void) {
     if (memory_protect_rw(regions, regions_total * sizeof(struct region_info))) {
         fatal_error("failed to unprotect memory for regions table");
     }
-    random_state_init(&regions_rng);
 
     ro.slab_region_start = memory_map(slab_region_size);
     if (ro.slab_region_start == NULL) {
@@ -645,7 +642,7 @@ COLD static void init_slow_path(void) {
         random_state_init(&c->rng);
 
         size_t bound = (real_class_region_size - class_region_size) / PAGE_SIZE - 1;
-        size_t gap = (get_random_u64_uniform(&rng, bound) + 1) * PAGE_SIZE;
+        size_t gap = (get_random_u64_uniform(&regions_rng, bound) + 1) * PAGE_SIZE;
         c->class_region_start = (char *)ro.slab_region_start + real_class_region_size * class + gap;
 
         size_t size = size_classes[class];
