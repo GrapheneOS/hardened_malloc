@@ -609,10 +609,6 @@ COLD static void init_slow_path(void) {
         return;
     }
 
-    if (pthread_atfork(full_lock, full_unlock, post_fork_child)) {
-        fatal_error("pthread_atfork failed");
-    }
-
     if (sysconf(_SC_PAGESIZE) != PAGE_SIZE) {
         fatal_error("page size mismatch");
     }
@@ -673,6 +669,11 @@ COLD static void init_slow_path(void) {
     }
 
     pthread_mutex_unlock(&mutex);
+
+    // may allocate, so wait until the allocator is initialized to avoid deadlocking
+    if (pthread_atfork(full_lock, full_unlock, post_fork_child)) {
+        fatal_error("pthread_atfork failed");
+    }
 }
 
 static inline void init(void) {
