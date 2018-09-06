@@ -83,8 +83,8 @@ allocation and then unmapped on free.
     * High entropy per-slab random values
     * [in-progress] Mangled into a unique value per slab slot (although not
       with a strong keyed hash due to performance limitations)
-* [in-progress] Some slab locations are skipped and remain memory protected,
-  leaving slab size class regions interspersed with guard pages
+* Possible slab locations are skipped and remain memory protected, leaving slab
+  size class regions interspersed with guard pages
 * Zero size allocations are memory protected
 * Protected allocator metadata
     * Address space for metadata is never used for allocations and vice versa

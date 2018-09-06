@@ -19,6 +19,8 @@
 
 static_assert(sizeof(void *) == 8, "64-bit only");
 
+static const bool guard_slabs = true;
+
 // either sizeof(uint64_t) or 0
 static const size_t canary_size = sizeof(uint64_t);
 
@@ -140,9 +142,9 @@ static size_t get_metadata_max(size_t slab_size) {
 }
 
 static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_size, bool non_zero_size) {
-    if (unlikely(c->metadata_count == c->metadata_allocated)) {
+    if (unlikely(c->metadata_count >= c->metadata_allocated)) {
         size_t metadata_max = get_metadata_max(slab_size);
-        if (c->metadata_count == metadata_max) {
+        if (c->metadata_count >= metadata_max) {
             errno = ENOMEM;
             return NULL;
         }
@@ -162,6 +164,9 @@ static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_si
         return NULL;
     }
     c->metadata_count++;
+    if (guard_slabs) {
+        c->metadata_count++;
+    }
     return metadata;
 }
 
