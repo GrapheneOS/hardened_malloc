@@ -152,7 +152,6 @@ static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_si
     }
 
     struct slab_metadata *metadata = c->slab_info + c->metadata_count;
-    metadata->canary_value = get_random_u64(&c->rng);
     c->metadata_count++;
     return metadata;
 }
@@ -271,6 +270,7 @@ static inline void *slab_allocate(size_t requested_size) {
             return p;
         } else if (c->free_slabs_head != NULL) {
             struct slab_metadata *metadata = c->free_slabs_head;
+            metadata->canary_value = get_random_u64(&c->rng);
 
             void *slab = get_slab(c, slab_size, metadata);
             if (requested_size != 0 && memory_protect_rw(slab, slab_size)) {
@@ -302,6 +302,7 @@ static inline void *slab_allocate(size_t requested_size) {
             pthread_mutex_unlock(&c->mutex);
             return NULL;
         }
+        metadata->canary_value = get_random_u64(&c->rng);
 
         void *slab = get_slab(c, slab_size, metadata);
         if (requested_size != 0 && memory_protect_rw(slab, slab_size)) {
