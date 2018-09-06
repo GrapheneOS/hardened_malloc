@@ -130,11 +130,16 @@ static const size_t real_class_region_size = class_region_size * 2;
 static const size_t slab_region_size = real_class_region_size * N_SIZE_CLASSES;
 static_assert(PAGE_SIZE == 4096, "bitmap handling will need adjustment for other page sizes");
 
+static void *get_slab(struct size_class *c, size_t slab_size, struct slab_metadata *metadata) {
+    size_t index = metadata - c->slab_info;
+    return (char *)c->class_region_start + (index * slab_size);
+}
+
 static size_t get_metadata_max(size_t slab_size) {
     return class_region_size / slab_size;
 }
 
-static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_size) {
+static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_size, bool non_zero_size) {
     if (unlikely(c->metadata_count == c->metadata_allocated)) {
         size_t metadata_max = get_metadata_max(slab_size);
         if (c->metadata_count == metadata_max) {
@@ -152,6 +157,10 @@ static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_si
     }
 
     struct slab_metadata *metadata = c->slab_info + c->metadata_count;
+    void *slab = get_slab(c, slab_size, metadata);
+    if (non_zero_size && memory_protect_rw(slab, slab_size)) {
+        return NULL;
+    }
     c->metadata_count++;
     return metadata;
 }
@@ -213,11 +222,6 @@ static bool has_free_slots(size_t slots, struct slab_metadata *metadata) {
 
 static bool is_free_slab(struct slab_metadata *metadata) {
     return !metadata->bitmap;
-}
-
-static void *get_slab(struct size_class *c, size_t slab_size, struct slab_metadata *metadata) {
-    size_t index = metadata - c->slab_info;
-    return (char *)c->class_region_start + (index * slab_size);
 }
 
 static struct slab_metadata *get_metadata(struct size_class *c, void *p) {
@@ -297,21 +301,15 @@ static inline void *slab_allocate(size_t requested_size) {
             return p;
         }
 
-        struct slab_metadata *metadata = alloc_metadata(c, slab_size);
-        if (metadata == NULL) {
+        struct slab_metadata *metadata = alloc_metadata(c, slab_size, requested_size);
+        if (unlikely(metadata == NULL)) {
             pthread_mutex_unlock(&c->mutex);
             return NULL;
         }
         metadata->canary_value = get_random_u64(&c->rng);
 
-        void *slab = get_slab(c, slab_size, metadata);
-        if (requested_size != 0 && memory_protect_rw(slab, slab_size)) {
-            c->metadata_count--;
-            pthread_mutex_unlock(&c->mutex);
-            return NULL;
-        }
-
         c->partial_slabs = metadata;
+        void *slab = get_slab(c, slab_size, metadata);
         size_t slot = get_free_slot(&c->rng, slots, metadata);
         set_slot(metadata, slot);
         void *p = slot_pointer(size, slab, slot);
