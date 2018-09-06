@@ -14,6 +14,10 @@ However, using more recent releases is highly recommended. Older versions of
 the dependencies may be compatible at the moment but are not tested and will
 explicitly not be supported.
 
+For external malloc replacement with musl, musl 1.1.20 is required. However,
+there will be custom integration offering better performance in the future
+along with other hardening for the C standard library implementation.
+
 Major releases of Android will be supported until tags stop being pushed to
 the Android Open Source Project (AOSP). Google supports each major release
 with security patches for 3 years, but tagged releases of the Android Open
