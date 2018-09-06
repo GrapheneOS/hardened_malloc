@@ -51,7 +51,9 @@ size_t h_malloc_usable_size(void *ptr);
 int h_mallopt(int param, int value);
 int h_malloc_trim(size_t pad);
 void h_malloc_stats(void);
+#if defined(__GLIBC__) || defined(__ANDROID__)
 struct mallinfo h_mallinfo(void);
+#endif
 int h_malloc_info(int options, FILE *fp);
 
 // obsolete glibc extensions

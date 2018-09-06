@@ -1049,9 +1049,11 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
 
 EXPORT void h_malloc_stats(void) {}
 
+#if defined(__GLIBC__) || defined(__ANDROID__)
 EXPORT struct mallinfo h_mallinfo(void) {
     return (struct mallinfo){0};
 }
+#endif
 
 EXPORT int h_malloc_info(UNUSED int options, UNUSED FILE *fp) {
     errno = ENOSYS;
