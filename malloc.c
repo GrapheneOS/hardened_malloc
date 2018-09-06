@@ -909,20 +909,12 @@ EXPORT int h_posix_memalign(void **memptr, size_t alignment, size_t size) {
 }
 
 EXPORT void *h_aligned_alloc(size_t alignment, size_t size) {
-    if (size % alignment) {
-        errno = EINVAL;
-        return NULL;
-    }
     init();
     size = adjust_size_for_canaries(size);
     return alloc_aligned_simple(alignment, size);
 }
 
-EXPORT void *h_memalign(size_t alignment, size_t size) {
-    init();
-    size = adjust_size_for_canaries(size);
-    return alloc_aligned_simple(alignment, size);
-}
+EXPORT void *h_memalign(size_t alignment, size_t size) ALIAS(h_aligned_alloc);
 
 EXPORT void *h_valloc(size_t size) {
     init();
