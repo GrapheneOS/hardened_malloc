@@ -557,14 +557,14 @@ static void regions_delete(struct region_info *region) {
     }
 }
 
-static void pre_fork(void) {
+static void full_lock(void) {
     pthread_mutex_lock(&regions_lock);
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
         pthread_mutex_lock(&size_class_metadata[class].mutex);
     }
 }
 
-static void post_fork_parent(void) {
+static void full_unlock(void) {
     pthread_mutex_unlock(&regions_lock);
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
         pthread_mutex_unlock(&size_class_metadata[class].mutex);
@@ -605,7 +605,7 @@ COLD static void init_slow_path(void) {
         return;
     }
 
-    if (pthread_atfork(pre_fork, post_fork_parent, post_fork_child)) {
+    if (pthread_atfork(full_lock, full_unlock, post_fork_child)) {
         fatal_error("pthread_atfork failed");
     }
 
@@ -1090,10 +1090,10 @@ COLD EXPORT int h_iterate(UNUSED uintptr_t base, UNUSED size_t size,
 }
 
 COLD EXPORT void h_malloc_disable(void) {
-    fatal_error("not implemented");
+    full_lock();
 }
 
 COLD EXPORT void h_malloc_enable(void) {
-    fatal_error("not implemented");
+    full_unlock();
 }
 #endif
