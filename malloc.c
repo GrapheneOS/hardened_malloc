@@ -13,6 +13,7 @@
 
 #include "config.h"
 #include "malloc.h"
+#include "mutex.h"
 #include "memory.h"
 #include "pages.h"
 #include "random.h"
@@ -100,7 +101,7 @@ static size_t get_slab_size(size_t slots, size_t size) {
 static const size_t max_empty_slabs_total = 64 * 1024;
 
 static struct size_class {
-    pthread_mutex_t mutex;
+    struct mutex lock;
     void *class_region_start;
     struct slab_metadata *slab_info;
 
@@ -269,7 +270,7 @@ static inline void *slab_allocate(size_t requested_size) {
     size_t slots = size_class_slots[info.class];
     size_t slab_size = get_slab_size(slots, size);
 
-    pthread_mutex_lock(&c->mutex);
+    mutex_lock(&c->lock);
 
     if (c->partial_slabs == NULL) {
         if (c->empty_slabs != NULL) {
@@ -291,7 +292,7 @@ static inline void *slab_allocate(size_t requested_size) {
                 set_canary(metadata, p, size);
             }
 
-            pthread_mutex_unlock(&c->mutex);
+            mutex_unlock(&c->lock);
             return p;
         } else if (c->free_slabs_head != NULL) {
             struct slab_metadata *metadata = c->free_slabs_head;
@@ -299,7 +300,7 @@ static inline void *slab_allocate(size_t requested_size) {
 
             void *slab = get_slab(c, slab_size, metadata);
             if (requested_size && memory_protect_rw(slab, slab_size)) {
-                pthread_mutex_unlock(&c->mutex);
+                mutex_unlock(&c->lock);
                 return NULL;
             }
 
@@ -320,13 +321,13 @@ static inline void *slab_allocate(size_t requested_size) {
                 set_canary(metadata, p, size);
             }
 
-            pthread_mutex_unlock(&c->mutex);
+            mutex_unlock(&c->lock);
             return p;
         }
 
         struct slab_metadata *metadata = alloc_metadata(c, slab_size, requested_size);
         if (unlikely(metadata == NULL)) {
-            pthread_mutex_unlock(&c->mutex);
+            mutex_unlock(&c->lock);
             return NULL;
         }
         metadata->canary_value = get_random_u64(&c->rng);
@@ -340,7 +341,7 @@ static inline void *slab_allocate(size_t requested_size) {
             set_canary(metadata, p, size);
         }
 
-        pthread_mutex_unlock(&c->mutex);
+        mutex_unlock(&c->lock);
         return p;
     }
 
@@ -362,7 +363,7 @@ static inline void *slab_allocate(size_t requested_size) {
         set_canary(metadata, p, size);
     }
 
-    pthread_mutex_unlock(&c->mutex);
+    mutex_unlock(&c->lock);
     return p;
 }
 
@@ -398,7 +399,7 @@ static inline void slab_free(void *p) {
     size_t slots = size_class_slots[class];
     size_t slab_size = get_slab_size(slots, size);
 
-    pthread_mutex_lock(&c->mutex);
+    mutex_lock(&c->lock);
 
     struct slab_metadata *metadata = get_metadata(c, p);
     void *slab = get_slab(c, slab_size, metadata);
@@ -453,7 +454,7 @@ static inline void slab_free(void *p) {
         if (c->empty_slabs_total + slab_size > max_empty_slabs_total) {
             if (!memory_map_fixed(slab, slab_size)) {
                 enqueue_free_slab(c, metadata);
-                pthread_mutex_unlock(&c->mutex);
+                mutex_unlock(&c->lock);
                 return;
             }
             // handle out-of-memory by just putting it into the empty slabs list
@@ -464,7 +465,7 @@ static inline void slab_free(void *p) {
         c->empty_slabs_total += slab_size;
     }
 
-    pthread_mutex_unlock(&c->mutex);
+    mutex_unlock(&c->lock);
 }
 
 struct region_info {
@@ -480,7 +481,7 @@ static struct random_state regions_rng;
 static struct region_info *regions;
 static size_t regions_total = initial_region_table_size;
 static size_t regions_free = initial_region_table_size;
-static pthread_mutex_t regions_lock = PTHREAD_MUTEX_INITIALIZER;
+static struct mutex regions_lock = MUTEX_INITIALIZER;
 
 static size_t hash_page(void *p) {
     uintptr_t u = (uintptr_t)p >> PAGE_SHIFT;
@@ -587,29 +588,25 @@ static void regions_delete(struct region_info *region) {
 }
 
 static void full_lock(void) {
-    pthread_mutex_lock(&regions_lock);
+    mutex_lock(&regions_lock);
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
-        pthread_mutex_lock(&size_class_metadata[class].mutex);
+        mutex_lock(&size_class_metadata[class].lock);
     }
 }
 
 static void full_unlock(void) {
-    pthread_mutex_unlock(&regions_lock);
+    mutex_unlock(&regions_lock);
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
-        pthread_mutex_unlock(&size_class_metadata[class].mutex);
+        mutex_unlock(&size_class_metadata[class].lock);
     }
 }
 
 static void post_fork_child(void) {
-    if (pthread_mutex_init(&regions_lock, NULL)) {
-        fatal_error("mutex initialization failed");
-    }
+    mutex_init(&regions_lock);
     random_state_init(&regions_rng);
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
         struct size_class *c = &size_class_metadata[class];
-        if (pthread_mutex_init(&c->mutex, NULL)) {
-            fatal_error("mutex initialization failed");
-        }
+        mutex_init(&c->lock);
         random_state_init(&c->rng);
     }
 }
@@ -625,12 +622,12 @@ static inline void enforce_init(void) {
 }
 
 COLD static void init_slow_path(void) {
-    static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+    static struct mutex lock = MUTEX_INITIALIZER;
 
-    pthread_mutex_lock(&mutex);
+    mutex_lock(&lock);
 
     if (is_init()) {
-        pthread_mutex_unlock(&mutex);
+        mutex_unlock(&lock);
         return;
     }
 
@@ -659,10 +656,7 @@ COLD static void init_slow_path(void) {
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
         struct size_class *c = &size_class_metadata[class];
 
-        if (pthread_mutex_init(&c->mutex, NULL)) {
-            fatal_error("mutex initialization failed");
-        }
-
+        mutex_init(&c->lock);
         random_state_init(&c->rng);
 
         size_t bound = (real_class_region_size - class_region_size) / PAGE_SIZE - 1;
@@ -693,7 +687,7 @@ COLD static void init_slow_path(void) {
         fatal_error("failed to protect allocator data");
     }
 
-    pthread_mutex_unlock(&mutex);
+    mutex_unlock(&lock);
 
     // may allocate, so wait until the allocator is initialized to avoid deadlocking
     if (pthread_atfork(full_lock, full_unlock, post_fork_child)) {
@@ -724,22 +718,22 @@ static void *allocate(size_t size) {
         return slab_allocate(size);
     }
 
-    pthread_mutex_lock(&regions_lock);
+    mutex_lock(&regions_lock);
     size_t guard_size = get_guard_size(&regions_rng, size);
-    pthread_mutex_unlock(&regions_lock);
+    mutex_unlock(&regions_lock);
 
     void *p = allocate_pages(size, guard_size, true);
     if (p == NULL) {
         return NULL;
     }
 
-    pthread_mutex_lock(&regions_lock);
+    mutex_lock(&regions_lock);
     if (regions_insert(p, size, guard_size)) {
-        pthread_mutex_unlock(&regions_lock);
+        mutex_unlock(&regions_lock);
         deallocate_pages(p, size, guard_size);
         return NULL;
     }
-    pthread_mutex_unlock(&regions_lock);
+    mutex_unlock(&regions_lock);
 
     return p;
 }
@@ -750,7 +744,7 @@ static void deallocate(void *p) {
         return;
     }
 
-    pthread_mutex_lock(&regions_lock);
+    mutex_lock(&regions_lock);
     struct region_info *region = regions_find(p);
     if (region == NULL) {
         fatal_error("invalid free");
@@ -758,7 +752,7 @@ static void deallocate(void *p) {
     size_t size = region->size;
     size_t guard_size = region->guard_size;
     regions_delete(region);
-    pthread_mutex_unlock(&regions_lock);
+    mutex_unlock(&regions_lock);
 
     deallocate_pages(p, size, guard_size);
 }
@@ -816,7 +810,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
             return old;
         }
     } else {
-        pthread_mutex_lock(&regions_lock);
+        mutex_lock(&regions_lock);
         struct region_info *region = regions_find(old);
         if (region == NULL) {
             fatal_error("invalid realloc");
@@ -825,10 +819,10 @@ EXPORT void *h_realloc(void *old, size_t size) {
         size_t old_guard_size = region->guard_size;
         if (PAGE_CEILING(old_size) == PAGE_CEILING(size)) {
             region->size = size;
-            pthread_mutex_unlock(&regions_lock);
+            mutex_unlock(&regions_lock);
             return old;
         }
-        pthread_mutex_unlock(&regions_lock);
+        mutex_unlock(&regions_lock);
 
         // in-place shrink
         if (size < old_size && size > max_slab_size_class) {
@@ -842,13 +836,13 @@ EXPORT void *h_realloc(void *old, size_t size) {
             void *new_guard_end = (char *)new_end + old_guard_size;
             memory_unmap(new_guard_end, old_rounded_size - rounded_size);
 
-            pthread_mutex_lock(&regions_lock);
+            mutex_lock(&regions_lock);
             struct region_info *region = regions_find(old);
             if (region == NULL) {
                 fatal_error("invalid realloc");
             }
             region->size = size;
-            pthread_mutex_unlock(&regions_lock);
+            mutex_unlock(&regions_lock);
 
             return old;
         }
@@ -860,13 +854,13 @@ EXPORT void *h_realloc(void *old, size_t size) {
                 return NULL;
             }
 
-            pthread_mutex_lock(&regions_lock);
+            mutex_lock(&regions_lock);
             struct region_info *region = regions_find(old);
             if (region == NULL) {
                 fatal_error("invalid realloc");
             }
             regions_delete(region);
-            pthread_mutex_unlock(&regions_lock);
+            mutex_unlock(&regions_lock);
 
             if (memory_remap_fixed(old, old_size, new, size)) {
                 memcpy(new, old, copy_size);
@@ -910,22 +904,22 @@ static int alloc_aligned(void **memptr, size_t alignment, size_t size, size_t mi
         return 0;
     }
 
-    pthread_mutex_lock(&regions_lock);
+    mutex_lock(&regions_lock);
     size_t guard_size = get_guard_size(&regions_rng, size);
-    pthread_mutex_unlock(&regions_lock);
+    mutex_unlock(&regions_lock);
 
     void *p = allocate_pages_aligned(size, alignment, guard_size);
     if (p == NULL) {
         return ENOMEM;
     }
 
-    pthread_mutex_lock(&regions_lock);
+    mutex_lock(&regions_lock);
     if (regions_insert(p, size, guard_size)) {
-        pthread_mutex_unlock(&regions_lock);
+        mutex_unlock(&regions_lock);
         deallocate_pages(p, size, guard_size);
         return ENOMEM;
     }
-    pthread_mutex_unlock(&regions_lock);
+    mutex_unlock(&regions_lock);
 
     *memptr = p;
     return 0;
@@ -995,13 +989,13 @@ EXPORT size_t h_malloc_usable_size(void *p) {
         return size ? size - canary_size : 0;
     }
 
-    pthread_mutex_lock(&regions_lock);
+    mutex_lock(&regions_lock);
     struct region_info *region = regions_find(p);
     if (p == NULL) {
         fatal_error("invalid malloc_usable_size");
     }
     size_t size = region->size;
-    pthread_mutex_unlock(&regions_lock);
+    mutex_unlock(&regions_lock);
 
     return size;
 }
@@ -1016,10 +1010,10 @@ EXPORT size_t h_malloc_object_size(void *p) {
         return size ? size - canary_size : 0;
     }
 
-    pthread_mutex_lock(&regions_lock);
+    mutex_lock(&regions_lock);
     struct region_info *region = regions_find(p);
     size_t size = p == NULL ? SIZE_MAX : region->size;
-    pthread_mutex_unlock(&regions_lock);
+    mutex_unlock(&regions_lock);
 
     return size;
 }
@@ -1053,7 +1047,7 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
         struct size_class *c = &size_class_metadata[class];
         size_t slab_size = get_slab_size(size_class_slots[class], size_classes[class]);
 
-        pthread_mutex_lock(&c->mutex);
+        mutex_lock(&c->lock);
         struct slab_metadata *iterator = c->empty_slabs;
         while (iterator) {
             void *slab = get_slab(c, slab_size, iterator);
@@ -1070,7 +1064,7 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
             is_trimmed = true;
         }
         c->empty_slabs = iterator;
-        pthread_mutex_unlock(&c->mutex);
+        mutex_unlock(&c->lock);
     }
 
     return is_trimmed;
