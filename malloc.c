@@ -210,9 +210,8 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, struct slab_
     size_t slot = ffzl(masked | random_split);
     if (slot) {
         return slot - 1;
-    } else {
-        return ffzl(masked) - 1;
     }
+    return ffzl(masked) - 1;
 }
 
 static bool has_free_slots(size_t slots, struct slab_metadata *metadata) {
