@@ -1001,7 +1001,7 @@ EXPORT size_t h_malloc_usable_size(void *p) {
 }
 
 EXPORT size_t h_malloc_object_size(void *p) {
-    if (p == NULL || !is_init()) {
+    if (p == NULL || unlikely(!is_init())) {
         return 0;
     }
 
@@ -1019,7 +1019,7 @@ EXPORT size_t h_malloc_object_size(void *p) {
 }
 
 EXPORT size_t h_malloc_object_size_fast(void *p) {
-    if (p == NULL || !is_init()) {
+    if (p == NULL || unlikely(!is_init())) {
         return 0;
     }
 
@@ -1036,7 +1036,7 @@ EXPORT int h_mallopt(UNUSED int param, UNUSED int value) {
 }
 
 EXPORT int h_malloc_trim(UNUSED size_t pad) {
-    if (!is_init()) {
+    if (unlikely(!is_init())) {
         return 0;
     }
 
