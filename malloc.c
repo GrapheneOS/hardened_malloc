@@ -20,6 +20,7 @@
 static_assert(sizeof(void *) == 8, "64-bit only");
 
 static const bool guard_slabs = true;
+static const bool enable_write_after_free_check = true;
 
 // either sizeof(uint64_t) or 0
 static const size_t canary_size = sizeof(uint64_t);
@@ -243,10 +244,20 @@ static void *slot_pointer(size_t size, void *slab, size_t slot) {
     return (char *)slab + slot * size;
 }
 
-static void set_canary(struct slab_metadata *metadata, void *p, size_t size, size_t requested_size) {
-    if (requested_size != 0) {
-        memcpy((char *)p + size - canary_size, &metadata->canary_value, canary_size);
+static void write_after_free_check(char *p, size_t size) {
+    if (!enable_write_after_free_check) {
+        return;
     }
+
+    for (size_t i = 0; i < size; i += sizeof(uint64_t)) {
+        if (*(uint64_t *)(p + i)) {
+            fatal_error("write after free");
+        }
+    }
+}
+
+static void set_canary(struct slab_metadata *metadata, void *p, size_t size) {
+    memcpy((char *)p + size - canary_size, &metadata->canary_value, canary_size);
 }
 
 static inline void *slab_allocate(size_t requested_size) {
@@ -273,7 +284,10 @@ static inline void *slab_allocate(size_t requested_size) {
             size_t slot = get_free_slot(&c->rng, slots, metadata);
             set_slot(metadata, slot);
             void *p = slot_pointer(size, slab, slot);
-            set_canary(metadata, p, size, requested_size);
+            if (requested_size) {
+                write_after_free_check(p, size - canary_size);
+                set_canary(metadata, p, size);
+            }
 
             pthread_mutex_unlock(&c->mutex);
             return p;
@@ -282,7 +296,7 @@ static inline void *slab_allocate(size_t requested_size) {
             metadata->canary_value = get_random_u64(&c->rng);
 
             void *slab = get_slab(c, slab_size, metadata);
-            if (requested_size != 0 && memory_protect_rw(slab, slab_size)) {
+            if (requested_size && memory_protect_rw(slab, slab_size)) {
                 pthread_mutex_unlock(&c->mutex);
                 return NULL;
             }
@@ -300,7 +314,9 @@ static inline void *slab_allocate(size_t requested_size) {
             size_t slot = get_free_slot(&c->rng, slots, metadata);
             set_slot(metadata, slot);
             void *p = slot_pointer(size, slab, slot);
-            set_canary(metadata, p, size, requested_size);
+            if (requested_size) {
+                set_canary(metadata, p, size);
+            }
 
             pthread_mutex_unlock(&c->mutex);
             return p;
@@ -318,7 +334,9 @@ static inline void *slab_allocate(size_t requested_size) {
         size_t slot = get_free_slot(&c->rng, slots, metadata);
         set_slot(metadata, slot);
         void *p = slot_pointer(size, slab, slot);
-        set_canary(metadata, p, size, requested_size);
+        if (requested_size) {
+            set_canary(metadata, p, size);
+        }
 
         pthread_mutex_unlock(&c->mutex);
         return p;
@@ -337,7 +355,10 @@ static inline void *slab_allocate(size_t requested_size) {
 
     void *slab = get_slab(c, slab_size, metadata);
     void *p = slot_pointer(size, slab, slot);
-    set_canary(metadata, p, size, requested_size);
+    if (requested_size) {
+        write_after_free_check(p, size - canary_size);
+        set_canary(metadata, p, size);
+    }
 
     pthread_mutex_unlock(&c->mutex);
     return p;
