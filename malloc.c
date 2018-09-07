@@ -20,6 +20,8 @@
 
 static_assert(sizeof(void *) == 8, "64-bit only");
 
+static_assert(!WRITE_AFTER_FREE_CHECK || ZERO_ON_FREE, "WRITE_AFTER_FREE_CHECK depends on ZERO_ON_FREE");
+
 // either sizeof(uint64_t) or 0
 static const size_t canary_size = sizeof(uint64_t);
 
@@ -411,7 +413,9 @@ static inline void slab_free(void *p) {
     }
 
     if (!is_zero_size) {
-        memset(p, 0, size - canary_size);
+        if (ZERO_ON_FREE) {
+            memset(p, 0, size - canary_size);
+        }
 
         if (canary_size) {
             uint64_t canary_value;
@@ -780,7 +784,17 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
     }
     init();
     total_size = adjust_size_for_canaries(total_size);
-    return allocate(total_size);
+    if (ZERO_ON_FREE) {
+        return allocate(total_size);
+    }
+    void *p = allocate(total_size);
+    if (unlikely(p == NULL)) {
+        return NULL;
+    }
+    if (size) {
+        memset(p, 0, total_size - canary_size);
+    }
+    return p;
 }
 
 static const size_t mremap_threshold = 4 * 1024 * 1024;
