@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -9,6 +8,6 @@ int main(void) {
         return 1;
     }
     free(p);
-    memset(p, 'a', 128 * 1024);
+    p[64 * 1024 + 1] = 'a';
     return 0;
 }
