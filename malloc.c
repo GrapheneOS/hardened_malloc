@@ -11,6 +11,7 @@
 
 #include "third_party/libdivide.h"
 
+#include "config.h"
 #include "malloc.h"
 #include "memory.h"
 #include "pages.h"
@@ -18,9 +19,6 @@
 #include "util.h"
 
 static_assert(sizeof(void *) == 8, "64-bit only");
-
-static const bool guard_slabs = true;
-static const bool enable_write_after_free_check = true;
 
 // either sizeof(uint64_t) or 0
 static const size_t canary_size = sizeof(uint64_t);
@@ -165,7 +163,7 @@ static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_si
         return NULL;
     }
     c->metadata_count++;
-    if (guard_slabs) {
+    if (GUARD_SLABS) {
         c->metadata_count++;
     }
     return metadata;
@@ -245,13 +243,13 @@ static void *slot_pointer(size_t size, void *slab, size_t slot) {
 }
 
 static void write_after_free_check(char *p, size_t size) {
-    if (!enable_write_after_free_check) {
+    if (!WRITE_AFTER_FREE_CHECK) {
         return;
     }
 
     for (size_t i = 0; i < size; i += sizeof(uint64_t)) {
         if (*(uint64_t *)(p + i)) {
-            fatal_error("write after free");
+            fatal_error("detected write after free");
         }
     }
 }

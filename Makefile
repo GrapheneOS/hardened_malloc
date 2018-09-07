@@ -7,7 +7,7 @@ hardened_malloc.so: $(OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared $^ $(LDLIBS) -o $@
 
 chacha.o: chacha.c chacha.h
-malloc.o: malloc.c malloc.h memory.h pages.h random.h util.h
+malloc.o: malloc.c malloc.h config.h memory.h pages.h random.h util.h
 memory.o: memory.c memory.h util.h
 pages.o: pages.c pages.h memory.h util.h
 random.o: random.c random.h chacha.h util.h
