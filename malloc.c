@@ -23,7 +23,7 @@ static_assert(sizeof(void *) == 8, "64-bit only");
 static_assert(!WRITE_AFTER_FREE_CHECK || ZERO_ON_FREE, "WRITE_AFTER_FREE_CHECK depends on ZERO_ON_FREE");
 
 // either sizeof(uint64_t) or 0
-static const size_t canary_size = sizeof(uint64_t);
+static const size_t canary_size = SLAB_CANARY ? sizeof(uint64_t) : 0;
 
 #define CACHELINE_SIZE 64
 

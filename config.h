@@ -5,5 +5,6 @@
 #define WRITE_AFTER_FREE_CHECK true
 #define SLOT_RANDOMIZE true
 #define ZERO_ON_FREE true
+#define SLAB_CANARY true
 
 #endif
