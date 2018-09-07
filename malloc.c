@@ -785,7 +785,7 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
     if (unlikely(p == NULL)) {
         return NULL;
     }
-    if (size) {
+    if (size && size <= max_slab_size_class) {
         memset(p, 0, total_size - canary_size);
     }
     return p;
