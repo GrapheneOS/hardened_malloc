@@ -47,6 +47,7 @@ struct slab_metadata {
     uint64_t canary_value;
 };
 
+static const size_t min_align = 16;
 static const size_t max_slab_size_class = 16384;
 
 static const uint16_t size_classes[] = {
@@ -87,6 +88,17 @@ static inline struct size_info get_size_info(size_t size) {
     for (unsigned class = 1; class < N_SIZE_CLASSES; class++) {
         size_t real_size = size_classes[class];
         if (size <= real_size) {
+            return (struct size_info){real_size, class};
+        }
+    }
+    fatal_error("invalid size for slabs");
+}
+
+// alignment must be a power of 2 <= PAGE_SIZE since slabs are only page aligned
+static inline struct size_info get_size_info_align(size_t size, size_t alignment) {
+    for (unsigned class = 1; class < N_SIZE_CLASSES; class++) {
+        size_t real_size = size_classes[class];
+        if (size <= real_size && !(real_size & (alignment - 1))) {
             return (struct size_info){real_size, class};
         }
     }
@@ -892,8 +904,8 @@ static int alloc_aligned(void **memptr, size_t alignment, size_t size, size_t mi
     }
 
     if (alignment <= PAGE_SIZE) {
-        if (size < alignment) {
-            size = alignment;
+        if (size <= max_slab_size_class && alignment > min_align) {
+            size = get_size_info_align(size, alignment).size;
         }
 
         void *p = allocate(size);
