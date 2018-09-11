@@ -708,11 +708,9 @@ COLD static void init_slow_path(void) {
 }
 
 static inline void init(void) {
-    if (likely(is_init())) {
-        return;
+    if (unlikely(!is_init())) {
+        init_slow_path();
     }
-
-    init_slow_path();
 }
 
 // trigger early initialization to set up pthread_atfork and protect state as soon as possible
