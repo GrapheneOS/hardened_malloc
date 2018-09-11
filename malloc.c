@@ -83,7 +83,7 @@ struct size_info {
 
 static inline struct size_info get_size_info(size_t size) {
     if (size == 0) {
-        return (struct size_info){16, 0};
+        return (struct size_info){0, 0};
     }
     if (size <= 128) {
         return (struct size_info){(size + 15) & ~15, ((size - 1) >> 4) + 1};
@@ -280,7 +280,7 @@ static void set_canary(struct slab_metadata *metadata, void *p, size_t size) {
 
 static inline void *allocate_small(size_t requested_size) {
     struct size_info info = get_size_info(requested_size);
-    size_t size = info.size;
+    size_t size = info.size ? info.size : 16;
     struct size_class *c = &size_class_metadata[info.class];
     size_t slots = size_class_slots[info.class];
     size_t slab_size = get_slab_size(slots, size);
