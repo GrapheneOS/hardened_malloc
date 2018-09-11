@@ -76,8 +76,7 @@ allocation and then unmapped on free.
     * [in-progress] Randomized allocation of slabs
     * [more randomization coming as the implementation is matured]
 * Slab allocations are zeroed on free and large allocations are unmapped
-* [in-progress] Detection of write-after-free by verifying zero filling is
-  intact
+* Detection of write-after-free by verifying zero filling is intact
 * Memory in fresh allocations is consistently zeroed due to it either being
   fresh pages or zeroed on free after previous usage
 * [in-progress] Delayed free via a combination of FIFO and randomization for
