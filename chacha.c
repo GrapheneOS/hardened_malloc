@@ -41,30 +41,21 @@ Public domain.
   c = PLUS(c,d); b = ROTATE(XOR(b,c), 7);
 
 static const char sigma[16] = "expand 32-byte k";
-static const char tau[16] = "expand 16-byte k";
 
-void chacha_keysetup(chacha_ctx *x,const u8 *k,u32 kbits)
+void chacha_keysetup(chacha_ctx *x,const u8 *k)
 {
-  const char *constants;
-
+  x->input[0] = U8TO32_LITTLE(sigma + 0);
+  x->input[1] = U8TO32_LITTLE(sigma + 4);
+  x->input[2] = U8TO32_LITTLE(sigma + 8);
+  x->input[3] = U8TO32_LITTLE(sigma + 12);
   x->input[4] = U8TO32_LITTLE(k + 0);
   x->input[5] = U8TO32_LITTLE(k + 4);
   x->input[6] = U8TO32_LITTLE(k + 8);
   x->input[7] = U8TO32_LITTLE(k + 12);
-  if (kbits == 256) { /* recommended */
-    k += 16;
-    constants = sigma;
-  } else { /* kbits == 128 */
-    constants = tau;
-  }
-  x->input[8] = U8TO32_LITTLE(k + 0);
-  x->input[9] = U8TO32_LITTLE(k + 4);
-  x->input[10] = U8TO32_LITTLE(k + 8);
-  x->input[11] = U8TO32_LITTLE(k + 12);
-  x->input[0] = U8TO32_LITTLE(constants + 0);
-  x->input[1] = U8TO32_LITTLE(constants + 4);
-  x->input[2] = U8TO32_LITTLE(constants + 8);
-  x->input[3] = U8TO32_LITTLE(constants + 12);
+  x->input[8] = U8TO32_LITTLE(k + 16);
+  x->input[9] = U8TO32_LITTLE(k + 20);
+  x->input[10] = U8TO32_LITTLE(k + 24);
+  x->input[11] = U8TO32_LITTLE(k + 28);
 }
 
 void chacha_ivsetup(chacha_ctx *x,const u8 *iv)

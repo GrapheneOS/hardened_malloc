@@ -35,14 +35,11 @@ static void get_random_seed(void *buf, size_t size) {
     }
 }
 
-#define KEY_SIZE 32
-#define IV_SIZE 8
-
 void random_state_init(struct random_state *state) {
-    uint8_t rnd[KEY_SIZE + IV_SIZE];
+    uint8_t rnd[CHACHA_KEY_SIZE + CHACHA_IV_SIZE];
     get_random_seed(rnd, sizeof(rnd));
-    chacha_keysetup(&state->ctx, rnd, KEY_SIZE * 8);
-    chacha_ivsetup(&state->ctx, rnd + KEY_SIZE);
+    chacha_keysetup(&state->ctx, rnd);
+    chacha_ivsetup(&state->ctx, rnd + CHACHA_KEY_SIZE);
     chacha_keystream_bytes(&state->ctx, state->cache, RANDOM_CACHE_SIZE);
     state->index = 0;
     state->reseed = 0;
