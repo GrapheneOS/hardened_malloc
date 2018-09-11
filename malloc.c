@@ -275,7 +275,7 @@ static void set_canary(struct slab_metadata *metadata, void *p, size_t size) {
     memcpy((char *)p + size - canary_size, &metadata->canary_value, canary_size);
 }
 
-static inline void *slab_allocate(size_t requested_size) {
+static inline void *allocate_small(size_t requested_size) {
     struct size_info info = get_size_info(requested_size);
     size_t size = info.size;
     struct size_class *c = &size_class_metadata[info.class];
@@ -399,7 +399,7 @@ static void enqueue_free_slab(struct size_class *c, struct slab_metadata *metada
     c->free_slabs_tail = metadata;
 }
 
-static inline void slab_free(void *p) {
+static inline void deallocate_small(void *p) {
     size_t class = slab_size_class(p);
 
     struct size_class *c = &size_class_metadata[class];
@@ -725,7 +725,7 @@ static size_t get_guard_size(struct random_state *state, size_t size) {
 
 static void *allocate(size_t size) {
     if (size <= max_slab_size_class) {
-        return slab_allocate(size);
+        return allocate_small(size);
     }
 
     mutex_lock(&regions_lock);
@@ -891,7 +891,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
     }
     memcpy(new, old, copy_size);
     if (old_size <= max_slab_size_class) {
-        slab_free(old);
+        deallocate_small(old);
     } else {
         deallocate_large(old);
     }
@@ -984,7 +984,7 @@ EXPORT void h_free(void *p) {
     }
 
     if (p >= ro.slab_region_start && p < ro.slab_region_end) {
-        slab_free(p);
+        deallocate_small(p);
         return;
     }
 
