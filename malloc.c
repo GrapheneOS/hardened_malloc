@@ -85,7 +85,10 @@ static inline struct size_info get_size_info(size_t size) {
     if (size == 0) {
         return (struct size_info){16, 0};
     }
-    for (unsigned class = 1; class < N_SIZE_CLASSES; class++) {
+    if (size <= 128) {
+        return (struct size_info){(size + 15) & ~15, ((size - 1) >> 4) + 1};
+    }
+    for (unsigned class = 9; class < N_SIZE_CLASSES; class++) {
         size_t real_size = size_classes[class];
         if (size <= real_size) {
             return (struct size_info){real_size, class};
