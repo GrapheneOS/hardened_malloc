@@ -748,11 +748,8 @@ static void *allocate(size_t size) {
     return p;
 }
 
-static void deallocate(void *p) {
-    if (p >= ro.slab_region_start && p < ro.slab_region_end) {
-        slab_free(p);
-        return;
-    }
+static void deallocate_large(void *p) {
+    enforce_init();
 
     mutex_lock(&regions_lock);
     struct region_info *region = regions_find(p);
@@ -810,7 +807,6 @@ EXPORT void *h_realloc(void *old, size_t size) {
         return allocate(size);
     }
 
-    enforce_init();
     size = adjust_size_for_canaries(size);
 
     size_t old_size;
@@ -820,6 +816,8 @@ EXPORT void *h_realloc(void *old, size_t size) {
             return old;
         }
     } else {
+        enforce_init();
+
         mutex_lock(&regions_lock);
         struct region_info *region = regions_find(old);
         if (region == NULL) {
@@ -892,7 +890,11 @@ EXPORT void *h_realloc(void *old, size_t size) {
         copy_size -= canary_size;
     }
     memcpy(new, old, copy_size);
-    deallocate(old);
+    if (old_size <= max_slab_size_class) {
+        slab_free(old);
+    } else {
+        deallocate_large(old);
+    }
     return new;
 }
 
@@ -981,8 +983,12 @@ EXPORT void h_free(void *p) {
         return;
     }
 
-    enforce_init();
-    deallocate(p);
+    if (p >= ro.slab_region_start && p < ro.slab_region_end) {
+        slab_free(p);
+        return;
+    }
+
+    deallocate_large(p);
 }
 
 EXPORT void h_cfree(void *ptr) ALIAS(h_free);
@@ -992,12 +998,12 @@ EXPORT size_t h_malloc_usable_size(void *p) {
         return 0;
     }
 
-    enforce_init();
-
     if (p >= ro.slab_region_start && p < ro.slab_region_end) {
         size_t size = slab_usable_size(p);
         return size ? size - canary_size : 0;
     }
+
+    enforce_init();
 
     mutex_lock(&regions_lock);
     struct region_info *region = regions_find(p);
@@ -1011,13 +1017,17 @@ EXPORT size_t h_malloc_usable_size(void *p) {
 }
 
 EXPORT size_t h_malloc_object_size(void *p) {
-    if (p == NULL || unlikely(!is_init())) {
+    if (p == NULL) {
         return 0;
     }
 
     if (p >= ro.slab_region_start && p < ro.slab_region_end) {
         size_t size = slab_usable_size(p);
         return size ? size - canary_size : 0;
+    }
+
+    if (unlikely(!is_init())) {
+        return 0;
     }
 
     mutex_lock(&regions_lock);
@@ -1029,13 +1039,17 @@ EXPORT size_t h_malloc_object_size(void *p) {
 }
 
 EXPORT size_t h_malloc_object_size_fast(void *p) {
-    if (p == NULL || unlikely(!is_init())) {
+    if (p == NULL) {
         return 0;
     }
 
     if (p >= ro.slab_region_start && p < ro.slab_region_end) {
         size_t size = slab_usable_size(p);
         return size ? size - canary_size : 0;
+    }
+
+    if (unlikely(!is_init())) {
+        return 0;
     }
 
     return SIZE_MAX;
