@@ -96,11 +96,17 @@ struct slab_metadata {
 };
 
 static const size_t min_align = 16;
-static const size_t max_slab_size_class = 16384;
 #define MIN_SLAB_SIZE_CLASS_SHIFT 4
-#define MAX_SLAB_SIZE_CLASS_SHIFT 14
 
-static const u16 size_classes[] = {
+#if !CONFIG_EXTENDED_SIZE_CLASSES
+static const size_t max_slab_size_class = 16384;
+#define MAX_SLAB_SIZE_CLASS_SHIFT 14
+#else
+static const size_t max_slab_size_class = 65536;
+#define MAX_SLAB_SIZE_CLASS_SHIFT 16
+#endif
+
+static const u32 size_classes[] = {
     /* 0 */ 0,
     /* 16 */ 16, 32, 48, 64, 80, 96, 112, 128,
     /* 32 */ 160, 192, 224, 256,
@@ -109,7 +115,11 @@ static const u16 size_classes[] = {
     /* 256 */ 1280, 1536, 1792, 2048,
     /* 512 */ 2560, 3072, 3584, 4096,
     /* 1024 */ 5120, 6144, 7168, 8192,
-    /* 2048 */ 10240, 12288, 14336, 16384
+    /* 2048 */ 10240, 12288, 14336, 16384,
+#if CONFIG_EXTENDED_SIZE_CLASSES
+    /* 4096 */ 20480, 24576, 28672, 32768,
+    /* 8192 */ 40960, 49152, 57344, 65536,
+#endif
 };
 
 static const u16 size_class_slots[] = {
@@ -121,7 +131,11 @@ static const u16 size_class_slots[] = {
     /* 256 */ 16, 16, 16, 16,
     /* 512 */ 8, 8, 8, 8,
     /* 1024 */ 8, 8, 8, 8,
-    /* 2048 */ 6, 5, 4, 4
+    /* 2048 */ 6, 5, 4, 4,
+#if CONFIG_EXTENDED_SIZE_CLASSES
+    /* 4096 */ 2, 2, 2, 2,
+    /* 8192 */ 2, 2, 2, 2,
+#endif
 };
 
 static const char *const size_class_labels[] = {
@@ -134,7 +148,11 @@ static const char *const size_class_labels[] = {
     /* 256 */ "malloc 1280", "malloc 1536", "malloc 1792", "malloc 2048",
     /* 512 */ "malloc 2560", "malloc 3072", "malloc 3584", "malloc 4096",
     /* 1024 */ "malloc 5120", "malloc 6144", "malloc 7168", "malloc 8192",
-    /* 2048 */ "malloc 10240", "malloc 12288", "malloc 14336", "malloc 16384"
+    /* 2048 */ "malloc 10240", "malloc 12288", "malloc 14336", "malloc 16384",
+#if CONFIG_EXTENDED_SIZE_CLASSES
+    /* 4096 */ "malloc 20480", "malloc 24576", "malloc 28672", "malloc 32768",
+    /* 8192 */ "malloc 40960", "malloc 49152", "malloc 57344", "malloc 65536",
+#endif
 };
 
 static void label_slab(void *slab, size_t slab_size, unsigned class) {
@@ -180,7 +198,7 @@ static size_t get_slab_size(size_t slots, size_t size) {
 }
 
 // limit on the number of cached empty slabs before attempting purging instead
-static const size_t max_empty_slabs_total = 64 * 1024;
+static const size_t max_empty_slabs_total = 128 * 1024;
 
 struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
     struct mutex lock;
