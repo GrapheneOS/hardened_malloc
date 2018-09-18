@@ -402,11 +402,14 @@ static void enqueue_free_slab(struct size_class *c, struct slab_metadata *metada
     c->free_slabs_tail = metadata;
 }
 
-static inline void deallocate_small(void *p) {
+static inline void deallocate_small(void *p, size_t *expected_size) {
     size_t class = slab_size_class(p);
 
     struct size_class *c = &size_class_metadata[class];
     size_t size = size_classes[class];
+    if (expected_size && size != *expected_size) {
+        fatal_error("sized deallocation mismatch");
+    }
     bool is_zero_size = size == 0;
     if (is_zero_size) {
         size = 16;
@@ -751,7 +754,7 @@ static void *allocate(size_t size) {
     return p;
 }
 
-static void deallocate_large(void *p) {
+static void deallocate_large(void *p, size_t *expected_size) {
     enforce_init();
 
     mutex_lock(&regions_lock);
@@ -760,6 +763,9 @@ static void deallocate_large(void *p) {
         fatal_error("invalid free");
     }
     size_t size = region->size;
+    if (expected_size && size != *expected_size) {
+        fatal_error("sized deallocation mismatch");
+    }
     size_t guard_size = region->guard_size;
     regions_delete(region);
     mutex_unlock(&regions_lock);
@@ -894,9 +900,9 @@ EXPORT void *h_realloc(void *old, size_t size) {
     }
     memcpy(new, old, copy_size);
     if (old_size <= max_slab_size_class) {
-        deallocate_small(old);
+        deallocate_small(old, NULL);
     } else {
-        deallocate_large(old);
+        deallocate_large(old, NULL);
     }
     return new;
 }
@@ -987,14 +993,28 @@ EXPORT void h_free(void *p) {
     }
 
     if (p >= ro.slab_region_start && p < ro.slab_region_end) {
-        deallocate_small(p);
+        deallocate_small(p, NULL);
         return;
     }
 
-    deallocate_large(p);
+    deallocate_large(p, NULL);
 }
 
 EXPORT void h_cfree(void *ptr) ALIAS(h_free);
+
+EXPORT void h_free_sized(void *p, size_t expected_size) {
+    if (p == NULL) {
+        return;
+    }
+
+    if (p >= ro.slab_region_start && p < ro.slab_region_end) {
+        expected_size = get_size_info(adjust_size_for_canaries(expected_size)).size;
+        deallocate_small(p, &expected_size);
+        return;
+    }
+
+    deallocate_large(p, &expected_size);
+}
 
 EXPORT size_t h_malloc_usable_size(void *p) {
     if (p == NULL) {

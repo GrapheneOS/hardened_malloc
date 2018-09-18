@@ -34,6 +34,7 @@
 
 #define h_malloc_object_size malloc_object_size
 #define h_malloc_object_size_fast malloc_object_size_fast
+#define h_free_sized free_sized
 #endif
 
 // C standard
@@ -83,5 +84,7 @@ size_t h_malloc_object_size(void *ptr);
 
 // similar to malloc_object_size, but avoiding locking so the results are much more limited
 size_t h_malloc_object_size_fast(void *ptr);
+
+void h_free_sized(void *ptr, size_t expected_size);
 
 #endif
