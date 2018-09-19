@@ -53,6 +53,16 @@ libraries.
 
 # Configuration
 
+You can set some configuration options at compile-time via arguments to the
+make command as follows:
+
+    make CONFIG_EXAMPLE=false
+
+The available configuration options are the following:
+
+* `CONFIG_CXX_ALLOCATOR`: `true` (default) or `false` to control whether the
+  C++ allocator is replaced
+
 Compile-time configuration is available in the `config.h` file for controlling
 the balance between security and performance / memory usage. By default, all
 the optional security features are enabled. Options are only provided for the
