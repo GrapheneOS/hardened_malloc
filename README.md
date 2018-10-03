@@ -102,8 +102,8 @@ allocation and then unmapped on free.
 * No usage of the legacy brk heap
 * Aggressive sanity checks
     * Errors other than ENOMEM from mmap, munmap, mprotect and mremap treated
-      as fatal, which can help to decent memory management gone wrong elsewhere
-      in the program
+      as fatal, which can help to detect memory management gone wrong elsewhere
+      in the process.
 
 # Randomness
 
