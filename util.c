@@ -6,6 +6,8 @@
 #include "util.h"
 
 COLD noreturn void fatal_error(const char *s) {
+    const char *prefix = "fatal allocator error: ";
+    write(STDERR_FILENO, prefix, strlen(prefix));
     write(STDERR_FILENO, s, strlen(s));
     write(STDERR_FILENO, "\n", 1);
     abort();
