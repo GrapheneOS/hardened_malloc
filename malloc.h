@@ -85,6 +85,16 @@ size_t h_malloc_object_size(void *ptr);
 // similar to malloc_object_size, but avoiding locking so the results are much more limited
 size_t h_malloc_object_size_fast(void *ptr);
 
+// The free function with an extra parameter for passing the size requested at
+// allocation time.
+//
+// This offers the same functionality as C++14 sized deallocation and can be
+// used to implement it.
+//
+// A performance-oriented allocator would use this as a performance
+// enhancement with undefined behavior on a mismatch. Instead, this hardened
+// allocator implementation uses it to improve security by checking that the
+// passed size matches the allocated size.
 void h_free_sized(void *ptr, size_t expected_size);
 
 #endif
