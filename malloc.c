@@ -274,6 +274,12 @@ static void write_after_free_check(char *p, size_t size) {
     }
 }
 
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+static const uint64_t canary_mask = 0xffffffffffffff00UL;
+#else
+static const uint64_t canary_mask = 0x00ffffffffffffffUL;
+#endif
+
 static void set_canary(struct slab_metadata *metadata, void *p, size_t size) {
     memcpy((char *)p + size - canary_size, &metadata->canary_value, canary_size);
 }
@@ -345,7 +351,7 @@ static inline void *allocate_small(size_t requested_size) {
             mutex_unlock(&c->lock);
             return NULL;
         }
-        metadata->canary_value = get_random_u64(&c->rng);
+        metadata->canary_value = get_random_u64(&c->rng) & canary_mask;
 
         c->partial_slabs = metadata;
         void *slab = get_slab(c, slab_size, metadata);

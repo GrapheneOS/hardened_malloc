@@ -84,6 +84,7 @@ allocation and then unmapped on free.
 * Random canaries placed after each slab allocation to *absorb*
   and then later detect overflows/underflows
     * High entropy per-slab random values
+    * Leading byte is zeroed to contain C string overflows
     * [in-progress] Mangled into a unique value per slab slot (although not
       with a strong keyed hash due to performance limitations)
 * Possible slab locations are skipped and remain memory protected, leaving slab
