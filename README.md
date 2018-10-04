@@ -30,6 +30,26 @@ and 9.0 but only the active AOSP branches (8.1 and 9.0) are supported by this
 project and it doesn't make much sense to use much older releases with far
 less privacy and security hardening.
 
+# Configuration
+
+Compile-time configuration is available in the `config.h` file for controlling
+the balance between security and performance / memory usage. By default, all
+the optional security features are enabled. Options are only provided for the
+features with a significant performance or memory usage cost.
+
+```
+#define GUARD_SLABS true
+#define WRITE_AFTER_FREE_CHECK true
+#define SLOT_RANDOMIZE true
+#define ZERO_ON_FREE true
+#define SLAB_CANARY true
+```
+
+There will be more control over enabled features in the future along with
+control over fairly arbitrarily chosen values like the size of empty slab
+caches (making them smaller improves security), the maximum size of guard
+regions for large allocations and the proportion of slabs to guard slabs.
+
 # Basic design
 
 The current design is very simple and will become a bit more sophisticated as
