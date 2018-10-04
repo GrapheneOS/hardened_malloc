@@ -17,10 +17,15 @@ static const unsigned size_classes[] = {
 
 #define N_SIZE_CLASSES (sizeof(size_classes) / sizeof(size_classes[0]))
 
+static size_t canary_size = 8;
+
 int main(void) {
     void *p[N_SIZE_CLASSES];
     for (unsigned i = 0; i < N_SIZE_CLASSES; i++) {
         unsigned size = size_classes[i];
+        if (size) {
+            size -= canary_size;
+        }
         p[i] = malloc(size);
         if (!p) {
             return 1;
