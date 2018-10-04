@@ -87,7 +87,7 @@ be determined from the range. Each small size class has a separate out-of-line
 metadata array outside of the overall allocation region, with the index of the
 metadata struct within the array mapping to the index of the slab within the
 dedicated size class region. Slabs are a multiple of the page size and are
-paged aligned. The entire small size class region starts out memory protected
+page aligned. The entire small size class region starts out memory protected
 and becomes readable / writable as it gets allocated, with idle slabs beyond
 the cache limit having their pages dropped and the memory protected again.
 
