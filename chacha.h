@@ -9,13 +9,12 @@
 typedef uint8_t u8;
 typedef uint32_t u32;
 
-typedef struct
-{
-  u32 input[16];
+typedef struct {
+    u32 input[16];
 } chacha_ctx;
 
-void chacha_keysetup(chacha_ctx *x,const u8 *k);
-void chacha_ivsetup(chacha_ctx *x,const u8 *iv);
-void chacha_keystream_bytes(chacha_ctx *x,u8 *c,u32 bytes);
+void chacha_keysetup(chacha_ctx *x, const u8 *k);
+void chacha_ivsetup(chacha_ctx *x, const u8 *iv);
+void chacha_keystream_bytes(chacha_ctx *x, u8 *c, u32 bytes);
 
 #endif
