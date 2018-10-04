@@ -730,7 +730,7 @@ COLD __attribute__((constructor(101))) static void trigger_early_init(void) {
 }
 
 static size_t get_guard_size(struct random_state *state, size_t size) {
-    return (get_random_u64_uniform(state, size / PAGE_SIZE / 8) + 1) * PAGE_SIZE;
+    return (get_random_u64_uniform(state, size / PAGE_SIZE / 2) + 1) * PAGE_SIZE;
 }
 
 static void *allocate(size_t size) {
