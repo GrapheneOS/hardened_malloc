@@ -37,6 +37,12 @@ executables using glibc or musl:
 
     ./preload.sh krita --new-image RGBA,U8,500,500
 
+It can be necessary to substantially increase the `vm.max_map_count` sysctl to
+accomodate the large number of mappings caused by guard slabs and large
+allocation guard regions. There will be a configuration option in `config.h`
+for tuning the proportion of slabs to guard slabs too, since the default 1:1
+proportion makes the address space quite sparse.
+
 It can offer slightly better performance when integrated into the C standard
 library and there are other opportunities for similar hardening within C
 standard library and dynamic linker implementations. For example, a library
