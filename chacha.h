@@ -1,13 +1,10 @@
 #ifndef CHACHA_H
 #define CHACHA_H
 
-#include <stdint.h>
+#include "util.h"
 
 #define CHACHA_KEY_SIZE 32
 #define CHACHA_IV_SIZE 8
-
-typedef uint8_t u8;
-typedef uint32_t u32;
 
 typedef struct {
     u32 input[16];

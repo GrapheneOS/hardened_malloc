@@ -1,6 +1,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <stdint.h>
 #include <stdnoreturn.h>
 
 #define likely(x) __builtin_expect(!!(x), 1)
@@ -18,5 +19,11 @@ static inline int ffzl(long x) {
 }
 
 COLD noreturn void fatal_error(const char *s);
+
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+typedef unsigned __int128 u128;
 
 #endif

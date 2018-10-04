@@ -2,7 +2,6 @@
 #include <errno.h>
 #include <stdatomic.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -23,8 +22,8 @@ static_assert(sizeof(void *) == 8, "64-bit only");
 
 static_assert(!WRITE_AFTER_FREE_CHECK || ZERO_ON_FREE, "WRITE_AFTER_FREE_CHECK depends on ZERO_ON_FREE");
 
-// either sizeof(uint64_t) or 0
-static const size_t canary_size = SLAB_CANARY ? sizeof(uint64_t) : 0;
+// either sizeof(u64) or 0
+static const size_t canary_size = SLAB_CANARY ? sizeof(u64) : 0;
 
 #define CACHELINE_SIZE 64
 
@@ -41,16 +40,16 @@ static union {
 };
 
 struct slab_metadata {
-    uint64_t bitmap;
+    u64 bitmap;
     struct slab_metadata *next;
     struct slab_metadata *prev;
-    uint64_t canary_value;
+    u64 canary_value;
 };
 
 static const size_t min_align = 16;
 static const size_t max_slab_size_class = 16384;
 
-static const uint16_t size_classes[] = {
+static const u16 size_classes[] = {
     /* 0 */ 0,
     /* 16 */ 16, 32, 48, 64, 80, 96, 112, 128,
     /* 32 */ 160, 192, 224, 256,
@@ -62,7 +61,7 @@ static const uint16_t size_classes[] = {
     /* 2048 */ 10240, 12288, 14336, 16384
 };
 
-static const uint16_t size_class_slots[] = {
+static const u16 size_class_slots[] = {
     /* 0 */ 256,
     /* 16 */ 256, 128, 85, 64, 51, 42, 36, 64,
     /* 32 */ 51, 64, 54, 64,
@@ -208,7 +207,7 @@ static bool get_slot(struct slab_metadata *metadata, size_t index) {
     return (metadata->bitmap >> index) & 1UL;
 }
 
-static uint64_t get_mask(size_t slots) {
+static u64 get_mask(size_t slots) {
     return slots < 64 ? ~0UL << slots : 0;
 }
 
@@ -217,14 +216,14 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, struct slab_
         slots = 64;
     }
 
-    uint64_t masked = metadata->bitmap | get_mask(slots);
+    u64 masked = metadata->bitmap | get_mask(slots);
     if (masked == ~0UL) {
         fatal_error("no zero bits");
     }
 
     if (SLOT_RANDOMIZE) {
         // randomize start location for linear search (uniform random choice is too slow)
-        uint64_t random_split = ~(~0UL << get_random_u16_uniform(rng, slots));
+        u64 random_split = ~(~0UL << get_random_u16_uniform(rng, slots));
 
         size_t slot = ffzl(masked | random_split);
         if (slot) {
@@ -240,7 +239,7 @@ static bool has_free_slots(size_t slots, struct slab_metadata *metadata) {
         slots = 64;
     }
 
-    uint64_t masked = metadata->bitmap | get_mask(slots);
+    u64 masked = metadata->bitmap | get_mask(slots);
     return masked != ~0UL;
 }
 
@@ -267,14 +266,14 @@ static void write_after_free_check(char *p, size_t size) {
         return;
     }
 
-    for (size_t i = 0; i < size; i += sizeof(uint64_t)) {
-        if (*(uint64_t *)(p + i)) {
+    for (size_t i = 0; i < size; i += sizeof(u64)) {
+        if (*(u64 *)(p + i)) {
             fatal_error("detected write after free");
         }
     }
 }
 
-static const uint64_t canary_mask = __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ ?
+static const u64 canary_mask = __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ ?
     0xffffffffffffff00UL :
     0x00ffffffffffffffUL;
 
@@ -441,7 +440,7 @@ static inline void deallocate_small(void *p, size_t *expected_size) {
         }
 
         if (canary_size) {
-            uint64_t canary_value;
+            u64 canary_value;
             memcpy(&canary_value, (char *)p + size - canary_size, canary_size);
             if (unlikely(canary_value != metadata->canary_value)) {
                 fatal_error("canary corrupted");

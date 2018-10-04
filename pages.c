@@ -1,5 +1,4 @@
 #include <errno.h>
-#include <stdint.h>
 
 #include "memory.h"
 #include "pages.h"
