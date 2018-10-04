@@ -30,6 +30,21 @@ and 9.0 but only the active AOSP branches (8.1 and 9.0) are supported by this
 project and it doesn't make much sense to use much older releases with far
 less privacy and security hardening.
 
+# Testing
+
+The `preload.sh` script can be used for testing with dynamically linked
+executables using glibc or musl:
+
+    ./preload.sh krita --new-image RGBA,U8,500,500
+
+It can offer slightly better performance when integrated into the C standard
+library and there are other opportunities for similar hardening within C
+standard library and dynamic linker implementations. For example, a library
+region can be implemented to offer similar isolation for dynamic libraries as
+this allocator offers across different size classes. The intention is that this
+will be offered as part of hardened variants of the Bionic and musl C standard
+libraries.
+
 # Configuration
 
 Compile-time configuration is available in the `config.h` file for controlling
