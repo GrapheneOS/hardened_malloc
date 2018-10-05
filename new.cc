@@ -41,42 +41,42 @@ static inline void *new_impl(size_t size, bool nothrow) {
     return handle_out_of_memory(size, nothrow);
 }
 
-void *operator new(size_t size) {
+EXPORT void *operator new(size_t size) {
     return new_impl(size, false);
 }
 
-void *operator new[](size_t size) {
+EXPORT void *operator new[](size_t size) {
     return new_impl(size, false);
 }
 
-void *operator new(size_t size, const std::nothrow_t &) noexcept {
+EXPORT void *operator new(size_t size, const std::nothrow_t &) noexcept {
     return new_impl(size, true);
 }
 
-void *operator new[](size_t size, const std::nothrow_t &) noexcept {
+EXPORT void *operator new[](size_t size, const std::nothrow_t &) noexcept {
     return new_impl(size, true);
 }
 
-void operator delete(void *ptr) noexcept {
+EXPORT void operator delete(void *ptr) noexcept {
     h_free(ptr);
 }
 
-void operator delete[](void *ptr) noexcept {
+EXPORT void operator delete[](void *ptr) noexcept {
     h_free(ptr);
 }
 
-void operator delete(void *ptr, const std::nothrow_t &) noexcept {
+EXPORT void operator delete(void *ptr, const std::nothrow_t &) noexcept {
     h_free(ptr);
 }
 
-void operator delete[](void *ptr, const std::nothrow_t &) noexcept {
+EXPORT void operator delete[](void *ptr, const std::nothrow_t &) noexcept {
     h_free(ptr);
 }
 
-void operator delete(void *ptr, size_t size) noexcept {
+EXPORT void operator delete(void *ptr, size_t size) noexcept {
     h_free_sized(ptr, size);
 }
 
-void operator delete[](void *ptr, size_t size) noexcept {
+EXPORT void operator delete[](void *ptr, size_t size) noexcept {
     h_free_sized(ptr, size);
 }
