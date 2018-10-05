@@ -1,8 +1,9 @@
 CONFIG_CXX_ALLOCATOR := true
 
 CPPFLAGS := -D_GNU_SOURCE
-CFLAGS := -std=c11 -Wall -Wextra -Wmissing-prototypes -O2 -flto -fPIC -fvisibility=hidden -fno-plt -pipe
-CXXFLAGS := -std=c++14 -Wall -Wextra -O2 -flto -fPIC -fvisibility=hidden -fno-plt -pipe
+SHARED_FLAGS := -O2 -flto -fPIC -fvisibility=hidden -fno-plt -pipe -Wall -Wextra
+CFLAGS := -std=c11 $(SHARED_FLAGS) -Wmissing-prototypes
+CXXFLAGS := -std=c++14 $(SHARED_FLAGS)
 LDFLAGS := -Wl,-z,defs,-z,relro,-z,now,-z,nodlopen,-z,text
 OBJECTS := chacha.o malloc.o memory.o pages.o random.o util.o
 
