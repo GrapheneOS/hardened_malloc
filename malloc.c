@@ -411,7 +411,7 @@ static inline void deallocate_small(void *p, size_t *expected_size) {
     struct size_class *c = &size_class_metadata[class];
     size_t size = size_classes[class];
     if (expected_size && size != *expected_size) {
-        fatal_error("sized deallocation mismatch");
+        fatal_error("sized deallocation mismatch (small)");
     }
     bool is_zero_size = size == 0;
     if (is_zero_size) {
@@ -767,7 +767,7 @@ static void deallocate_large(void *p, size_t *expected_size) {
     }
     size_t size = region->size;
     if (expected_size && size != *expected_size) {
-        fatal_error("sized deallocation mismatch");
+        fatal_error("sized deallocation mismatch (large)");
     }
     size_t guard_size = region->guard_size;
     regions_delete(region);
