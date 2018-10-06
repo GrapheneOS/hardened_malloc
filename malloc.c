@@ -844,11 +844,11 @@ EXPORT void *h_realloc(void *old, size_t size) {
         }
         mutex_unlock(&regions_lock);
 
+        size_t old_rounded_size = PAGE_CEILING(old_size);
+        size_t rounded_size = PAGE_CEILING(size);
+
         // in-place shrink
         if (size < old_size && size > max_slab_size_class) {
-            size_t rounded_size = PAGE_CEILING(size);
-            size_t old_rounded_size = PAGE_CEILING(old_size);
-
             void *new_end = (char *)old + rounded_size;
             if (memory_map_fixed(new_end, old_guard_size)) {
                 return NULL;
@@ -865,6 +865,27 @@ EXPORT void *h_realloc(void *old, size_t size) {
             mutex_unlock(&regions_lock);
 
             return old;
+        }
+
+        // in-place growth
+        if (size > old_size) {
+            void *guard_end = (char *)old + old_rounded_size + old_guard_size;
+            size_t extra = rounded_size - old_rounded_size;
+            if (!memory_remap((char *)old + old_rounded_size, old_guard_size, old_guard_size + extra)) {
+                if (memory_protect_rw((char *)old + old_rounded_size, extra)) {
+                    memory_unmap(guard_end, extra);
+                } else {
+                    mutex_lock(&regions_lock);
+                    struct region_info *region = regions_find(old);
+                    if (region == NULL) {
+                        fatal_error("invalid realloc");
+                    }
+                    region->size = size;
+                    mutex_unlock(&regions_lock);
+
+                    return old;
+                }
+            }
         }
 
         size_t copy_size = size < old_size ? size : old_size;

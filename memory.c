@@ -51,6 +51,17 @@ int memory_protect_ro(void *ptr, size_t size) {
     return memory_protect_prot(ptr, size, PROT_READ);
 }
 
+int memory_remap(void *old, size_t old_size, size_t new_size) {
+    void *ptr = mremap(old, old_size, new_size, 0);
+    if (unlikely(ptr == MAP_FAILED)) {
+        if (errno != ENOMEM) {
+            fatal_error("non-ENOMEM mremap failure");
+        }
+        return 1;
+    }
+    return 0;
+}
+
 int memory_remap_fixed(void *old, size_t old_size, void *new, size_t new_size) {
     void *ptr = mremap(old, old_size, new_size, MREMAP_MAYMOVE|MREMAP_FIXED, new);
     if (unlikely(ptr == MAP_FAILED)) {
