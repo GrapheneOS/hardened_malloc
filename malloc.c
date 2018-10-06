@@ -847,28 +847,28 @@ EXPORT void *h_realloc(void *old, size_t size) {
         size_t old_rounded_size = PAGE_CEILING(old_size);
         size_t rounded_size = PAGE_CEILING(size);
 
-        // in-place shrink
-        if (size < old_size && size > max_slab_size_class) {
-            void *new_end = (char *)old + rounded_size;
-            if (memory_map_fixed(new_end, old_guard_size)) {
-                return NULL;
+        if (size > max_slab_size_class) {
+            // in-place shrink
+            if (size < old_size) {
+                void *new_end = (char *)old + rounded_size;
+                if (memory_map_fixed(new_end, old_guard_size)) {
+                    return NULL;
+                }
+                void *new_guard_end = (char *)new_end + old_guard_size;
+                memory_unmap(new_guard_end, old_rounded_size - rounded_size);
+
+                mutex_lock(&regions_lock);
+                struct region_info *region = regions_find(old);
+                if (region == NULL) {
+                    fatal_error("invalid realloc");
+                }
+                region->size = size;
+                mutex_unlock(&regions_lock);
+
+                return old;
             }
-            void *new_guard_end = (char *)new_end + old_guard_size;
-            memory_unmap(new_guard_end, old_rounded_size - rounded_size);
 
-            mutex_lock(&regions_lock);
-            struct region_info *region = regions_find(old);
-            if (region == NULL) {
-                fatal_error("invalid realloc");
-            }
-            region->size = size;
-            mutex_unlock(&regions_lock);
-
-            return old;
-        }
-
-        // in-place growth
-        if (size > old_size) {
+            // in-place growth
             void *guard_end = (char *)old + old_rounded_size + old_guard_size;
             size_t extra = rounded_size - old_rounded_size;
             if (!memory_remap((char *)old + old_rounded_size, old_guard_size, old_guard_size + extra)) {
@@ -886,31 +886,31 @@ EXPORT void *h_realloc(void *old, size_t size) {
                     return old;
                 }
             }
-        }
 
-        size_t copy_size = size < old_size ? size : old_size;
-        if (copy_size >= mremap_threshold) {
-            void *new = allocate(size);
-            if (new == NULL) {
-                return NULL;
-            }
+            size_t copy_size = size < old_size ? size : old_size;
+            if (copy_size >= mremap_threshold) {
+                void *new = allocate(size);
+                if (new == NULL) {
+                    return NULL;
+                }
 
-            mutex_lock(&regions_lock);
-            struct region_info *region = regions_find(old);
-            if (region == NULL) {
-                fatal_error("invalid realloc");
-            }
-            regions_delete(region);
-            mutex_unlock(&regions_lock);
+                mutex_lock(&regions_lock);
+                struct region_info *region = regions_find(old);
+                if (region == NULL) {
+                    fatal_error("invalid realloc");
+                }
+                regions_delete(region);
+                mutex_unlock(&regions_lock);
 
-            if (memory_remap_fixed(old, old_size, new, size)) {
-                memcpy(new, old, copy_size);
-                deallocate_pages(old, old_size, old_guard_size);
-            } else {
-                memory_unmap((char *)old - old_guard_size, old_guard_size);
-                memory_unmap((char *)old + PAGE_CEILING(old_size), old_guard_size);
+                if (memory_remap_fixed(old, old_size, new, size)) {
+                    memcpy(new, old, copy_size);
+                    deallocate_pages(old, old_size, old_guard_size);
+                } else {
+                    memory_unmap((char *)old - old_guard_size, old_guard_size);
+                    memory_unmap((char *)old + PAGE_CEILING(old_size), old_guard_size);
+                }
+                return new;
             }
-            return new;
         }
     }
 
