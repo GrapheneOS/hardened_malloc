@@ -8,5 +8,6 @@
 #define SLOT_RANDOMIZE true
 #define ZERO_ON_FREE true
 #define SLAB_CANARY true
+#define GUARD_SIZE_DIVISOR 2
 
 #endif
