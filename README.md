@@ -69,11 +69,12 @@ the optional security features are enabled. Options are only provided for the
 features with a significant performance or memory usage cost.
 
 ```
-#define GUARD_SLABS true
 #define WRITE_AFTER_FREE_CHECK true
 #define SLOT_RANDOMIZE true
 #define ZERO_ON_FREE true
 #define SLAB_CANARY true
+#define GUARD_SLABS_INTERVAL 1
+#define GUARD_SIZE_DIVISOR 2
 ```
 
 There will be more control over enabled features in the future along with
