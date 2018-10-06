@@ -141,6 +141,7 @@ static struct size_class {
     struct random_state rng;
     size_t metadata_allocated;
     size_t metadata_count;
+    size_t metadata_count_unguarded;
 } __attribute__((aligned(CACHELINE_SIZE))) size_class_metadata[N_SIZE_CLASSES];
 
 static const size_t class_region_size = 128ULL * 1024 * 1024 * 1024;
@@ -180,8 +181,10 @@ static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_si
         return NULL;
     }
     c->metadata_count++;
-    if (GUARD_SLABS) {
+    c->metadata_count_unguarded++;
+    if (c->metadata_count_unguarded >= GUARD_SLABS_INTERVAL) {
         c->metadata_count++;
+        c->metadata_count_unguarded = 0;
     }
     return metadata;
 }
