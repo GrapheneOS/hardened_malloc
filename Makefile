@@ -15,10 +15,10 @@ endif
 hardened_malloc.so: $(OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared $^ $(LDLIBS) -o $@
 
-chacha.o: chacha.c chacha.h
-malloc.o: malloc.c malloc.h mutex.h config.h memory.h pages.h random.h util.h
+chacha.o: chacha.c chacha.h util.h
+malloc.o: malloc.c malloc.h config.h mutex.h memory.h pages.h random.h util.h
 memory.o: memory.c memory.h util.h
-new.o: new.cc
+new.o: new.cc malloc.h util.h
 pages.o: pages.c pages.h memory.h util.h
 random.o: random.c random.h chacha.h util.h
 util.o: util.c util.h
