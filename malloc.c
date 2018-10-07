@@ -189,24 +189,15 @@ static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_si
     return metadata;
 }
 
-static void check_index(size_t index) {
-    if (index >= 64) {
-        fatal_error("invalid index");
-    }
-}
-
 static void set_slot(struct slab_metadata *metadata, size_t index) {
-    check_index(index);
     metadata->bitmap |= 1UL << index;
 }
 
 static void clear_slot(struct slab_metadata *metadata, size_t index) {
-    check_index(index);
     metadata->bitmap &= ~(1UL << index);
 }
 
 static bool get_slot(struct slab_metadata *metadata, size_t index) {
-    check_index(index);
     return (metadata->bitmap >> index) & 1UL;
 }
 
