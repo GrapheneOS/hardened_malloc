@@ -40,7 +40,7 @@ static union {
 };
 
 struct slab_metadata {
-    u64 bitmap;
+    u64 bitmap[4];
     struct slab_metadata *next;
     struct slab_metadata *prev;
     u64 canary_value;
@@ -190,15 +190,15 @@ static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_si
 }
 
 static void set_slot(struct slab_metadata *metadata, size_t index) {
-    metadata->bitmap |= 1UL << index;
+    metadata->bitmap[index / 64] |= 1UL << index;
 }
 
 static void clear_slot(struct slab_metadata *metadata, size_t index) {
-    metadata->bitmap &= ~(1UL << index);
+    metadata->bitmap[index / 64] &= ~(1UL << index);
 }
 
 static bool get_slot(struct slab_metadata *metadata, size_t index) {
-    return (metadata->bitmap >> index) & 1UL;
+    return (metadata->bitmap[index / 64] >> index) & 1UL;
 }
 
 static u64 get_mask(size_t slots) {
@@ -206,39 +206,64 @@ static u64 get_mask(size_t slots) {
 }
 
 static size_t get_free_slot(struct random_state *rng, size_t slots, struct slab_metadata *metadata) {
-    if (slots > 64) {
-        slots = 64;
-    }
-
-    u64 masked = metadata->bitmap | get_mask(slots);
-    if (masked == ~0UL) {
-        fatal_error("no zero bits");
-    }
-
     if (SLOT_RANDOMIZE) {
         // randomize start location for linear search (uniform random choice is too slow)
-        u64 random_split = ~(~0UL << get_random_u16_uniform(rng, slots));
+        unsigned random_index = get_random_u16_uniform(rng, slots);
+        unsigned first_bitmap = random_index / 64;
+        u64 random_split = ~(~0UL << (random_index - first_bitmap * 64));
 
-        size_t slot = ffzl(masked | random_split);
-        if (slot) {
-            return slot - 1;
+        for (unsigned i = first_bitmap; i <= slots / 64; i++) {
+            u64 masked = metadata->bitmap[i];
+            if (i == slots / 64) {
+                masked |= get_mask(slots - i * 64);
+            }
+
+            if (i == first_bitmap) {
+                masked |= random_split;
+            }
+
+            if (masked == ~0UL) {
+                continue;
+            }
+
+            return ffzl(masked) - 1 + i * 64;
         }
+   }
+
+    for (unsigned i = 0; i <= slots / 64; i++) {
+        u64 masked = metadata->bitmap[i];
+        if (i == slots / 64) {
+            masked |= get_mask(slots - i * 64);
+        }
+
+        if (masked == ~0UL) {
+            continue;
+        }
+
+        return ffzl(masked) - 1 + i * 64;
     }
 
-    return ffzl(masked) - 1;
+    fatal_error("no zero bits");
 }
 
 static bool has_free_slots(size_t slots, struct slab_metadata *metadata) {
-    if (slots > 64) {
-        slots = 64;
+    if (slots <= 64) {
+        u64 masked = metadata->bitmap[0] | get_mask(slots);
+        return masked != ~0UL;
+    } else if (slots <= 128) {
+        u64 masked = metadata->bitmap[1] | get_mask(slots - 64);
+        return metadata->bitmap[0] != ~0UL || masked != ~0UL;
+    } else if (slots <= 192) {
+        u64 masked = metadata->bitmap[2] | get_mask(slots - 128);
+        return metadata->bitmap[0] != ~0UL || metadata->bitmap[1] != ~0UL || masked != ~0UL;
     }
-
-    u64 masked = metadata->bitmap | get_mask(slots);
-    return masked != ~0UL;
+    u64 masked = metadata->bitmap[3] | get_mask(slots - 192);
+    return metadata->bitmap[0] != ~0UL || metadata->bitmap[1] != ~0UL || metadata->bitmap[2] != ~0UL || masked != ~0UL;
 }
 
 static bool is_free_slab(struct slab_metadata *metadata) {
-    return !metadata->bitmap;
+    return !metadata->bitmap[0] && !metadata->bitmap[1] && !metadata->bitmap[2] &&
+        !metadata->bitmap[3];
 }
 
 static struct slab_metadata *get_metadata(struct size_class *c, void *p) {
