@@ -850,10 +850,10 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
     return p;
 }
 
-#define MREMAP_THRESHOLD (32 * 1024 * 1024)
+#define MREMAP_MOVE_THRESHOLD (32 * 1024 * 1024)
 
-static_assert(MREMAP_THRESHOLD >= REGION_QUARANTINE_SKIP_THRESHOLD,
-    "mremap threshold must be above region quarantine limit");
+static_assert(MREMAP_MOVE_THRESHOLD >= REGION_QUARANTINE_SKIP_THRESHOLD,
+    "mremap move threshold must be above region quarantine limit");
 
 EXPORT void *h_realloc(void *old, size_t size) {
     if (old == NULL) {
@@ -931,7 +931,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
             }
 
             size_t copy_size = size < old_size ? size : old_size;
-            if (copy_size >= MREMAP_THRESHOLD) {
+            if (copy_size >= MREMAP_MOVE_THRESHOLD) {
                 void *new = allocate(size);
                 if (new == NULL) {
                     return NULL;
