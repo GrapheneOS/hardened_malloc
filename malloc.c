@@ -522,6 +522,27 @@ static struct region_info *regions;
 static size_t regions_total = initial_region_table_size;
 static size_t regions_free = initial_region_table_size;
 static struct mutex regions_lock = MUTEX_INITIALIZER;
+static struct region_info regions_quarantine[REGION_QUARANTINE_SIZE];
+static size_t regions_quarantine_index;
+
+static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t guard_size) {
+    if (size >= REGION_QUARANTINE_SKIP_THRESHOLD) {
+        deallocate_pages(p, size, guard_size);
+        return;
+    }
+
+    if (unlikely(memory_map_fixed(p, size))) {
+        deallocate_pages(p, size, guard_size);
+        return;
+    }
+
+    struct region_info old = regions_quarantine[regions_quarantine_index];
+    if (old.p != NULL) {
+        deallocate_pages(old.p, old.size, old.guard_size);
+    }
+    regions_quarantine[regions_quarantine_index] = (struct region_info){p, size, guard_size};
+    regions_quarantine_index = (regions_quarantine_index + 1) % REGION_QUARANTINE_SIZE;
+}
 
 static size_t hash_page(void *p) {
     uintptr_t u = (uintptr_t)p >> PAGE_SHIFT;
@@ -792,7 +813,7 @@ static void deallocate_large(void *p, size_t *expected_size) {
     regions_delete(region);
     mutex_unlock(&regions_lock);
 
-    deallocate_pages(p, size, guard_size);
+    regions_quarantine_deallocate_pages(p, size, guard_size);
 }
 
 static size_t adjust_size_for_canaries(size_t size) {
@@ -829,7 +850,10 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
     return p;
 }
 
-static const size_t mremap_threshold = 4 * 1024 * 1024;
+#define MREMAP_THRESHOLD (32 * 1024 * 1024)
+
+static_assert(MREMAP_THRESHOLD >= REGION_QUARANTINE_SKIP_THRESHOLD,
+    "mremap threshold must be above region quarantine limit");
 
 EXPORT void *h_realloc(void *old, size_t size) {
     if (old == NULL) {
@@ -874,7 +898,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
                     return NULL;
                 }
                 void *new_guard_end = (char *)new_end + old_guard_size;
-                memory_unmap(new_guard_end, old_rounded_size - rounded_size);
+                regions_quarantine_deallocate_pages(new_guard_end, old_rounded_size - rounded_size, 0);
 
                 mutex_lock(&regions_lock);
                 struct region_info *region = regions_find(old);
@@ -907,7 +931,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
             }
 
             size_t copy_size = size < old_size ? size : old_size;
-            if (copy_size >= mremap_threshold) {
+            if (copy_size >= MREMAP_THRESHOLD) {
                 void *new = allocate(size);
                 if (new == NULL) {
                     return NULL;

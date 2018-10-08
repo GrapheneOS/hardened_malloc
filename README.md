@@ -75,6 +75,8 @@ features with a significant performance or memory usage cost.
 #define SLAB_CANARY true
 #define GUARD_SLABS_INTERVAL 1
 #define GUARD_SIZE_DIVISOR 2
+#define REGION_QUARANTINE_SIZE 1024
+#define REGION_QUARANTINE_SKIP_THRESHOLD (32 * 1024 * 1024)
 ```
 
 There will be more control over enabled features in the future along with
@@ -127,7 +129,12 @@ allocation and then unmapped on free.
     * [in-progress] Randomized delayed free for slab allocations
     * [in-progress] Randomized allocation of slabs
     * [more randomization coming as the implementation is matured]
-* Slab allocations are zeroed on free and large allocations are unmapped
+* Slab allocations are zeroed on free
+* Large allocations are purged and memory protected on free with the memory
+  mapping kept reserved in a quarantine to detect use-after-free
+    * The quarantine is a FIFO ring buffer, with the oldest mapping in the
+      quarantine being unmapped to make room for the most recently freed
+      mapping
 * Detection of write-after-free by verifying zero filling is intact
 * Memory in fresh allocations is consistently zeroed due to it either being
   fresh pages or zeroed on free after previous usage
