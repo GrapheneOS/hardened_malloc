@@ -8,7 +8,9 @@ EXECUTABLES := \
     read_after_free_large \
     read_after_free_small \
     write_after_free_large \
+    write_after_free_large_reuse \
     write_after_free_small \
+    write_after_free_small_reuse \
     read_zero_size \
     write_zero_size \
     invalid_free_protected \
