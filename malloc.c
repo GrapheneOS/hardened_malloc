@@ -514,6 +514,11 @@ struct region_info {
     size_t guard_size;
 };
 
+struct quarantine_info {
+    void *p;
+    size_t size;
+};
+
 static const size_t initial_region_table_size = 256;
 static const size_t max_region_table_size = class_region_size / PAGE_SIZE;
 
@@ -522,7 +527,7 @@ static struct region_info *regions;
 static size_t regions_total = initial_region_table_size;
 static size_t regions_free = initial_region_table_size;
 static struct mutex regions_lock = MUTEX_INITIALIZER;
-static struct region_info regions_quarantine[REGION_QUARANTINE_SIZE];
+static struct quarantine_info regions_quarantine[REGION_QUARANTINE_SIZE];
 static size_t regions_quarantine_index;
 
 static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t guard_size) {
@@ -536,11 +541,12 @@ static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t gua
         return;
     }
 
-    struct region_info old = regions_quarantine[regions_quarantine_index];
+    struct quarantine_info old = regions_quarantine[regions_quarantine_index];
     if (old.p != NULL) {
-        deallocate_pages(old.p, old.size, old.guard_size);
+        memory_unmap(old.p, old.size);
     }
-    regions_quarantine[regions_quarantine_index] = (struct region_info){p, size, guard_size};
+    regions_quarantine[regions_quarantine_index] =
+        (struct quarantine_info){(char *)p - guard_size, size + guard_size * 2};
     regions_quarantine_index = (regions_quarantine_index + 1) % REGION_QUARANTINE_SIZE;
 }
 
