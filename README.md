@@ -153,7 +153,8 @@ allocation and then unmapped on free.
   size class regions interspersed with guard pages
 * Zero size allocations are memory protected
 * Protected allocator metadata
-    * Address space for metadata is never used for allocations and vice versa
+    * Address space for metadata is entirely reserved during initialization and
+      never reused for allocations or anything else
     * [implementing stronger protection is in-progress]
 * Extension for retrieving the size of allocations with fallback
   to a sentinel for pointers not managed by the allocator
