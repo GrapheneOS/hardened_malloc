@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <string.h>
 
+#include "chacha.h"
 #include "random.h"
 #include "util.h"
 
@@ -15,8 +16,6 @@ static ssize_t getrandom(void *buf, size_t buflen, unsigned int flags) {
     return syscall(SYS_getrandom, buf, buflen, flags);
 }
 #endif
-
-#include "chacha.h"
 
 static void get_random_seed(void *buf, size_t size) {
     while (size > 0) {
