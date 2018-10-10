@@ -112,6 +112,9 @@ allocation and then unmapped on free.
 
 * Fully out-of-line metadata
 * Deterministic detection of any invalid free (unallocated, unaligned, etc.)
+    * Validation of the size passed for C++14 sized deallocation by `delete`
+      (detects type confusion if the size is different) and various containers
+      using the allocator API directly
 * Isolated memory region for slab allocations
     * Divided up into isolated inner regions for each size class
         * High entropy random base for each size class region
