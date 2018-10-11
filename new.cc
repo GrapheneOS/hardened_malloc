@@ -1,6 +1,5 @@
-#include <stdlib.h>
-#include <new>
 #include <bits/functexcept.h>
+#include <new>
 
 #define noreturn
 
