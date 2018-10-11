@@ -144,9 +144,9 @@ static struct size_class {
     size_t metadata_count_unguarded;
 } __attribute__((aligned(CACHELINE_SIZE))) size_class_metadata[N_SIZE_CLASSES];
 
-static const size_t class_region_size = 128ULL * 1024 * 1024 * 1024;
-static const size_t real_class_region_size = class_region_size * 2;
-static const size_t slab_region_size = real_class_region_size * N_SIZE_CLASSES;
+#define CLASS_REGION_SIZE (128ULL * 1024 * 1024 * 1024)
+#define REAL_CLASS_REGION_SIZE (CLASS_REGION_SIZE * 2)
+static const size_t slab_region_size = REAL_CLASS_REGION_SIZE * N_SIZE_CLASSES;
 static_assert(PAGE_SIZE == 4096, "bitmap handling will need adjustment for other page sizes");
 
 static void *get_slab(struct size_class *c, size_t slab_size, struct slab_metadata *metadata) {
@@ -155,7 +155,7 @@ static void *get_slab(struct size_class *c, size_t slab_size, struct slab_metada
 }
 
 static size_t get_metadata_max(size_t slab_size) {
-    return class_region_size / slab_size;
+    return CLASS_REGION_SIZE / slab_size;
 }
 
 static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_size, bool non_zero_size) {
@@ -406,7 +406,7 @@ static inline void *allocate_small(size_t requested_size) {
 
 static size_t slab_size_class(void *p) {
     size_t offset = (char *)p - (char *)ro.slab_region_start;
-    return offset / real_class_region_size;
+    return offset / REAL_CLASS_REGION_SIZE;
 }
 
 static size_t slab_usable_size(void *p) {
@@ -519,13 +519,13 @@ struct quarantine_info {
     size_t size;
 };
 
-static const size_t initial_region_table_size = 256;
-static const size_t max_region_table_size = class_region_size / PAGE_SIZE;
+#define INITIAL_REGION_TABLE_SIZE 256
+static const size_t max_region_table_size = CLASS_REGION_SIZE / PAGE_SIZE;
 
 static struct random_state regions_rng;
 static struct region_info *regions;
-static size_t regions_total = initial_region_table_size;
-static size_t regions_free = initial_region_table_size;
+static size_t regions_total = INITIAL_REGION_TABLE_SIZE;
+static size_t regions_free = INITIAL_REGION_TABLE_SIZE;
 static struct mutex regions_lock = MUTEX_INITIALIZER;
 static struct quarantine_info regions_quarantine[REGION_QUARANTINE_SIZE];
 static size_t regions_quarantine_index;
@@ -726,9 +726,9 @@ COLD static void init_slow_path(void) {
         mutex_init(&c->lock);
         random_state_init(&c->rng);
 
-        size_t bound = (real_class_region_size - class_region_size) / PAGE_SIZE - 1;
+        size_t bound = (REAL_CLASS_REGION_SIZE - CLASS_REGION_SIZE) / PAGE_SIZE - 1;
         size_t gap = (get_random_u64_uniform(&regions_rng, bound) + 1) * PAGE_SIZE;
-        c->class_region_start = (char *)ro.slab_region_start + real_class_region_size * class + gap;
+        c->class_region_start = (char *)ro.slab_region_start + REAL_CLASS_REGION_SIZE * class + gap;
 
         size_t size = size_classes[class];
         if (size == 0) {
