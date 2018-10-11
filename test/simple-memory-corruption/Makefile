@@ -22,7 +22,8 @@ EXECUTABLES := \
     uninitialized_malloc_usable_size \
     eight_byte_overflow_small \
     eight_byte_overflow_large \
-    string_overflow
+    string_overflow \
+    delete_type_size_mismatch
 
 all: $(EXECUTABLES)
 
