@@ -527,7 +527,8 @@ static struct region_info *regions;
 static size_t regions_total = INITIAL_REGION_TABLE_SIZE;
 static size_t regions_free = INITIAL_REGION_TABLE_SIZE;
 static struct mutex regions_lock = MUTEX_INITIALIZER;
-static struct quarantine_info regions_quarantine[REGION_QUARANTINE_SIZE];
+static struct quarantine_info regions_quarantine_random[REGION_QUARANTINE_RANDOM_SIZE];
+static struct quarantine_info regions_quarantine_queue[REGION_QUARANTINE_QUEUE_SIZE];
 static size_t regions_quarantine_index;
 
 static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t guard_size) {
@@ -541,13 +542,27 @@ static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t gua
         return;
     }
 
-    struct quarantine_info old = regions_quarantine[regions_quarantine_index];
-    if (old.p != NULL) {
-        memory_unmap(old.p, old.size);
-    }
-    regions_quarantine[regions_quarantine_index] =
+    struct quarantine_info a =
         (struct quarantine_info){(char *)p - guard_size, size + guard_size * 2};
-    regions_quarantine_index = (regions_quarantine_index + 1) % REGION_QUARANTINE_SIZE;
+
+    mutex_lock(&regions_lock);
+
+    size_t index = get_random_u64_uniform(&regions_rng, REGION_QUARANTINE_RANDOM_SIZE);
+    struct quarantine_info b = regions_quarantine_random[index];
+    regions_quarantine_random[index] = a;
+    if (b.p == NULL) {
+        mutex_unlock(&regions_lock);
+        return;
+    }
+
+    a = regions_quarantine_queue[regions_quarantine_index];
+    if (a.p != NULL) {
+        memory_unmap(a.p, a.size);
+    }
+    regions_quarantine_queue[regions_quarantine_index] = b;
+    regions_quarantine_index = (regions_quarantine_index + 1) % REGION_QUARANTINE_QUEUE_SIZE;
+
+    mutex_unlock(&regions_lock);
 }
 
 static size_t hash_page(void *p) {
