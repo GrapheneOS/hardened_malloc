@@ -135,9 +135,12 @@ allocation and then unmapped on free.
 * Slab allocations are zeroed on free
 * Large allocations are purged and memory protected on free with the memory
   mapping kept reserved in a quarantine to detect use-after-free
-    * The quarantine is a FIFO ring buffer, with the oldest mapping in the
-      quarantine being unmapped to make room for the most recently freed
-      mapping
+    * The quarantine is primarily based on a FIFO ring buffer, with the oldest
+      mapping in the quarantine being unmapped to make room for the most
+      recently freed mapping
+    * Another layer of the quarantine swaps with a random slot in an array to
+      randomize the number of large deallocations required to push mappings out
+      of the quarantine
 * Detection of write-after-free by verifying zero filling is intact
 * Memory in fresh allocations is consistently zeroed due to it either being
   fresh pages or zeroed on free after previous usage
