@@ -18,6 +18,15 @@
 #include "random.h"
 #include "util.h"
 
+// use __register_atfork directly to avoid linking with libpthread for glibc < 2.28
+#ifdef __GLIBC__
+extern void *__dso_handle;
+extern int __register_atfork(void (*)(void), void (*)(void), void (*)(void), void *);
+#define atfork(prepare, parent, child) __register_atfork(prepare, parent, child, __dso_handle)
+#else
+#define atfork pthread_atfork
+#endif
+
 static_assert(sizeof(void *) == 8, "64-bit only");
 
 static_assert(!WRITE_AFTER_FREE_CHECK || ZERO_ON_FREE, "WRITE_AFTER_FREE_CHECK depends on ZERO_ON_FREE");
@@ -773,7 +782,7 @@ COLD static void init_slow_path(void) {
     mutex_unlock(&lock);
 
     // may allocate, so wait until the allocator is initialized to avoid deadlocking
-    if (pthread_atfork(full_lock, full_unlock, post_fork_child)) {
+    if (atfork(full_lock, full_unlock, post_fork_child)) {
         fatal_error("pthread_atfork failed");
     }
 }
