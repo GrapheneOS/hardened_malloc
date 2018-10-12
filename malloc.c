@@ -556,13 +556,14 @@ static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t gua
     }
 
     a = regions_quarantine_queue[regions_quarantine_index];
-    if (a.p != NULL) {
-        memory_unmap(a.p, a.size);
-    }
     regions_quarantine_queue[regions_quarantine_index] = b;
     regions_quarantine_index = (regions_quarantine_index + 1) % REGION_QUARANTINE_QUEUE_SIZE;
 
     mutex_unlock(&regions_lock);
+
+    if (a.p != NULL) {
+        memory_unmap(a.p, a.size);
+    }
 }
 
 static size_t hash_page(void *p) {
