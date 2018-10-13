@@ -44,9 +44,7 @@ static union {
         atomic_bool initialized;
     };
     char padding[PAGE_SIZE];
-} ro __attribute__((aligned(PAGE_SIZE))) = {
-    .initialized = ATOMIC_VAR_INIT(false)
-};
+} ro __attribute__((aligned(PAGE_SIZE)));
 
 struct slab_metadata {
     u64 bitmap[4];
