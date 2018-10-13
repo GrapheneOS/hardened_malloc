@@ -144,6 +144,7 @@ static struct size_class {
     // FIFO singly-linked list
     struct slab_metadata *free_slabs_head;
     struct slab_metadata *free_slabs_tail;
+    struct slab_metadata *free_slabs_quarantine[FREE_SLABS_QUARANTINE_RANDOM_SIZE];
 
     struct libdivide_u32_t size_divisor;
     struct libdivide_u64_t slab_size_divisor;
@@ -425,12 +426,21 @@ static size_t slab_usable_size(void *p) {
 static void enqueue_free_slab(struct size_class *c, struct slab_metadata *metadata) {
     metadata->next = NULL;
 
-    if (c->free_slabs_tail != NULL) {
-        c->free_slabs_tail->next = metadata;
-    } else {
-        c->free_slabs_head = metadata;
+    static_assert(FREE_SLABS_QUARANTINE_RANDOM_SIZE < (u16)-1, "free slabs quarantine too large");
+    size_t index = get_random_u16_uniform(&c->rng, FREE_SLABS_QUARANTINE_RANDOM_SIZE);
+    struct slab_metadata *substitute = c->free_slabs_quarantine[index];
+    c->free_slabs_quarantine[index] = metadata;
+
+    if (substitute == NULL) {
+        return;
     }
-    c->free_slabs_tail = metadata;
+
+    if (c->free_slabs_tail != NULL) {
+        c->free_slabs_tail->next = substitute;
+    } else {
+        c->free_slabs_head = substitute;
+    }
+    c->free_slabs_tail = substitute;
 }
 
 static inline void deallocate_small(void *p, size_t *expected_size) {
