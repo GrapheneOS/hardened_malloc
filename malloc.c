@@ -221,7 +221,7 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, struct slab_
         unsigned first_bitmap = random_index / 64;
         u64 random_split = ~(~0UL << (random_index - first_bitmap * 64));
 
-        for (unsigned i = first_bitmap; i <= slots / 64; i++) {
+        for (unsigned i = first_bitmap; i <= (slots - 1) / 64; i++) {
             u64 masked = metadata->bitmap[i];
             if (i == slots / 64) {
                 masked |= get_mask(slots - i * 64);
@@ -239,9 +239,9 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, struct slab_
         }
    }
 
-    for (unsigned i = 0; i <= slots / 64; i++) {
+    for (unsigned i = 0; i <= (slots - 1) / 64; i++) {
         u64 masked = metadata->bitmap[i];
-        if (i == slots / 64) {
+        if (i == (slots - 1) / 64) {
             masked |= get_mask(slots - i * 64);
         }
 
