@@ -442,7 +442,7 @@ static void enqueue_free_slab(struct size_class *c, struct slab_metadata *metada
     c->free_slabs_tail = substitute;
 }
 
-static inline void deallocate_small(void *p, size_t *expected_size) {
+static inline void deallocate_small(void *p, const size_t *expected_size) {
     size_t class = slab_size_class(p);
 
     struct size_class *c = &size_class_metadata[class];
@@ -837,7 +837,7 @@ static void *allocate(size_t size) {
     return p;
 }
 
-static void deallocate_large(void *p, size_t *expected_size) {
+static void deallocate_large(void *p, const size_t *expected_size) {
     enforce_init();
 
     mutex_lock(&regions_lock);
