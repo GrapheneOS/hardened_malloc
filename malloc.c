@@ -199,15 +199,18 @@ static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_si
 }
 
 static void set_slot(struct slab_metadata *metadata, size_t index) {
-    metadata->bitmap[index / 64] |= 1UL << index;
+    size_t bucket = index / 64;
+    metadata->bitmap[bucket] |= 1UL << (index - bucket * 64);
 }
 
 static void clear_slot(struct slab_metadata *metadata, size_t index) {
-    metadata->bitmap[index / 64] &= ~(1UL << index);
+    size_t bucket = index / 64;
+    metadata->bitmap[bucket] &= ~(1UL << (index - bucket * 64));
 }
 
 static bool get_slot(struct slab_metadata *metadata, size_t index) {
-    return (metadata->bitmap[index / 64] >> index) & 1UL;
+    size_t bucket = index / 64;
+    return (metadata->bitmap[bucket] >> (index - bucket * 64)) & 1UL;
 }
 
 static u64 get_mask(size_t slots) {
