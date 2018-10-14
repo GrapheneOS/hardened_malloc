@@ -9,7 +9,7 @@ extern "C" {
 }
 
 COLD static void *handle_out_of_memory(size_t size, bool nothrow) {
-    void *ptr;
+    void *ptr = nullptr;
 
     do {
         std::new_handler handler = std::get_new_handler();
