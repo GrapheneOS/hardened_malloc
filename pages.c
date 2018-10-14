@@ -4,7 +4,9 @@
 #include "pages.h"
 #include "util.h"
 
-#define ALIGNMENT_CEILING(s, alignment) (((s) + (alignment - 1)) & ((~(alignment)) + 1))
+static uintptr_t alignment_ceiling(uintptr_t s, uintptr_t alignment) {
+    return ((s) + (alignment - 1)) & ((~alignment) + 1);
+}
 
 void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotect) {
     size_t real_size;
@@ -54,7 +56,7 @@ void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t guard_
 
     void *usable = (char *)real + guard_size;
 
-    size_t lead_size = ALIGNMENT_CEILING((uintptr_t)usable, alignment) - (uintptr_t)usable;
+    size_t lead_size = alignment_ceiling((uintptr_t)usable, alignment) - (uintptr_t)usable;
     size_t trail_size = alloc_size - lead_size - usable_size;
     void *base = (char *)usable + lead_size;
 
