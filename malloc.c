@@ -1084,14 +1084,14 @@ EXPORT void *h_valloc(size_t size) {
 }
 
 EXPORT void *h_pvalloc(size_t size) {
-    size_t rounded = PAGE_CEILING(size);
-    if (!rounded) {
+    size = PAGE_CEILING(size);
+    if (!size) {
         errno = ENOMEM;
         return NULL;
     }
     init();
     size = adjust_size_for_canaries(size);
-    return alloc_aligned_simple(PAGE_SIZE, rounded);
+    return alloc_aligned_simple(PAGE_SIZE, size);
 }
 
 EXPORT void h_free(void *p) {
