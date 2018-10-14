@@ -1,4 +1,5 @@
 CONFIG_CXX_ALLOCATOR := true
+CONFIG_UBSAN := false
 
 CPPFLAGS := -D_GNU_SOURCE
 SHARED_FLAGS := -O2 -flto -fPIC -fvisibility=hidden -fno-plt -pipe -Wall -Wextra
@@ -14,6 +15,11 @@ ifeq ($(CONFIG_CXX_ALLOCATOR),true)
     LDLIBS += -lstdc++
     SOURCES += new.cc
     OBJECTS += new.o
+endif
+
+ifeq ($(CONFIG_UBSAN),true)
+    CFLAGS += -fsanitize=undefined
+    CXXFLAGS += -fsanitize=undefined
 endif
 
 hardened_malloc.so: $(OBJECTS)
