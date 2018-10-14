@@ -123,8 +123,11 @@ static const size_t max_empty_slabs_total = 64 * 1024;
 
 static struct size_class {
     struct mutex lock;
+
     void *class_region_start;
     struct slab_metadata *slab_info;
+    struct libdivide_u32_t size_divisor;
+    struct libdivide_u64_t slab_size_divisor;
 
     // slabs with at least one allocated slot and at least one free slot
     //
@@ -144,8 +147,6 @@ static struct size_class {
     struct slab_metadata *free_slabs_tail;
     struct slab_metadata *free_slabs_quarantine[FREE_SLABS_QUARANTINE_RANDOM_SIZE];
 
-    struct libdivide_u32_t size_divisor;
-    struct libdivide_u64_t slab_size_divisor;
     struct random_state rng;
     size_t metadata_allocated;
     size_t metadata_count;
