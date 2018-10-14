@@ -289,7 +289,7 @@ static void *slot_pointer(size_t size, void *slab, size_t slot) {
     return (char *)slab + slot * size;
 }
 
-static void write_after_free_check(char *p, size_t size) {
+static void write_after_free_check(const char *p, size_t size) {
     if (!WRITE_AFTER_FREE_CHECK) {
         return;
     }
