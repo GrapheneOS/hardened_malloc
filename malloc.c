@@ -543,7 +543,7 @@ struct quarantine_info {
 };
 
 #define INITIAL_REGION_TABLE_SIZE 256
-static const size_t max_region_table_size = CLASS_REGION_SIZE / PAGE_SIZE;
+#define MAX_REGION_TABLE_SIZE (CLASS_REGION_SIZE / PAGE_SIZE / sizeof(struct region_metadata))
 
 struct region_allocator {
     struct mutex lock;
@@ -559,6 +559,8 @@ struct region_allocator {
 struct allocator_state {
     struct size_class size_class_metadata[N_SIZE_CLASSES];
     struct region_allocator region_allocator;
+    struct region_metadata regions_a[MAX_REGION_TABLE_SIZE] __attribute__((aligned(PAGE_SIZE)));
+    struct region_metadata regions_b[MAX_REGION_TABLE_SIZE] __attribute__((aligned(PAGE_SIZE)));
 };
 
 static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t guard_size) {
@@ -618,7 +620,7 @@ static int regions_grow(void) {
     size_t newsize = newtotal * sizeof(struct region_metadata);
     size_t mask = newtotal - 1;
 
-    if (newtotal > max_region_table_size) {
+    if (newtotal > MAX_REGION_TABLE_SIZE) {
         return 1;
     }
 
@@ -768,9 +770,13 @@ COLD static void init_slow_path(void) {
         (get_random_u64_uniform(rng, REAL_CLASS_REGION_SIZE / PAGE_SIZE) + 1) * PAGE_SIZE;
 
     struct allocator_state *allocator_state =
-        allocate_pages(sizeof(struct allocator_state), metadata_guard_size, true);
+        allocate_pages(sizeof(struct allocator_state), metadata_guard_size, false);
     if (allocator_state == NULL) {
         fatal_error("failed to reserve allocator state");
+    }
+    if (memory_protect_rw(allocator_state, sizeof(allocator_state->size_class_metadata) +
+        sizeof(allocator_state->region_allocator))) {
+        fatal_error("failed to unprotect allocator state");
     }
 
     ro.region_allocator = &allocator_state->region_allocator;
@@ -778,12 +784,8 @@ COLD static void init_slow_path(void) {
 
     mutex_init(&ra->lock);
     random_state_init(&ra->rng);
-    for (unsigned i = 0; i < 2; i++) {
-        ro.regions[i] = allocate_pages(max_region_table_size, PAGE_SIZE, false);
-        if (ro.regions[i] == NULL) {
-            fatal_error("failed to reserve memory for regions table");
-        }
-    }
+    ro.regions[0] = allocator_state->regions_a;
+    ro.regions[1] = allocator_state->regions_b;
     ra->regions = ro.regions[0];
     ra->total = INITIAL_REGION_TABLE_SIZE;
     if (memory_protect_rw(ra->regions, ra->total * sizeof(struct region_metadata))) {
