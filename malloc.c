@@ -40,6 +40,7 @@ static union {
     struct {
         void *slab_region_start;
         void *slab_region_end;
+        struct size_class *size_class_metadata;
         struct region_allocator *region_allocator;
         struct region_metadata *regions[2];
         atomic_bool initialized;
@@ -122,7 +123,7 @@ static size_t get_slab_size(size_t slots, size_t size) {
 // limit on the number of cached empty slabs before attempting purging instead
 static const size_t max_empty_slabs_total = 64 * 1024;
 
-static struct size_class {
+struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
     struct mutex lock;
 
     void *class_region_start;
@@ -152,7 +153,7 @@ static struct size_class {
     size_t metadata_allocated;
     size_t metadata_count;
     size_t metadata_count_unguarded;
-} __attribute__((aligned(CACHELINE_SIZE))) size_class_metadata[N_SIZE_CLASSES];
+};
 
 #define CLASS_REGION_SIZE (128ULL * 1024 * 1024 * 1024)
 #define REAL_CLASS_REGION_SIZE (CLASS_REGION_SIZE * 2)
@@ -316,7 +317,7 @@ static void set_canary(struct slab_metadata *metadata, void *p, size_t size) {
 static inline void *allocate_small(size_t requested_size) {
     struct size_info info = get_size_info(requested_size);
     size_t size = info.size ? info.size : 16;
-    struct size_class *c = &size_class_metadata[info.class];
+    struct size_class *c = &ro.size_class_metadata[info.class];
     size_t slots = size_class_slots[info.class];
     size_t slab_size = get_slab_size(slots, size);
 
@@ -449,7 +450,7 @@ static void enqueue_free_slab(struct size_class *c, struct slab_metadata *metada
 static inline void deallocate_small(void *p, const size_t *expected_size) {
     size_t class = slab_size_class(p);
 
-    struct size_class *c = &size_class_metadata[class];
+    struct size_class *c = &ro.size_class_metadata[class];
     size_t size = size_classes[class];
     if (expected_size && size != *expected_size) {
         fatal_error("sized deallocation mismatch (small)");
@@ -707,14 +708,14 @@ static void regions_delete(struct region_metadata *region) {
 static void full_lock(void) {
     mutex_lock(&ro.region_allocator->lock);
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
-        mutex_lock(&size_class_metadata[class].lock);
+        mutex_lock(&ro.size_class_metadata[class].lock);
     }
 }
 
 static void full_unlock(void) {
     mutex_unlock(&ro.region_allocator->lock);
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
-        mutex_unlock(&size_class_metadata[class].lock);
+        mutex_unlock(&ro.size_class_metadata[class].lock);
     }
 }
 
@@ -722,7 +723,7 @@ static void post_fork_child(void) {
     mutex_init(&ro.region_allocator->lock);
     random_state_init(&ro.region_allocator->rng);
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
-        struct size_class *c = &size_class_metadata[class];
+        struct size_class *c = &ro.size_class_metadata[class];
         mutex_init(&c->lock);
         random_state_init(&c->rng);
     }
@@ -753,6 +754,9 @@ COLD static void init_slow_path(void) {
     }
 
     ro.region_allocator = allocate_pages(sizeof(struct region_allocator), PAGE_SIZE, true);
+    if (ro.region_allocator == NULL) {
+        fatal_error("failed to allocate region allocator state");
+    }
     struct region_allocator *ra = ro.region_allocator;
 
     mutex_init(&ra->lock);
@@ -775,8 +779,13 @@ COLD static void init_slow_path(void) {
     }
     ro.slab_region_end = (char *)ro.slab_region_start + slab_region_size;
 
+    ro.size_class_metadata = allocate_pages(sizeof(struct size_class) * N_SIZE_CLASSES, PAGE_SIZE, true);
+    if (ro.size_class_metadata == NULL) {
+        fatal_error("failed to allocate slab allocator state");
+    }
+
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
-        struct size_class *c = &size_class_metadata[class];
+        struct size_class *c = &ro.size_class_metadata[class];
 
         mutex_init(&c->lock);
         random_state_init(&c->rng);
@@ -1229,7 +1238,7 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
 
     // skip zero byte size class since there's nothing to change
     for (unsigned class = 1; class < N_SIZE_CLASSES; class++) {
-        struct size_class *c = &size_class_metadata[class];
+        struct size_class *c = &ro.size_class_metadata[class];
         size_t slab_size = get_slab_size(size_class_slots[class], size_classes[class]);
 
         mutex_lock(&c->lock);
