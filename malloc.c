@@ -40,6 +40,7 @@ static union {
     struct {
         void *slab_region_start;
         void *slab_region_end;
+        struct region_allocator *region_allocator;
         struct region_info *regions[2];
         atomic_bool initialized;
     };
@@ -543,14 +544,16 @@ struct quarantine_info {
 #define INITIAL_REGION_TABLE_SIZE 256
 static const size_t max_region_table_size = CLASS_REGION_SIZE / PAGE_SIZE;
 
-static struct random_state regions_rng;
-static struct region_info *regions;
-static size_t regions_total = INITIAL_REGION_TABLE_SIZE;
-static size_t regions_free = INITIAL_REGION_TABLE_SIZE;
-static struct mutex regions_lock = MUTEX_INITIALIZER;
-static struct quarantine_info regions_quarantine_random[REGION_QUARANTINE_RANDOM_SIZE];
-static struct quarantine_info regions_quarantine_queue[REGION_QUARANTINE_QUEUE_SIZE];
-static size_t regions_quarantine_index;
+struct region_allocator {
+    struct mutex lock;
+    struct region_info *regions;
+    size_t total;
+    size_t free;
+    struct quarantine_info quarantine_random[REGION_QUARANTINE_RANDOM_SIZE];
+    struct quarantine_info quarantine_queue[REGION_QUARANTINE_QUEUE_SIZE];
+    size_t quarantine_queue_index;
+    struct random_state rng;
+};
 
 static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t guard_size) {
     if (size >= REGION_QUARANTINE_SKIP_THRESHOLD) {
@@ -566,21 +569,23 @@ static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t gua
     struct quarantine_info a =
         (struct quarantine_info){(char *)p - guard_size, size + guard_size * 2};
 
-    mutex_lock(&regions_lock);
+    struct region_allocator *ra = ro.region_allocator;
 
-    size_t index = get_random_u64_uniform(&regions_rng, REGION_QUARANTINE_RANDOM_SIZE);
-    struct quarantine_info b = regions_quarantine_random[index];
-    regions_quarantine_random[index] = a;
+    mutex_lock(&ra->lock);
+
+    size_t index = get_random_u64_uniform(&ra->rng, REGION_QUARANTINE_RANDOM_SIZE);
+    struct quarantine_info b = ra->quarantine_random[index];
+    ra->quarantine_random[index] = a;
     if (b.p == NULL) {
-        mutex_unlock(&regions_lock);
+        mutex_unlock(&ra->lock);
         return;
     }
 
-    a = regions_quarantine_queue[regions_quarantine_index];
-    regions_quarantine_queue[regions_quarantine_index] = b;
-    regions_quarantine_index = (regions_quarantine_index + 1) % REGION_QUARANTINE_QUEUE_SIZE;
+    a = ra->quarantine_queue[ra->quarantine_queue_index];
+    ra->quarantine_queue[ra->quarantine_queue_index] = b;
+    ra->quarantine_queue_index = (ra->quarantine_queue_index + 1) % REGION_QUARANTINE_QUEUE_SIZE;
 
-    mutex_unlock(&regions_lock);
+    mutex_unlock(&ra->lock);
 
     if (a.p != NULL) {
         memory_unmap(a.p, a.size);
@@ -597,11 +602,13 @@ static size_t hash_page(void *p) {
 }
 
 static int regions_grow(void) {
-    if (regions_total > SIZE_MAX / sizeof(struct region_info) / 2) {
+    struct region_allocator *ra = ro.region_allocator;
+
+    if (ra->total > SIZE_MAX / sizeof(struct region_info) / 2) {
         return 1;
     }
 
-    size_t newtotal = regions_total * 2;
+    size_t newtotal = ra->total * 2;
     size_t newsize = newtotal * sizeof(struct region_info);
     size_t mask = newtotal - 1;
 
@@ -609,105 +616,111 @@ static int regions_grow(void) {
         return 1;
     }
 
-    struct region_info *p = regions == ro.regions[0] ?
+    struct region_info *p = ra->regions == ro.regions[0] ?
         ro.regions[1] : ro.regions[0];
 
     if (memory_protect_rw(p, newsize)) {
         return 1;
     }
 
-    for (size_t i = 0; i < regions_total; i++) {
-        void *q = regions[i].p;
+    for (size_t i = 0; i < ra->total; i++) {
+        void *q = ra->regions[i].p;
         if (q != NULL) {
             size_t index = hash_page(q) & mask;
             while (p[index].p != NULL) {
                 index = (index - 1) & mask;
             }
-            p[index] = regions[i];
+            p[index] = ra->regions[i];
         }
     }
 
-    memory_map_fixed(regions, regions_total * sizeof(struct region_info));
-    regions_free = regions_free + regions_total;
-    regions_total = newtotal;
-    regions = p;
+    memory_map_fixed(ra->regions, ra->total * sizeof(struct region_info));
+    ra->free = ra->free + ra->total;
+    ra->total = newtotal;
+    ra->regions = p;
     return 0;
 }
 
 static int regions_insert(void *p, size_t size, size_t guard_size) {
-    if (regions_free * 4 < regions_total) {
+    struct region_allocator *ra = ro.region_allocator;
+
+    if (ra->free * 4 < ra->total) {
         if (regions_grow()) {
             return 1;
         }
     }
 
-    size_t mask = regions_total - 1;
+    size_t mask = ra->total - 1;
     size_t index = hash_page(p) & mask;
-    void *q = regions[index].p;
+    void *q = ra->regions[index].p;
     while (q != NULL) {
         index = (index - 1) & mask;
-        q = regions[index].p;
+        q = ra->regions[index].p;
     }
-    regions[index].p = p;
-    regions[index].size = size;
-    regions[index].guard_size = guard_size;
-    regions_free--;
+    ra->regions[index].p = p;
+    ra->regions[index].size = size;
+    ra->regions[index].guard_size = guard_size;
+    ra->free--;
     return 0;
 }
 
 static struct region_info *regions_find(void *p) {
-    size_t mask = regions_total - 1;
+    struct region_allocator *ra = ro.region_allocator;
+
+    size_t mask = ra->total - 1;
     size_t index = hash_page(p) & mask;
-    void *r = regions[index].p;
+    void *r = ra->regions[index].p;
     while (r != p && r != NULL) {
         index = (index - 1) & mask;
-        r = regions[index].p;
+        r = ra->regions[index].p;
     }
-    return (r == p && r != NULL) ? &regions[index] : NULL;
+    return (r == p && r != NULL) ? &ra->regions[index] : NULL;
 }
 
 static void regions_delete(struct region_info *region) {
-    size_t mask = regions_total - 1;
+    struct region_allocator *ra = ro.region_allocator;
 
-    regions_free++;
+    size_t mask = ra->total - 1;
 
-    size_t i = region - regions;
+    ra->free++;
+
+    size_t i = region - ra->regions;
     for (;;) {
-        regions[i].p = NULL;
-        regions[i].size = 0;
+        ra->regions[i].p = NULL;
+        ra->regions[i].size = 0;
         size_t j = i;
         for (;;) {
             i = (i - 1) & mask;
-            if (regions[i].p == NULL) {
+            if (ra->regions[i].p == NULL) {
                 return;
             }
-            size_t r = hash_page(regions[i].p) & mask;
+            size_t r = hash_page(ra->regions[i].p) & mask;
             if ((i <= r && r < j) || (r < j && j < i) || (j < i && i <= r)) {
                 continue;
             }
-            regions[j] = regions[i];
+            ra->regions[j] = ra->regions[i];
             break;
         }
     }
 }
 
 static void full_lock(void) {
-    mutex_lock(&regions_lock);
+    mutex_lock(&ro.region_allocator->lock);
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
         mutex_lock(&size_class_metadata[class].lock);
     }
 }
 
 static void full_unlock(void) {
-    mutex_unlock(&regions_lock);
+    mutex_unlock(&ro.region_allocator->lock);
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
         mutex_unlock(&size_class_metadata[class].lock);
     }
 }
 
 static void post_fork_child(void) {
-    mutex_init(&regions_lock);
-    random_state_init(&regions_rng);
+    mutex_init(&ro.region_allocator->lock);
+    random_state_init(&ro.region_allocator->rng);
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
         struct size_class *c = &size_class_metadata[class];
         mutex_init(&c->lock);
@@ -739,15 +752,20 @@ COLD static void init_slow_path(void) {
         fatal_error("page size mismatch");
     }
 
-    random_state_init(&regions_rng);
+    ro.region_allocator = allocate_pages(sizeof(struct region_allocator), PAGE_SIZE, true);
+    struct region_allocator *ra = ro.region_allocator;
+
+    mutex_init(&ra->lock);
+    random_state_init(&ra->rng);
     for (unsigned i = 0; i < 2; i++) {
         ro.regions[i] = allocate_pages(max_region_table_size, PAGE_SIZE, false);
         if (ro.regions[i] == NULL) {
             fatal_error("failed to reserve memory for regions table");
         }
     }
-    regions = ro.regions[0];
-    if (memory_protect_rw(regions, regions_total * sizeof(struct region_info))) {
+    ra->regions = ro.regions[0];
+    ra->total = INITIAL_REGION_TABLE_SIZE;
+    if (memory_protect_rw(ra->regions, ra->total * sizeof(struct region_info))) {
         fatal_error("failed to unprotect memory for regions table");
     }
 
@@ -764,7 +782,7 @@ COLD static void init_slow_path(void) {
         random_state_init(&c->rng);
 
         size_t bound = (REAL_CLASS_REGION_SIZE - CLASS_REGION_SIZE) / PAGE_SIZE - 1;
-        size_t gap = (get_random_u64_uniform(&regions_rng, bound) + 1) * PAGE_SIZE;
+        size_t gap = (get_random_u64_uniform(&c->rng, bound) + 1) * PAGE_SIZE;
         c->class_region_start = (char *)ro.slab_region_start + REAL_CLASS_REGION_SIZE * class + gap;
 
         size_t size = size_classes[class];
@@ -820,22 +838,24 @@ static void *allocate(size_t size) {
         return allocate_small(size);
     }
 
-    mutex_lock(&regions_lock);
-    size_t guard_size = get_guard_size(&regions_rng, size);
-    mutex_unlock(&regions_lock);
+    struct region_allocator *ra = ro.region_allocator;
+
+    mutex_lock(&ra->lock);
+    size_t guard_size = get_guard_size(&ra->rng, size);
+    mutex_unlock(&ra->lock);
 
     void *p = allocate_pages(size, guard_size, true);
     if (p == NULL) {
         return NULL;
     }
 
-    mutex_lock(&regions_lock);
+    mutex_lock(&ra->lock);
     if (regions_insert(p, size, guard_size)) {
-        mutex_unlock(&regions_lock);
+        mutex_unlock(&ra->lock);
         deallocate_pages(p, size, guard_size);
         return NULL;
     }
-    mutex_unlock(&regions_lock);
+    mutex_unlock(&ra->lock);
 
     return p;
 }
@@ -843,7 +863,9 @@ static void *allocate(size_t size) {
 static void deallocate_large(void *p, const size_t *expected_size) {
     enforce_init();
 
-    mutex_lock(&regions_lock);
+    struct region_allocator *ra = ro.region_allocator;
+
+    mutex_lock(&ra->lock);
     struct region_info *region = regions_find(p);
     if (region == NULL) {
         fatal_error("invalid free");
@@ -854,7 +876,7 @@ static void deallocate_large(void *p, const size_t *expected_size) {
     }
     size_t guard_size = region->guard_size;
     regions_delete(region);
-    mutex_unlock(&regions_lock);
+    mutex_unlock(&ra->lock);
 
     regions_quarantine_deallocate_pages(p, size, guard_size);
 }
@@ -916,7 +938,9 @@ EXPORT void *h_realloc(void *old, size_t size) {
     } else {
         enforce_init();
 
-        mutex_lock(&regions_lock);
+        struct region_allocator *ra = ro.region_allocator;
+
+        mutex_lock(&ra->lock);
         struct region_info *region = regions_find(old);
         if (region == NULL) {
             fatal_error("invalid realloc");
@@ -925,10 +949,10 @@ EXPORT void *h_realloc(void *old, size_t size) {
         size_t old_guard_size = region->guard_size;
         if (PAGE_CEILING(old_size) == PAGE_CEILING(size)) {
             region->size = size;
-            mutex_unlock(&regions_lock);
+            mutex_unlock(&ra->lock);
             return old;
         }
-        mutex_unlock(&regions_lock);
+        mutex_unlock(&ra->lock);
 
         size_t old_rounded_size = PAGE_CEILING(old_size);
         size_t rounded_size = PAGE_CEILING(size);
@@ -943,13 +967,13 @@ EXPORT void *h_realloc(void *old, size_t size) {
                 void *new_guard_end = (char *)new_end + old_guard_size;
                 regions_quarantine_deallocate_pages(new_guard_end, old_rounded_size - rounded_size, 0);
 
-                mutex_lock(&regions_lock);
+                mutex_lock(&ra->lock);
                 struct region_info *region = regions_find(old);
                 if (region == NULL) {
                     fatal_error("invalid realloc");
                 }
                 region->size = size;
-                mutex_unlock(&regions_lock);
+                mutex_unlock(&ra->lock);
 
                 return old;
             }
@@ -961,13 +985,13 @@ EXPORT void *h_realloc(void *old, size_t size) {
                 if (memory_protect_rw((char *)old + old_rounded_size, extra)) {
                     memory_unmap(guard_end, extra);
                 } else {
-                    mutex_lock(&regions_lock);
+                    mutex_lock(&ra->lock);
                     struct region_info *region = regions_find(old);
                     if (region == NULL) {
                         fatal_error("invalid realloc");
                     }
                     region->size = size;
-                    mutex_unlock(&regions_lock);
+                    mutex_unlock(&ra->lock);
 
                     return old;
                 }
@@ -980,13 +1004,13 @@ EXPORT void *h_realloc(void *old, size_t size) {
                     return NULL;
                 }
 
-                mutex_lock(&regions_lock);
+                mutex_lock(&ra->lock);
                 struct region_info *region = regions_find(old);
                 if (region == NULL) {
                     fatal_error("invalid realloc");
                 }
                 regions_delete(region);
-                mutex_unlock(&regions_lock);
+                mutex_unlock(&ra->lock);
 
                 if (memory_remap_fixed(old, old_size, new, size)) {
                     memcpy(new, old, copy_size);
@@ -1035,22 +1059,24 @@ static int alloc_aligned(void **memptr, size_t alignment, size_t size, size_t mi
         return 0;
     }
 
-    mutex_lock(&regions_lock);
-    size_t guard_size = get_guard_size(&regions_rng, size);
-    mutex_unlock(&regions_lock);
+    struct region_allocator *ra = ro.region_allocator;
+
+    mutex_lock(&ra->lock);
+    size_t guard_size = get_guard_size(&ra->rng, size);
+    mutex_unlock(&ra->lock);
 
     void *p = allocate_pages_aligned(size, alignment, guard_size);
     if (p == NULL) {
         return ENOMEM;
     }
 
-    mutex_lock(&regions_lock);
+    mutex_lock(&ra->lock);
     if (regions_insert(p, size, guard_size)) {
-        mutex_unlock(&regions_lock);
+        mutex_unlock(&ra->lock);
         deallocate_pages(p, size, guard_size);
         return ENOMEM;
     }
-    mutex_unlock(&regions_lock);
+    mutex_unlock(&ra->lock);
 
     *memptr = p;
     return 0;
@@ -1138,13 +1164,14 @@ EXPORT size_t h_malloc_usable_size(void *p) {
 
     enforce_init();
 
-    mutex_lock(&regions_lock);
+    struct region_allocator *ra = ro.region_allocator;
+    mutex_lock(&ra->lock);
     struct region_info *region = regions_find(p);
     if (p == NULL) {
         fatal_error("invalid malloc_usable_size");
     }
     size_t size = region->size;
-    mutex_unlock(&regions_lock);
+    mutex_unlock(&ra->lock);
 
     return size;
 }
@@ -1163,10 +1190,11 @@ EXPORT size_t h_malloc_object_size(void *p) {
         return 0;
     }
 
-    mutex_lock(&regions_lock);
+    struct region_allocator *ra = ro.region_allocator;
+    mutex_lock(&ra->lock);
     struct region_info *region = regions_find(p);
     size_t size = p == NULL ? SIZE_MAX : region->size;
-    mutex_unlock(&regions_lock);
+    mutex_unlock(&ra->lock);
 
     return size;
 }
