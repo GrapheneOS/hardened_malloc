@@ -108,6 +108,26 @@ Large allocations are tracked via a global hash table mapping their address to
 their size and guard size. They're simply memory mappings and get mapped on
 allocation and then unmapped on free.
 
+This allocator is aimed at production usage, not aiding with finding and fixing
+memory corruption bugs for software development. It does find many latent bugs
+but won't include features like the option of generating and storing stack
+traces for each allocation to include the allocation site in related error
+messages. The design choices are based around minimizing overhead and
+maximizing security which often leads to different decisions than a tool
+attempting to find bugs. For example, it uses zero-based sanitization on free
+and doesn't minimize slack space from size class rounding between the end of an
+allocation and the canary / guard region. Zero-based filling has the least
+chance of uncovering latent bugs, but also the best chance of mitigating
+vulnerabilities. The canary feature is primarily meant to act as padding
+absorbing small overflows to render them harmless, so slack space is helpful
+rather than harmful despite not detecting the corruption on free. The canary
+needs detection on free in order to have any hope of stopping other kinds of
+issues like a sequential overflow, which is why it's included.  It's assumed
+that an attacker can figure out the allocator is in use so the focus is
+explicitly not on detecting bugs that are impossible to exploit with it in use
+like an 8 byte overflow. The design choices would be different if performance
+was a bit less important and if a core goal was finding latent bugs.
+
 # Security properties
 
 * Fully out-of-line metadata
