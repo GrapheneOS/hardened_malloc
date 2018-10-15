@@ -556,11 +556,14 @@ struct region_allocator {
     struct random_state rng;
 };
 
-struct allocator_state {
+struct __attribute__((aligned(PAGE_SIZE))) allocator_state {
     struct size_class size_class_metadata[N_SIZE_CLASSES];
     struct region_allocator region_allocator;
+    // padding until next page boundary for mprotect
     struct region_metadata regions_a[MAX_REGION_TABLE_SIZE] __attribute__((aligned(PAGE_SIZE)));
+    // padding until next page boundary for mprotect
     struct region_metadata regions_b[MAX_REGION_TABLE_SIZE] __attribute__((aligned(PAGE_SIZE)));
+    // padding until next page boundary for mprotect
 };
 
 static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t guard_size) {
