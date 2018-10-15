@@ -788,6 +788,7 @@ COLD static void init_slow_path(void) {
     ro.regions[1] = allocator_state->regions_b;
     ra->regions = ro.regions[0];
     ra->total = INITIAL_REGION_TABLE_SIZE;
+    ra->free = INITIAL_REGION_TABLE_SIZE;
     if (memory_protect_rw(ra->regions, ra->total * sizeof(struct region_metadata))) {
         fatal_error("failed to unprotect memory for regions table");
     }
