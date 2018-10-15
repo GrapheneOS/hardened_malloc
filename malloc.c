@@ -556,6 +556,11 @@ struct region_allocator {
     struct random_state rng;
 };
 
+struct allocator_state {
+    struct size_class size_class_metadata[N_SIZE_CLASSES];
+    struct region_allocator region_allocator;
+};
+
 static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t guard_size) {
     if (size >= REGION_QUARANTINE_SKIP_THRESHOLD) {
         deallocate_pages(p, size, guard_size);
@@ -762,10 +767,13 @@ COLD static void init_slow_path(void) {
     size_t metadata_guard_size =
         (get_random_u64_uniform(rng, REAL_CLASS_REGION_SIZE / PAGE_SIZE) + 1) * PAGE_SIZE;
 
-    ro.region_allocator = allocate_pages(sizeof(struct region_allocator), metadata_guard_size, true);
-    if (ro.region_allocator == NULL) {
-        fatal_error("failed to allocate region allocator state");
+    struct allocator_state *allocator_state =
+        allocate_pages(sizeof(struct allocator_state), metadata_guard_size, true);
+    if (allocator_state == NULL) {
+        fatal_error("failed to reserve allocator state");
     }
+
+    ro.region_allocator = &allocator_state->region_allocator;
     struct region_allocator *ra = ro.region_allocator;
 
     mutex_init(&ra->lock);
@@ -788,10 +796,7 @@ COLD static void init_slow_path(void) {
     }
     ro.slab_region_end = (char *)ro.slab_region_start + slab_region_size;
 
-    ro.size_class_metadata = allocate_pages(sizeof(struct size_class) * N_SIZE_CLASSES, PAGE_SIZE, true);
-    if (ro.size_class_metadata == NULL) {
-        fatal_error("failed to allocate slab allocator state");
-    }
+    ro.size_class_metadata = allocator_state->size_class_metadata;
 
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
         struct size_class *c = &ro.size_class_metadata[class];
