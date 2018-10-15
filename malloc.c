@@ -753,7 +753,16 @@ COLD static void init_slow_path(void) {
         fatal_error("page size mismatch");
     }
 
-    ro.region_allocator = allocate_pages(sizeof(struct region_allocator), PAGE_SIZE, true);
+    struct random_state *rng = allocate_pages(sizeof(struct random_state), PAGE_SIZE, true);
+    if (rng == NULL) {
+        fatal_error("failed to allocate init rng");
+    }
+    random_state_init(rng);
+
+    size_t metadata_guard_size =
+        (get_random_u64_uniform(rng, REAL_CLASS_REGION_SIZE / PAGE_SIZE) + 1) * PAGE_SIZE;
+
+    ro.region_allocator = allocate_pages(sizeof(struct region_allocator), metadata_guard_size, true);
     if (ro.region_allocator == NULL) {
         fatal_error("failed to allocate region allocator state");
     }
@@ -791,7 +800,7 @@ COLD static void init_slow_path(void) {
         random_state_init(&c->rng);
 
         size_t bound = (REAL_CLASS_REGION_SIZE - CLASS_REGION_SIZE) / PAGE_SIZE - 1;
-        size_t gap = (get_random_u64_uniform(&c->rng, bound) + 1) * PAGE_SIZE;
+        size_t gap = (get_random_u64_uniform(rng, bound) + 1) * PAGE_SIZE;
         c->class_region_start = (char *)ro.slab_region_start + REAL_CLASS_REGION_SIZE * class + gap;
 
         size_t size = size_classes[class];
@@ -811,6 +820,8 @@ COLD static void init_slow_path(void) {
             fatal_error("failed to allocate initial slab info");
         }
     }
+
+    deallocate_pages(rng, sizeof(struct random_state), PAGE_SIZE);
 
     atomic_store_explicit(&ro.initialized, true, memory_order_release);
 
