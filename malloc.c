@@ -41,7 +41,7 @@ static union {
         void *slab_region_start;
         void *slab_region_end;
         struct region_allocator *region_allocator;
-        struct region_info *regions[2];
+        struct region_metadata *regions[2];
         atomic_bool initialized;
     };
     char padding[PAGE_SIZE];
@@ -530,7 +530,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     mutex_unlock(&c->lock);
 }
 
-struct region_info {
+struct region_metadata {
     void *p;
     size_t size;
     size_t guard_size;
@@ -546,7 +546,7 @@ static const size_t max_region_table_size = CLASS_REGION_SIZE / PAGE_SIZE;
 
 struct region_allocator {
     struct mutex lock;
-    struct region_info *regions;
+    struct region_metadata *regions;
     size_t total;
     size_t free;
     struct quarantine_info quarantine_random[REGION_QUARANTINE_RANDOM_SIZE];
@@ -604,19 +604,19 @@ static size_t hash_page(void *p) {
 static int regions_grow(void) {
     struct region_allocator *ra = ro.region_allocator;
 
-    if (ra->total > SIZE_MAX / sizeof(struct region_info) / 2) {
+    if (ra->total > SIZE_MAX / sizeof(struct region_metadata) / 2) {
         return 1;
     }
 
     size_t newtotal = ra->total * 2;
-    size_t newsize = newtotal * sizeof(struct region_info);
+    size_t newsize = newtotal * sizeof(struct region_metadata);
     size_t mask = newtotal - 1;
 
     if (newtotal > max_region_table_size) {
         return 1;
     }
 
-    struct region_info *p = ra->regions == ro.regions[0] ?
+    struct region_metadata *p = ra->regions == ro.regions[0] ?
         ro.regions[1] : ro.regions[0];
 
     if (memory_protect_rw(p, newsize)) {
@@ -634,7 +634,7 @@ static int regions_grow(void) {
         }
     }
 
-    memory_map_fixed(ra->regions, ra->total * sizeof(struct region_info));
+    memory_map_fixed(ra->regions, ra->total * sizeof(struct region_metadata));
     ra->free = ra->free + ra->total;
     ra->total = newtotal;
     ra->regions = p;
@@ -664,7 +664,7 @@ static int regions_insert(void *p, size_t size, size_t guard_size) {
     return 0;
 }
 
-static struct region_info *regions_find(void *p) {
+static struct region_metadata *regions_find(void *p) {
     struct region_allocator *ra = ro.region_allocator;
 
     size_t mask = ra->total - 1;
@@ -677,7 +677,7 @@ static struct region_info *regions_find(void *p) {
     return (r == p && r != NULL) ? &ra->regions[index] : NULL;
 }
 
-static void regions_delete(struct region_info *region) {
+static void regions_delete(struct region_metadata *region) {
     struct region_allocator *ra = ro.region_allocator;
 
     size_t mask = ra->total - 1;
@@ -765,7 +765,7 @@ COLD static void init_slow_path(void) {
     }
     ra->regions = ro.regions[0];
     ra->total = INITIAL_REGION_TABLE_SIZE;
-    if (memory_protect_rw(ra->regions, ra->total * sizeof(struct region_info))) {
+    if (memory_protect_rw(ra->regions, ra->total * sizeof(struct region_metadata))) {
         fatal_error("failed to unprotect memory for regions table");
     }
 
@@ -866,7 +866,7 @@ static void deallocate_large(void *p, const size_t *expected_size) {
     struct region_allocator *ra = ro.region_allocator;
 
     mutex_lock(&ra->lock);
-    struct region_info *region = regions_find(p);
+    struct region_metadata *region = regions_find(p);
     if (region == NULL) {
         fatal_error("invalid free");
     }
@@ -941,7 +941,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
         struct region_allocator *ra = ro.region_allocator;
 
         mutex_lock(&ra->lock);
-        struct region_info *region = regions_find(old);
+        struct region_metadata *region = regions_find(old);
         if (region == NULL) {
             fatal_error("invalid realloc");
         }
@@ -968,7 +968,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
                 regions_quarantine_deallocate_pages(new_guard_end, old_rounded_size - rounded_size, 0);
 
                 mutex_lock(&ra->lock);
-                struct region_info *region = regions_find(old);
+                struct region_metadata *region = regions_find(old);
                 if (region == NULL) {
                     fatal_error("invalid realloc");
                 }
@@ -986,7 +986,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
                     memory_unmap(guard_end, extra);
                 } else {
                     mutex_lock(&ra->lock);
-                    struct region_info *region = regions_find(old);
+                    struct region_metadata *region = regions_find(old);
                     if (region == NULL) {
                         fatal_error("invalid realloc");
                     }
@@ -1005,7 +1005,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
                 }
 
                 mutex_lock(&ra->lock);
-                struct region_info *region = regions_find(old);
+                struct region_metadata *region = regions_find(old);
                 if (region == NULL) {
                     fatal_error("invalid realloc");
                 }
@@ -1166,7 +1166,7 @@ EXPORT size_t h_malloc_usable_size(void *p) {
 
     struct region_allocator *ra = ro.region_allocator;
     mutex_lock(&ra->lock);
-    struct region_info *region = regions_find(p);
+    struct region_metadata *region = regions_find(p);
     if (p == NULL) {
         fatal_error("invalid malloc_usable_size");
     }
@@ -1192,7 +1192,7 @@ EXPORT size_t h_malloc_object_size(void *p) {
 
     struct region_allocator *ra = ro.region_allocator;
     mutex_lock(&ra->lock);
-    struct region_info *region = regions_find(p);
+    struct region_metadata *region = regions_find(p);
     size_t size = p == NULL ? SIZE_MAX : region->size;
     mutex_unlock(&ra->lock);
 
