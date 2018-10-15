@@ -126,6 +126,9 @@ allocation and then unmapped on free.
     * Entire slab region starts out non-readable and non-writable
     * Slabs beyond the cache limit are purged and become non-readable and
       non-writable memory again
+        * Placed into a queue for reuse in FIFO order to maximize the time
+          spent memory protected
+        * Randomized array is used to add a random delay for reuse
 * Fine-grained randomization within memory regions
     * Randomly sized guard regions for large allocations
     * Random slot selection within slabs
