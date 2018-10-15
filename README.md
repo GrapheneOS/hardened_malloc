@@ -155,10 +155,14 @@ allocation and then unmapped on free.
 * Possible slab locations are skipped and remain memory protected, leaving slab
   size class regions interspersed with guard pages
 * Zero size allocations are memory protected
-* Protected allocator metadata
-    * Address space for metadata is entirely reserved during initialization and
+* Protected allocator state (including all metadata)
+    * Address space for state is entirely reserved during initialization and
       never reused for allocations or anything else
-    * [implementing stronger protection is in-progress]
+    * State within global variables is entirely read-only after initialization
+      with pointers to the isolated allocator state so leaking the address of
+      the library doesn't leak the address of writable state
+    * [in-progress] Protection via Memory Protection Keys (MPK) on x86\_64
+    * [implementing stronger state protection is in-progress]
 * Extension for retrieving the size of allocations with fallback
   to a sentinel for pointers not managed by the allocator
     * Can also return accurate values for pointers *within* small allocations
