@@ -184,6 +184,8 @@ was a bit less important and if a core goal was finding latent bugs.
     * State within global variables is entirely read-only after initialization
       with pointers to the isolated allocator state so leaking the address of
       the library doesn't leak the address of writable state
+    * [in-progress] Allocator state is located within a dedicated region with
+      high entropy randomly sized guard regions around it
     * [in-progress] Protection via Memory Protection Keys (MPK) on x86\_64
     * [implementing stronger state protection is in-progress]
 * Extension for retrieving the size of allocations with fallback
