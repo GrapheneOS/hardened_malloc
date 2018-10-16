@@ -777,8 +777,7 @@ COLD static void init_slow_path(void) {
     if (allocator_state == NULL) {
         fatal_error("failed to reserve allocator state");
     }
-    if (memory_protect_rw(allocator_state, sizeof(allocator_state->size_class_metadata) +
-        sizeof(allocator_state->region_allocator))) {
+    if (memory_protect_rw(allocator_state, offsetof(struct allocator_state, regions_a))) {
         fatal_error("failed to unprotect allocator state");
     }
 
