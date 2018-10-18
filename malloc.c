@@ -165,6 +165,8 @@ static void *get_slab(struct size_class *c, size_t slab_size, struct slab_metada
     return (char *)c->class_region_start + (index * slab_size);
 }
 
+#define MAX_METADATA_MAX (CLASS_REGION_SIZE / PAGE_SIZE)
+
 static size_t get_metadata_max(size_t slab_size) {
     return CLASS_REGION_SIZE / slab_size;
 }
@@ -556,6 +558,10 @@ struct region_allocator {
     struct random_state rng;
 };
 
+struct __attribute__((aligned(PAGE_SIZE))) slab_info_mapping {
+    struct slab_metadata slab_info[MAX_METADATA_MAX];
+};
+
 struct __attribute__((aligned(PAGE_SIZE))) allocator_state {
     struct size_class size_class_metadata[N_SIZE_CLASSES];
     struct region_allocator region_allocator;
@@ -563,6 +569,8 @@ struct __attribute__((aligned(PAGE_SIZE))) allocator_state {
     struct region_metadata regions_a[MAX_REGION_TABLE_SIZE] __attribute__((aligned(PAGE_SIZE)));
     // padding until next page boundary for mprotect
     struct region_metadata regions_b[MAX_REGION_TABLE_SIZE] __attribute__((aligned(PAGE_SIZE)));
+    // padding until next page boundary for mprotect
+    struct slab_info_mapping slab_info_mapping[N_SIZE_CLASSES];
     // padding until next page boundary for mprotect
 };
 
@@ -820,11 +828,7 @@ COLD static void init_slow_path(void) {
         c->size_divisor = libdivide_u32_gen(size);
         size_t slab_size = get_slab_size(size_class_slots[class], size);
         c->slab_size_divisor = libdivide_u64_gen(slab_size);
-        size_t metadata_max = get_metadata_max(slab_size);
-        c->slab_info = allocate_pages(metadata_max * sizeof(struct slab_metadata), PAGE_SIZE, false);
-        if (c->slab_info == NULL) {
-            fatal_error("failed to allocate slab metadata");
-        }
+        c->slab_info = allocator_state->slab_info_mapping[class].slab_info;
     }
 
     deallocate_pages(rng, sizeof(struct random_state), PAGE_SIZE);
