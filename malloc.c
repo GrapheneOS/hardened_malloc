@@ -1023,7 +1023,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
                 }
             }
 
-            size_t copy_size = size < old_size ? size : old_size;
+            size_t copy_size = min(size, old_size);
             if (copy_size >= MREMAP_MOVE_THRESHOLD) {
                 void *new = allocate(size);
                 if (new == NULL) {
@@ -1054,7 +1054,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
     if (new == NULL) {
         return NULL;
     }
-    size_t copy_size = size < old_size ? size : old_size;
+    size_t copy_size = min(size, old_size);
     if (size > 0 && size <= max_slab_size_class) {
         copy_size -= canary_size;
     }
