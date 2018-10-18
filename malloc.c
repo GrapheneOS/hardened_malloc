@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <unistd.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include "third_party/libdivide.h"
 
@@ -810,7 +810,6 @@ COLD static void init_slow_path(void) {
     ro.slab_region_end = (char *)ro.slab_region_start + slab_region_size;
 
     ro.size_class_metadata = allocator_state->size_class_metadata;
-
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
         struct size_class *c = &ro.size_class_metadata[class];
 
