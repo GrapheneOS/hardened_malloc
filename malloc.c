@@ -176,7 +176,7 @@ static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_si
             errno = ENOMEM;
             return NULL;
         }
-        size_t allocate = c->metadata_allocated * 2;
+        size_t allocate = max(c->metadata_allocated * 2, PAGE_SIZE / sizeof(struct slab_metadata));
         if (allocate > metadata_max) {
             allocate = metadata_max;
         }
@@ -824,10 +824,6 @@ COLD static void init_slow_path(void) {
         c->slab_info = allocate_pages(metadata_max * sizeof(struct slab_metadata), PAGE_SIZE, false);
         if (c->slab_info == NULL) {
             fatal_error("failed to allocate slab metadata");
-        }
-        c->metadata_allocated = PAGE_SIZE / sizeof(struct slab_metadata);
-        if (memory_protect_rw(c->slab_info, c->metadata_allocated * sizeof(struct slab_metadata))) {
-            fatal_error("failed to allocate initial slab info");
         }
     }
 

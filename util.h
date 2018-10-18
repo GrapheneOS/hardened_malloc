@@ -7,6 +7,18 @@
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
+#define min(x, y) ({ \
+    __typeof__(x) _x = (x); \
+    __typeof__(y) _y = (y); \
+    (void) (&_x == &_y); \
+    _x < _y ? _x : _y; })
+
+#define max(x, y) ({ \
+    __typeof__(x) _x = (x); \
+    __typeof__(y) _y = (y); \
+    (void) (&_x == &_y); \
+    _x > _y ? _x : _y; })
+
 #define COLD __attribute__((cold))
 #define UNUSED __attribute__((unused))
 #define EXPORT __attribute__((visibility("default")))
