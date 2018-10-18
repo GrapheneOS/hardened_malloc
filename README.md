@@ -61,7 +61,9 @@ make command as follows:
 The available configuration options are the following:
 
 * `CONFIG_CXX_ALLOCATOR`: `true` (default) or `false` to control whether the
-  C++ allocator is replaced
+  C++ allocator is replaced for slightly improved performance and detection of
+  mismatched sizes for sized deallocation (often type confusion bugs). This
+  will result in linking against the C++ standard library.
 
 Compile-time configuration is available in the `config.h` file for controlling
 the balance between security and performance / memory usage. By default, all
