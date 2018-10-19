@@ -191,7 +191,7 @@ was a bit less important and if a core goal was finding latent bugs.
     * Allocator state is located within a dedicated region with high entropy
       randomly sized guard regions around it
     * [in-progress] Protection via Memory Protection Keys (MPK) on x86\_64
-    * [implementing stronger state protection is in-progress]
+    * [future] Protection via MTE on ARMv8.5+
 * Extension for retrieving the size of allocations with fallback
   to a sentinel for pointers not managed by the allocator
     * Can also return accurate values for pointers *within* small allocations
