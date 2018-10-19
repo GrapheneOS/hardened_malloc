@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static const unsigned size_classes[] = {
+#include "../config.h"
+
+static unsigned size_classes[] = {
     /* large */ 4 * 1024 * 1024,
     /* 0 */ 0,
     /* 16 */ 16, 32, 48, 64, 80, 96, 112, 128,
@@ -17,15 +19,16 @@ static const unsigned size_classes[] = {
 
 #define N_SIZE_CLASSES (sizeof(size_classes) / sizeof(size_classes[0]))
 
-static size_t canary_size = 8;
+static const size_t canary_size = SLAB_CANARY ? sizeof(uint64_t) : 0;
 
 int main(void) {
+    for (unsigned i = 2; i < N_SIZE_CLASSES; i++) {
+        size_classes[i] -= canary_size;
+    }
+
     void *p[N_SIZE_CLASSES];
     for (unsigned i = 0; i < N_SIZE_CLASSES; i++) {
         unsigned size = size_classes[i];
-        if (size) {
-            size -= canary_size;
-        }
         p[i] = malloc(size);
         if (!p) {
             return 1;
