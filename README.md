@@ -77,8 +77,10 @@ features with a significant performance or memory usage cost.
 #define SLAB_CANARY true
 #define GUARD_SLABS_INTERVAL 1
 #define GUARD_SIZE_DIVISOR 2
-#define REGION_QUARANTINE_SIZE 1024
+#define REGION_QUARANTINE_RANDOM_SIZE 128
+#define REGION_QUARANTINE_QUEUE_SIZE 1024
 #define REGION_QUARANTINE_SKIP_THRESHOLD (32 * 1024 * 1024)
+#define FREE_SLABS_QUARANTINE_RANDOM_SIZE 32
 ```
 
 There will be more control over enabled features in the future along with
