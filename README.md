@@ -64,6 +64,10 @@ The available configuration options are the following:
   C++ allocator is replaced for slightly improved performance and detection of
   mismatched sizes for sized deallocation (often type confusion bugs). This
   will result in linking against the C++ standard library.
+* `CONFIG_SEAL_METADATA`: `true` or `false` (default) to control whether Memory
+  Protection Keys are used to disable access to all writable allocator state
+  outside of the memory allocator code. It's currently disabled by default due
+  to being extremely experimental and needing some minor optimization work.
 
 Compile-time configuration is available in the `config.h` file for controlling
 the balance between security and performance / memory usage. By default, all
@@ -190,7 +194,7 @@ was a bit less important and if a core goal was finding latent bugs.
       the library doesn't leak the address of writable state
     * Allocator state is located within a dedicated region with high entropy
       randomly sized guard regions around it
-    * [in-progress] Protection via Memory Protection Keys (MPK) on x86\_64
+    * Protection via Memory Protection Keys (MPK) on x86\_64
     * [future] Protection via MTE on ARMv8.5+
 * Extension for retrieving the size of allocations with fallback
   to a sentinel for pointers not managed by the allocator

@@ -1,5 +1,6 @@
 CONFIG_CXX_ALLOCATOR := true
 CONFIG_UBSAN := false
+CONFIG_SEAL_METADATA := false
 
 CPPFLAGS := -D_GNU_SOURCE
 SHARED_FLAGS := -O2 -flto -fPIC -fvisibility=hidden -fno-plt -pipe -Wall -Wextra -Wcast-align=strict -Wcast-qual -Wwrite-strings
@@ -20,6 +21,10 @@ endif
 ifeq ($(CONFIG_UBSAN),true)
     CFLAGS += -fsanitize=undefined
     CXXFLAGS += -fsanitize=undefined
+endif
+
+ifeq ($(CONFIG_SEAL_METADATA),true)
+    CPPFLAGS += -DCONFIG_SEAL_METADATA
 endif
 
 hardened_malloc.so: $(OBJECTS)

@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include <pthread.h>
+#include <sys/mman.h>
 #include <unistd.h>
 
 #include "third_party/libdivide.h"
@@ -43,6 +44,9 @@ static union {
         struct size_class *size_class_metadata;
         struct region_allocator *region_allocator;
         struct region_metadata *regions[2];
+#ifdef USE_PKEY
+        int metadata_pkey;
+#endif
         atomic_bool initialized;
     };
     char padding[PAGE_SIZE];
@@ -81,6 +85,26 @@ static const u16 size_class_slots[] = {
     /* 1024 */ 8, 8, 8, 8,
     /* 2048 */ 6, 5, 4, 4
 };
+
+int get_metadata_key(void) {
+#ifdef USE_PKEY
+    return ro.metadata_pkey;
+#else
+    return -1;
+#endif
+}
+
+static inline void thread_unseal_metadata(void) {
+#ifdef USE_PKEY
+    pkey_set(ro.metadata_pkey, 0);
+#endif
+}
+
+static inline void thread_seal_metadata(void) {
+#ifdef USE_PKEY
+    pkey_set(ro.metadata_pkey, PKEY_DISABLE_ACCESS);
+#endif
+}
 
 #define N_SIZE_CLASSES (sizeof(size_classes) / sizeof(size_classes[0]))
 
@@ -182,7 +206,7 @@ static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_si
         if (allocate > metadata_max) {
             allocate = metadata_max;
         }
-        if (memory_protect_rw(c->slab_info, allocate * sizeof(struct slab_metadata))) {
+        if (memory_protect_rw_metadata(c->slab_info, allocate * sizeof(struct slab_metadata))) {
             return NULL;
         }
         c->metadata_allocated = allocate;
@@ -638,7 +662,7 @@ static int regions_grow(void) {
     struct region_metadata *p = ra->regions == ro.regions[0] ?
         ro.regions[1] : ro.regions[0];
 
-    if (memory_protect_rw(p, newsize)) {
+    if (memory_protect_rw_metadata(p, newsize)) {
         return 1;
     }
 
@@ -767,6 +791,10 @@ COLD static void init_slow_path(void) {
         return;
     }
 
+#ifdef USE_PKEY
+    ro.metadata_pkey = pkey_alloc(0, 0);
+#endif
+
     if (sysconf(_SC_PAGESIZE) != PAGE_SIZE) {
         fatal_error("page size mismatch");
     }
@@ -785,7 +813,7 @@ COLD static void init_slow_path(void) {
     if (allocator_state == NULL) {
         fatal_error("failed to reserve allocator state");
     }
-    if (memory_protect_rw(allocator_state, offsetof(struct allocator_state, regions_a))) {
+    if (memory_protect_rw_metadata(allocator_state, offsetof(struct allocator_state, regions_a))) {
         fatal_error("failed to unprotect allocator state");
     }
 
@@ -799,7 +827,7 @@ COLD static void init_slow_path(void) {
     ra->regions = ro.regions[0];
     ra->total = INITIAL_REGION_TABLE_SIZE;
     ra->free = INITIAL_REGION_TABLE_SIZE;
-    if (memory_protect_rw(ra->regions, ra->total * sizeof(struct region_metadata))) {
+    if (memory_protect_rw_metadata(ra->regions, ra->total * sizeof(struct region_metadata))) {
         fatal_error("failed to unprotect memory for regions table");
     }
 
@@ -891,6 +919,7 @@ static void *allocate(size_t size) {
 
 static void deallocate_large(void *p, const size_t *expected_size) {
     enforce_init();
+    thread_unseal_metadata();
 
     struct region_allocator *ra = ro.region_allocator;
 
@@ -919,8 +948,11 @@ static size_t adjust_size_for_canaries(size_t size) {
 
 EXPORT void *h_malloc(size_t size) {
     init();
+    thread_unseal_metadata();
     size = adjust_size_for_canaries(size);
-    return allocate(size);
+    void *p = allocate(size);
+    thread_seal_metadata();
+    return p;
 }
 
 EXPORT void *h_calloc(size_t nmemb, size_t size) {
@@ -930,11 +962,15 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
         return NULL;
     }
     init();
+    thread_unseal_metadata();
     total_size = adjust_size_for_canaries(total_size);
     if (ZERO_ON_FREE) {
-        return allocate(total_size);
+        void *p = allocate(total_size);
+        thread_seal_metadata();
+        return p;
     }
     void *p = allocate(total_size);
+    thread_seal_metadata();
     if (unlikely(p == NULL)) {
         return NULL;
     }
@@ -952,8 +988,11 @@ static_assert(MREMAP_MOVE_THRESHOLD >= REGION_QUARANTINE_SKIP_THRESHOLD,
 EXPORT void *h_realloc(void *old, size_t size) {
     if (old == NULL) {
         init();
+        thread_unseal_metadata();
         size = adjust_size_for_canaries(size);
-        return allocate(size);
+        void *p = allocate(size);
+        thread_seal_metadata();
+        return p;
     }
 
     size = adjust_size_for_canaries(size);
@@ -965,8 +1004,10 @@ EXPORT void *h_realloc(void *old, size_t size) {
             return old;
         }
         enforce_init();
+        thread_unseal_metadata();
     } else {
         enforce_init();
+        thread_unseal_metadata();
 
         struct region_allocator *ra = ro.region_allocator;
 
@@ -980,6 +1021,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
         if (PAGE_CEILING(old_size) == PAGE_CEILING(size)) {
             region->size = size;
             mutex_unlock(&ra->lock);
+            thread_seal_metadata();
             return old;
         }
         mutex_unlock(&ra->lock);
@@ -992,6 +1034,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
             if (size < old_size) {
                 void *new_end = (char *)old + rounded_size;
                 if (memory_map_fixed(new_end, old_guard_size)) {
+                    thread_seal_metadata();
                     return NULL;
                 }
                 void *new_guard_end = (char *)new_end + old_guard_size;
@@ -1005,6 +1048,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
                 region->size = size;
                 mutex_unlock(&ra->lock);
 
+                thread_seal_metadata();
                 return old;
             }
 
@@ -1023,6 +1067,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
                     region->size = size;
                     mutex_unlock(&ra->lock);
 
+                    thread_seal_metadata();
                     return old;
                 }
             }
@@ -1031,6 +1076,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
             if (copy_size >= MREMAP_MOVE_THRESHOLD) {
                 void *new = allocate(size);
                 if (new == NULL) {
+                    thread_seal_metadata();
                     return NULL;
                 }
 
@@ -1049,6 +1095,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
                     memory_unmap((char *)old - old_guard_size, old_guard_size);
                     memory_unmap((char *)old + PAGE_CEILING(old_size), old_guard_size);
                 }
+                thread_seal_metadata();
                 return new;
             }
         }
@@ -1056,6 +1103,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
 
     void *new = allocate(size);
     if (new == NULL) {
+        thread_seal_metadata();
         return NULL;
     }
     size_t copy_size = min(size, old_size);
@@ -1068,6 +1116,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
     } else {
         deallocate_large(old, NULL);
     }
+    thread_seal_metadata();
     return new;
 }
 
@@ -1124,22 +1173,31 @@ static void *alloc_aligned_simple(size_t alignment, size_t size) {
 
 EXPORT int h_posix_memalign(void **memptr, size_t alignment, size_t size) {
     init();
+    thread_unseal_metadata();
     size = adjust_size_for_canaries(size);
-    return alloc_aligned(memptr, alignment, size, sizeof(void *));
+    int ret = alloc_aligned(memptr, alignment, size, sizeof(void *));
+    thread_seal_metadata();
+    return ret;
 }
 
 EXPORT void *h_aligned_alloc(size_t alignment, size_t size) {
     init();
+    thread_unseal_metadata();
     size = adjust_size_for_canaries(size);
-    return alloc_aligned_simple(alignment, size);
+    void *p = alloc_aligned_simple(alignment, size);
+    thread_seal_metadata();
+    return p;
 }
 
 EXPORT void *h_memalign(size_t alignment, size_t size) ALIAS(h_aligned_alloc);
 
 EXPORT void *h_valloc(size_t size) {
     init();
+    thread_unseal_metadata();
     size = adjust_size_for_canaries(size);
-    return alloc_aligned_simple(PAGE_SIZE, size);
+    void *p = alloc_aligned_simple(PAGE_SIZE, size);
+    thread_seal_metadata();
+    return p;
 }
 
 EXPORT void *h_pvalloc(size_t size) {
@@ -1149,8 +1207,11 @@ EXPORT void *h_pvalloc(size_t size) {
         return NULL;
     }
     init();
+    thread_unseal_metadata();
     size = adjust_size_for_canaries(size);
-    return alloc_aligned_simple(PAGE_SIZE, size);
+    void *p = alloc_aligned_simple(PAGE_SIZE, size);
+    thread_seal_metadata();
+    return p;
 }
 
 EXPORT void h_free(void *p) {
@@ -1159,11 +1220,14 @@ EXPORT void h_free(void *p) {
     }
 
     if (p >= ro.slab_region_start && p < ro.slab_region_end) {
+        thread_unseal_metadata();
         deallocate_small(p, NULL);
         return;
     }
 
     deallocate_large(p, NULL);
+
+    thread_seal_metadata();
 }
 
 EXPORT void h_cfree(void *ptr) ALIAS(h_free);
@@ -1174,12 +1238,15 @@ EXPORT void h_free_sized(void *p, size_t expected_size) {
     }
 
     if (p >= ro.slab_region_start && p < ro.slab_region_end) {
+        thread_unseal_metadata();
         expected_size = get_size_info(adjust_size_for_canaries(expected_size)).size;
         deallocate_small(p, &expected_size);
         return;
     }
 
     deallocate_large(p, &expected_size);
+
+    thread_seal_metadata();
 }
 
 EXPORT size_t h_malloc_usable_size(void *p) {
@@ -1193,6 +1260,7 @@ EXPORT size_t h_malloc_usable_size(void *p) {
     }
 
     enforce_init();
+    thread_unseal_metadata();
 
     struct region_allocator *ra = ro.region_allocator;
     mutex_lock(&ra->lock);
@@ -1203,6 +1271,7 @@ EXPORT size_t h_malloc_usable_size(void *p) {
     size_t size = region->size;
     mutex_unlock(&ra->lock);
 
+    thread_seal_metadata();
     return size;
 }
 
@@ -1220,12 +1289,15 @@ EXPORT size_t h_malloc_object_size(void *p) {
         return 0;
     }
 
+    thread_unseal_metadata();
+
     struct region_allocator *ra = ro.region_allocator;
     mutex_lock(&ra->lock);
     struct region_metadata *region = regions_find(p);
     size_t size = p == NULL ? SIZE_MAX : region->size;
     mutex_unlock(&ra->lock);
 
+    thread_seal_metadata();
     return size;
 }
 
@@ -1255,6 +1327,8 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
         return 0;
     }
 
+    thread_unseal_metadata();
+
     bool is_trimmed = false;
 
     // skip zero byte size class since there's nothing to change
@@ -1281,6 +1355,8 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
         c->empty_slabs = iterator;
         mutex_unlock(&c->lock);
     }
+
+    thread_seal_metadata();
 
     return is_trimmed;
 }
@@ -1331,11 +1407,15 @@ COLD EXPORT int h_iterate(UNUSED uintptr_t base, UNUSED size_t size,
 
 COLD EXPORT void h_malloc_disable(void) {
     init();
+    thread_unseal_metadata();
     full_lock();
+    thread_seal_metadata();
 }
 
 COLD EXPORT void h_malloc_enable(void) {
     init();
+    thread_unseal_metadata();
     full_unlock();
+    thread_seal_metadata();
 }
 #endif
