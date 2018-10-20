@@ -964,6 +964,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
         if (size <= max_slab_size_class && get_size_info(size).size == old_size) {
             return old;
         }
+        enforce_init();
     } else {
         enforce_init();
 
