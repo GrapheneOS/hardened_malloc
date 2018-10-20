@@ -1329,10 +1329,12 @@ COLD EXPORT int h_iterate(UNUSED uintptr_t base, UNUSED size_t size,
 }
 
 COLD EXPORT void h_malloc_disable(void) {
+    init();
     full_lock();
 }
 
 COLD EXPORT void h_malloc_enable(void) {
+    init();
     full_unlock();
 }
 #endif
