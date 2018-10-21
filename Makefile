@@ -2,7 +2,7 @@ CONFIG_CXX_ALLOCATOR := true
 CONFIG_UBSAN := false
 
 CPPFLAGS := -D_GNU_SOURCE
-SHARED_FLAGS := -O2 -flto -fPIC -fvisibility=hidden -fno-plt -pipe -Wall -Wextra
+SHARED_FLAGS := -O2 -flto -fPIC -fvisibility=hidden -fno-plt -pipe -Wall -Wextra -Wcast-align=strict -Wcast-qual -Wwrite-strings
 CFLAGS := -std=c11 $(SHARED_FLAGS) -Wmissing-prototypes
 CXXFLAGS := -std=c++14 $(SHARED_FLAGS)
 LDFLAGS := -Wl,-z,defs,-z,relro,-z,now,-z,nodlopen,-z,text

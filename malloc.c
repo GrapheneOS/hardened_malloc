@@ -296,13 +296,13 @@ static void *slot_pointer(size_t size, void *slab, size_t slot) {
     return (char *)slab + slot * size;
 }
 
-static void write_after_free_check(const char *p, size_t size) {
+static void write_after_free_check(const void *p, size_t size) {
     if (!WRITE_AFTER_FREE_CHECK) {
         return;
     }
 
     for (size_t i = 0; i < size; i += sizeof(u64)) {
-        if (*(u64 *)(p + i)) {
+        if (*(const u64 *)(p + i)) {
             fatal_error("detected write after free");
         }
     }
