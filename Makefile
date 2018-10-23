@@ -3,7 +3,7 @@ CONFIG_UBSAN := false
 CONFIG_SEAL_METADATA := false
 
 define safe_flag
-$(shell $(CC) -E $1 - </dev/null &>/dev/null && echo $1)
+$(shell $(CC) -E $1 - </dev/null >/dev/null 2>&1 && echo $1)
 endef
 
 CPPFLAGS := -D_GNU_SOURCE
