@@ -776,6 +776,14 @@ static void full_unlock(void) {
 
 static void post_fork_child(void) {
     thread_unseal_metadata();
+
+#ifdef USE_PKEY
+    // disable sealing to work around kernel bug causing fork to lose the pkey setup
+    memory_protect_rw(&ro, sizeof(ro));
+    ro.metadata_pkey = -1;
+    memory_protect_ro(&ro, sizeof(ro));
+#endif
+
     mutex_init(&ro.region_allocator->lock);
     random_state_init(&ro.region_allocator->rng);
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
