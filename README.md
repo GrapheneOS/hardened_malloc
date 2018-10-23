@@ -67,7 +67,9 @@ The available configuration options are the following:
 * `CONFIG_SEAL_METADATA`: `true` or `false` (default) to control whether Memory
   Protection Keys are used to disable access to all writable allocator state
   outside of the memory allocator code. It's currently disabled by default due
-  to being extremely experimental and needing some minor optimization work.
+  to being extremely experimental and a significant performance cost for this
+  use case on current generation hardware, which may become drastically lower
+  in the future.
 
 Compile-time configuration is available in the `config.h` file for controlling
 the balance between security and performance / memory usage. By default, all
