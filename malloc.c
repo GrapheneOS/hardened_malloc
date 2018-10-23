@@ -757,20 +757,25 @@ static void regions_delete(struct region_metadata *region) {
 }
 
 static void full_lock(void) {
+    thread_unseal_metadata();
     mutex_lock(&ro.region_allocator->lock);
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
         mutex_lock(&ro.size_class_metadata[class].lock);
     }
+    thread_seal_metadata();
 }
 
 static void full_unlock(void) {
+    thread_unseal_metadata();
     mutex_unlock(&ro.region_allocator->lock);
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
         mutex_unlock(&ro.size_class_metadata[class].lock);
     }
+    thread_seal_metadata();
 }
 
 static void post_fork_child(void) {
+    thread_unseal_metadata();
     mutex_init(&ro.region_allocator->lock);
     random_state_init(&ro.region_allocator->rng);
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
@@ -778,6 +783,7 @@ static void post_fork_child(void) {
         mutex_init(&c->lock);
         random_state_init(&c->rng);
     }
+    thread_seal_metadata();
 }
 
 static inline bool is_init(void) {
