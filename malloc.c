@@ -94,15 +94,24 @@ int get_metadata_key(void) {
 #endif
 }
 
+#ifdef USE_PKEY
+static inline void thread_set_metadata_access(unsigned access) {
+    if (ro.metadata_pkey == -1) {
+        return;
+    }
+    pkey_set(ro.metadata_pkey, access);
+}
+#endif
+
 static inline void thread_unseal_metadata(void) {
 #ifdef USE_PKEY
-    pkey_set(ro.metadata_pkey, 0);
+    thread_set_metadata_access(0);
 #endif
 }
 
 static inline void thread_seal_metadata(void) {
 #ifdef USE_PKEY
-    pkey_set(ro.metadata_pkey, PKEY_DISABLE_ACCESS);
+    thread_set_metadata_access(PKEY_DISABLE_ACCESS);
 #endif
 }
 
