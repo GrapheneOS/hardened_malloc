@@ -39,7 +39,7 @@ typedef uint64_t u64;
 typedef unsigned __int128 u128;
 
 #ifdef CONFIG_SEAL_METADATA
-#if defined(__GLIBC__) && __GLIBC_PREREQ(2, 27) && defined(__x86_64__)
+#if defined(__GLIBC__) && __GLIBC_PREREQ(2, 27)
 #define USE_PKEY
 #else
 #error "CONFIG_SEAL_METADATA requires Memory Protection Key support"
