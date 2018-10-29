@@ -512,16 +512,16 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     }
 
     if (!is_zero_size) {
-        if (ZERO_ON_FREE) {
-            memset(p, 0, size - canary_size);
-        }
-
         if (canary_size) {
             u64 canary_value;
             memcpy(&canary_value, (char *)p + size - canary_size, canary_size);
             if (unlikely(canary_value != metadata->canary_value)) {
                 fatal_error("canary corrupted");
             }
+        }
+
+        if (ZERO_ON_FREE) {
+            memset(p, 0, size - canary_size);
         }
     }
 
