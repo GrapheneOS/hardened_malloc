@@ -69,12 +69,14 @@ The available configuration options are the following:
   outside of the memory allocator code. It's currently disabled by default due
   to being extremely experimental and a significant performance cost for this
   use case on current generation hardware, which may become drastically lower
-  in the future.
+  in the future. Whether or not this feature is enabled, the metadata is all
+  contained within an isolated memory region with high entropy random guard
+  regions around it.
 
-Compile-time configuration is available in the `config.h` file for controlling
-the balance between security and performance / memory usage. By default, all
-the optional security features are enabled. Options are only provided for the
-features with a significant performance or memory usage cost.
+Additional compile-time configuration is available in the `config.h` file for
+controlling the balance between security and performance / memory usage. By
+default, all the optional security features are enabled. Options are only
+provided for the features with a significant performance or memory usage cost.
 
 ```
 #define WRITE_AFTER_FREE_CHECK true
