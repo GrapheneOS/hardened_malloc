@@ -1245,6 +1245,7 @@ EXPORT void h_free(void *p) {
     if (p >= ro.slab_region_start && p < ro.slab_region_end) {
         thread_unseal_metadata();
         deallocate_small(p, NULL);
+        thread_seal_metadata();
         return;
     }
 
@@ -1264,6 +1265,7 @@ EXPORT void h_free_sized(void *p, size_t expected_size) {
         thread_unseal_metadata();
         expected_size = get_size_info(adjust_size_for_canaries(expected_size)).size;
         deallocate_small(p, &expected_size);
+        thread_seal_metadata();
         return;
     }
 
