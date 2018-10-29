@@ -60,6 +60,10 @@ make command as follows:
 
 The available configuration options are the following:
 
+* `CONFIG_NATIVE`: `true` (default) or `false` to control whether the code is
+  optimized for the detected CPU on the host. If this is disabled, setting up a
+  custom `-march` higher than the baseline architecture is highly recommended
+  due to substantial performance benefits for this code.
 * `CONFIG_CXX_ALLOCATOR`: `true` (default) or `false` to control whether the
   C++ allocator is replaced for slightly improved performance and detection of
   mismatched sizes for sized deallocation (often type confusion bugs). This

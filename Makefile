@@ -1,3 +1,4 @@
+CONFIG_NATIVE := true
 CONFIG_CXX_ALLOCATOR := true
 CONFIG_UBSAN := false
 CONFIG_SEAL_METADATA := false
@@ -8,6 +9,11 @@ endef
 
 CPPFLAGS := -D_GNU_SOURCE
 SHARED_FLAGS := -O2 -flto -fPIC -fvisibility=hidden -fno-plt -pipe -Wall -Wextra $(call safe_flag,-Wcast-align=strict) -Wcast-qual -Wwrite-strings
+
+ifeq ($(CONFIG_NATIVE),true)
+    SHARED_FLAGS += -march=native
+endif
+
 CFLAGS := -std=c11 $(SHARED_FLAGS) -Wmissing-prototypes
 CXXFLAGS := -std=c++14 $(SHARED_FLAGS)
 LDFLAGS := -Wl,-z,defs,-z,relro,-z,now,-z,nodlopen,-z,text
