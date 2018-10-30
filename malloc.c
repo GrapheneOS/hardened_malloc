@@ -261,30 +261,31 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, struct slab_
         unsigned first_bitmap = random_index / 64;
         u64 random_split = ~(~0UL << (random_index - first_bitmap * 64));
 
-        for (unsigned i = first_bitmap; i <= (slots - 1) / 64; i++) {
-            u64 masked = metadata->bitmap[i];
+        unsigned i = first_bitmap;
+        u64 masked = metadata->bitmap[i];
+        masked |= random_split;
+        for (;;) {
             if (i == slots / 64) {
                 masked |= get_mask(slots - i * 64);
-            }
-
-            if (i == first_bitmap) {
-                masked |= random_split;
             }
 
             if (masked != ~0UL) {
                 return ffzl(masked) - 1 + i * 64;
             }
-        }
-   }
 
-    for (unsigned i = 0; i <= (slots - 1) / 64; i++) {
-        u64 masked = metadata->bitmap[i];
-        if (i == (slots - 1) / 64) {
-            masked |= get_mask(slots - i * 64);
+            i = i == (slots - 1) / 64 ? 0 : i + 1;
+            masked = metadata->bitmap[i];
         }
+    } else {
+        for (unsigned i = 0; i <= (slots - 1) / 64; i++) {
+            u64 masked = metadata->bitmap[i];
+            if (i == (slots - 1) / 64) {
+                masked |= get_mask(slots - i * 64);
+            }
 
-        if (masked != ~0UL) {
-            return ffzl(masked) - 1 + i * 64;
+            if (masked != ~0UL) {
+                return ffzl(masked) - 1 + i * 64;
+            }
         }
     }
 
