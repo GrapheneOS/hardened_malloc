@@ -346,6 +346,10 @@ static void set_canary(struct slab_metadata *metadata, void *p, size_t size) {
     memcpy((char *)p + size - canary_size, &metadata->canary_value, canary_size);
 }
 
+static u64 get_random_canary(struct random_state *rng) {
+    return get_random_u64(rng) & canary_mask;
+}
+
 static inline void *allocate_small(size_t requested_size) {
     struct size_info info = get_size_info(requested_size);
     size_t size = info.size ? info.size : 16;
@@ -379,7 +383,7 @@ static inline void *allocate_small(size_t requested_size) {
             return p;
         } else if (c->free_slabs_head != NULL) {
             struct slab_metadata *metadata = c->free_slabs_head;
-            metadata->canary_value = get_random_u64(&c->rng);
+            metadata->canary_value = get_random_canary(&c->rng);
 
             void *slab = get_slab(c, slab_size, metadata);
             if (requested_size && memory_protect_rw(slab, slab_size)) {
@@ -413,7 +417,7 @@ static inline void *allocate_small(size_t requested_size) {
             mutex_unlock(&c->lock);
             return NULL;
         }
-        metadata->canary_value = get_random_u64(&c->rng) & canary_mask;
+        metadata->canary_value = get_random_canary(&c->rng);
 
         c->partial_slabs = metadata;
         void *slab = get_slab(c, slab_size, metadata);
