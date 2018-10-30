@@ -271,11 +271,9 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, struct slab_
                 masked |= random_split;
             }
 
-            if (masked == ~0UL) {
-                continue;
+            if (masked != ~0UL) {
+                return ffzl(masked) - 1 + i * 64;
             }
-
-            return ffzl(masked) - 1 + i * 64;
         }
    }
 
@@ -285,11 +283,9 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, struct slab_
             masked |= get_mask(slots - i * 64);
         }
 
-        if (masked == ~0UL) {
-            continue;
+        if (masked != ~0UL) {
+            return ffzl(masked) - 1 + i * 64;
         }
-
-        return ffzl(masked) - 1 + i * 64;
     }
 
     fatal_error("no zero bits");
