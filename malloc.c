@@ -52,11 +52,16 @@ static union {
     char padding[PAGE_SIZE];
 } ro __attribute__((aligned(PAGE_SIZE)));
 
+#define SLAB_METADATA_COUNT
+
 struct slab_metadata {
     u64 bitmap[4];
     struct slab_metadata *next;
     struct slab_metadata *prev;
     u64 canary_value;
+#ifdef SLAB_METADATA_COUNT
+    u16 count;
+#endif
 };
 
 static const size_t min_align = 16;
@@ -238,11 +243,17 @@ static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_si
 static void set_slot(struct slab_metadata *metadata, size_t index) {
     size_t bucket = index / 64;
     metadata->bitmap[bucket] |= 1UL << (index - bucket * 64);
+#ifdef SLAB_METADATA_COUNT
+    metadata->count++;
+#endif
 }
 
 static void clear_slot(struct slab_metadata *metadata, size_t index) {
     size_t bucket = index / 64;
     metadata->bitmap[bucket] &= ~(1UL << (index - bucket * 64));
+#ifdef SLAB_METADATA_COUNT
+    metadata->count--;
+#endif
 }
 
 static bool get_slot(struct slab_metadata *metadata, size_t index) {
@@ -293,6 +304,9 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, struct slab_
 }
 
 static bool has_free_slots(size_t slots, struct slab_metadata *metadata) {
+#ifdef SLAB_METADATA_COUNT
+    return metadata->count < slots;
+#else
     if (slots <= 64) {
         u64 masked = metadata->bitmap[0] | get_mask(slots);
         return masked != ~0UL;
@@ -305,11 +319,16 @@ static bool has_free_slots(size_t slots, struct slab_metadata *metadata) {
     }
     u64 masked = metadata->bitmap[3] | get_mask(slots - 192);
     return metadata->bitmap[0] != ~0UL || metadata->bitmap[1] != ~0UL || metadata->bitmap[2] != ~0UL || masked != ~0UL;
+#endif
 }
 
 static bool is_free_slab(struct slab_metadata *metadata) {
+#ifdef SLAB_METADATA_COUNT
+    return !metadata->count;
+#else
     return !metadata->bitmap[0] && !metadata->bitmap[1] && !metadata->bitmap[2] &&
         !metadata->bitmap[3];
+#endif
 }
 
 static struct slab_metadata *get_metadata(struct size_class *c, void *p) {
