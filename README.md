@@ -293,7 +293,7 @@ slabs containing them:
 > each doubling in size, which limits internal fragmentation to approximately 20% for all but the
 > smallest size classes
 
-| size class | worst case internal fragmentation | slab slots | slab size | worst case internal fragmentation for slabs |
+| size class | worst case internal fragmentation | slab slots | slab size | internal fragmentation for slabs |
 | - | - | - | - | - |
 | 16 | 93.75% | 256 | 4096 | 0.0% |
 | 32 | 46.875% | 128 | 4096 | 0.0% |

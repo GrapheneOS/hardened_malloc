@@ -36,7 +36,7 @@ def page_align(size):
     return (size + 4095) & ~4095
 
 print("| ", end="")
-print("size class", "worst case internal fragmentation", "slab slots", "slab size", "worst case internal fragmentation for slabs", sep=" | ", end=" |\n")
+print("size class", "worst case internal fragmentation", "slab slots", "slab size", "internal fragmentation for slabs", sep=" | ", end=" |\n")
 print("| ", end='')
 print("-", "-", "-", "-", "-", sep=" | ", end=" |\n")
 for size, slots, fragmentation in zip(size_classes, size_class_slots, fragmentation):
