@@ -117,8 +117,8 @@ documentation are written. The following advanced options are available:
 
 There will be more control over enabled features in the future along with
 control over fairly arbitrarily chosen values like the size of empty slab
-caches (making them smaller improves security), the maximum size of guard
-regions for large allocations and the proportion of slabs to guard slabs.
+caches (making them smaller improves security and reduces memory usage while
+larger caches can substantially improves performance).
 
 # Basic design
 
