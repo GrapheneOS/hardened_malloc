@@ -213,7 +213,8 @@ was a bit less important and if a core goal was finding latent bugs.
       with a strong keyed hash due to performance limitations)
 * Possible slab locations are skipped and remain memory protected, leaving slab
   size class regions interspersed with guard pages
-* Zero size allocations are memory protected
+* Zero size allocations are a dedicated size class with the entire region
+  remaining non-readable and non-writable
 * Protected allocator state (including all metadata)
     * Address space for state is entirely reserved during initialization and
       never reused for allocations or anything else
@@ -277,8 +278,10 @@ overhead and can easily dwarf the cost of an efficient CSPRNG.
 
 # Size classes
 
-The zero byte size class is a special case of the smallest regular size class. It's allocated in a
-separate region with the memory left non-readable and non-writable.
+The zero byte size class is a special case of the smallest regular size class.
+It's allocated in a dedicated region like other size classes but with the slabs
+never being made readable and writable so the only memory usage is for the slab
+metadata.
 
 The slab slot count for each size class is not yet finely tuned beyond choosing values avoiding
 internal fragmentation for slabs (i.e. avoiding wasted space due to page size rounding).
@@ -292,7 +295,7 @@ slabs containing them:
 
 | size class | worst case internal fragmentation | slab slots | slab size | worst case internal fragmentation for slabs |
 | - | - | - | - | - |
-| 16 | 100% | 256 | 4096 | 0.0% |
+| 16 | 93.75% | 256 | 4096 | 0.0% |
 | 32 | 46.875% | 128 | 4096 | 0.0% |
 | 48 | 31.25% | 85 | 4096 | 0.390625% |
 | 64 | 23.4375% | 64 | 4096 | 0.0% |

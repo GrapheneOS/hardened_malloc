@@ -24,7 +24,7 @@ size_class_slots = [
     6, 5, 4, 4
 ]
 
-fragmentation = [100]
+fragmentation = [100 - 1 / 16 * 100]
 
 for i in range(len(size_classes) - 1):
     size_class = size_classes[i + 1]
