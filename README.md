@@ -222,7 +222,8 @@ was a bit less important and if a core goal was finding latent bugs.
       the library doesn't leak the address of writable state
     * Allocator state is located within a dedicated region with high entropy
       randomly sized guard regions around it
-    * Protection via Memory Protection Keys (MPK) on x86\_64
+    * Protection via Memory Protection Keys (MPK) on x86\_64 (disabled by
+      default due to low benefit-cost ratio on top of baseline protections)
     * [future] Protection via MTE on ARMv8.5+
 * Extension for retrieving the size of allocations with fallback
   to a sentinel for pointers not managed by the allocator
