@@ -58,7 +58,9 @@ make command as follows:
 
     make CONFIG_EXAMPLE=false
 
-The available configuration options are the following:
+Configuration options are provided when there are significant compromises
+between portability, performance, memory usage or security. The following
+options are available:
 
 * `CONFIG_NATIVE`: `true` (default) or `false` to control whether the code is
   optimized for the detected CPU on the host. If this is disabled, setting up a
@@ -68,6 +70,29 @@ The available configuration options are the following:
   C++ allocator is replaced for slightly improved performance and detection of
   mismatched sizes for sized deallocation (often type confusion bugs). This
   will result in linking against the C++ standard library.
+* `CONFIG_ZERO_ON_FREE`: `true` (default) or `false` to control whether small
+  allocations are zeroed on free, to mitigate use-after-free and uninitialized
+  use vulnerabilities along with purging lots of potentially sensitive data
+  from the process as soon as possible. This has a performance cost scaling to
+  the size of the allocation, which is usually acceptable.
+* `CONFIG_WRITE_AFTER_FREE_CHECK`: `true` (default) or `false` to control
+  sanity checking that new allocations contain zeroed memory. This can detect
+  writes caused by a write-after-free vulnerability and mixes well with the
+  features for making memory reuse randomized / delayed. This has a performance
+  cost scaling to the size of the allocation, which is usually acceptable.
+* `CONFIG_SLOT_RANDOMIZE`: `true` (default) or `false` to randomize selection
+  of free slots within slabs. This has a measurable performance cost and isn't
+  one of the important security features, but the cost has been deemed more
+  than acceptable to be enabled by default.
+* `CONFIG_SLAB_CANARY`: `true` (default) or `false` to enable support for
+  adding 8 byte canaries to the end of memory allocations. The primary purpose
+  of the canaries is to render small fixed size buffer overflows harmless by
+  absorbing them. The first byte of the canary is always zero, containing
+  overflows caused by a missing C string NUL terminator. The other 7 bytes are
+  a per-slab random value. On free, integrity of the canary is checked to
+  detect attacks like linear overflows or other forms of heap corruption caused
+  by imprecise exploit primitives. However, checking on free will often be too
+  late to prevent exploitation so it's not the main purpose of the canaries.
 * `CONFIG_SEAL_METADATA`: `true` or `false` (default) to control whether Memory
   Protection Keys are used to disable access to all writable allocator state
   outside of the memory allocator code. It's currently disabled by default due
@@ -77,16 +102,11 @@ The available configuration options are the following:
   contained within an isolated memory region with high entropy random guard
   regions around it.
 
-Additional compile-time configuration is available in the `config.h` file for
-controlling the balance between security and performance / memory usage. By
-default, all the optional security features are enabled. Options are only
-provided for the features with a significant performance or memory usage cost.
+More advanced compile-time configuration is available in the `config.h` file
+and will be migrated to the main configuration when proper sanity checks and
+documentation are written. The following advanced options are available:
 
 ```
-#define WRITE_AFTER_FREE_CHECK true
-#define SLOT_RANDOMIZE true
-#define ZERO_ON_FREE true
-#define SLAB_CANARY true
 #define GUARD_SLABS_INTERVAL 1
 #define GUARD_SIZE_DIVISOR 2
 #define REGION_QUARANTINE_RANDOM_SIZE 128

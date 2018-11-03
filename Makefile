@@ -2,6 +2,10 @@ CONFIG_NATIVE := true
 CONFIG_CXX_ALLOCATOR := true
 CONFIG_UBSAN := false
 CONFIG_SEAL_METADATA := false
+CONFIG_WRITE_AFTER_FREE_CHECK := true
+CONFIG_SLOT_RANDOMIZE := true
+CONFIG_ZERO_ON_FREE := true
+CONFIG_SLAB_CANARY := true
 
 define safe_flag
 $(shell $(CC) -E $1 - </dev/null >/dev/null 2>&1 && echo $1)
@@ -36,6 +40,28 @@ endif
 ifeq ($(CONFIG_SEAL_METADATA),true)
     CPPFLAGS += -DCONFIG_SEAL_METADATA
 endif
+
+ifeq (,$(filter $(CONFIG_ZERO_ON_FREE),true false))
+    $(error CONFIG_ZERO_ON_FREE must be true or false)
+endif
+
+ifeq (,$(filter $(CONFIG_WRITE_AFTER_FREE_CHECK),true false))
+    $(error CONFIG_WRITE_AFTER_FREE_CHECK must be true or false)
+endif
+
+ifeq (,$(filter $(CONFIG_SLOT_RANDOMIZE),true false))
+    $(error CONFIG_SLOT_RANDOMIZE must be true or false)
+endif
+
+ifeq (,$(filter $(CONFIG_SLAB_CANARY),true false))
+    $(error CONFIG_SLAB_CANARY must be true or false)
+endif
+
+CPPFLAGS += \
+    -DZERO_ON_FREE=$(CONFIG_ZERO_ON_FREE) \
+    -DWRITE_AFTER_FREE_CHECK=$(CONFIG_WRITE_AFTER_FREE_CHECK) \
+    -DSLOT_RANDOMIZE=$(CONFIG_SLOT_RANDOMIZE) \
+    -DSLAB_CANARY=$(CONFIG_SLAB_CANARY)
 
 hardened_malloc.so: $(OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared $^ $(LDLIBS) -o $@
