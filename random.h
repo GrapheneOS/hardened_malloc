@@ -4,12 +4,12 @@
 #include "chacha.h"
 #include "util.h"
 
-#define RANDOM_CACHE_SIZE 256ULL
-#define RANDOM_RESEED_SIZE 256ULL * 1024
+#define RANDOM_CACHE_SIZE 256U
+#define RANDOM_RESEED_SIZE (256U * 1024)
 
 struct random_state {
-    size_t index;
-    size_t reseed;
+    unsigned index;
+    unsigned reseed;
     chacha_ctx ctx;
     u8 cache[RANDOM_CACHE_SIZE];
 };

@@ -56,7 +56,7 @@ static void refill(struct random_state *state) {
 
 u16 get_random_u16(struct random_state *state) {
     u16 value;
-    size_t remaining = RANDOM_CACHE_SIZE - state->index;
+    unsigned remaining = RANDOM_CACHE_SIZE - state->index;
     if (remaining < sizeof(value)) {
         refill(state);
     }
@@ -83,7 +83,7 @@ u16 get_random_u16_uniform(struct random_state *state, u16 bound) {
 
 u64 get_random_u64(struct random_state *state) {
     u64 value;
-    size_t remaining = RANDOM_CACHE_SIZE - state->index;
+    unsigned remaining = RANDOM_CACHE_SIZE - state->index;
     if (remaining < sizeof(value)) {
         refill(state);
     }
