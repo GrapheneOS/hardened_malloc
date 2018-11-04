@@ -20,7 +20,7 @@ endif
 
 CFLAGS := -std=c11 $(SHARED_FLAGS) -Wmissing-prototypes
 CXXFLAGS := -std=c++14 $(SHARED_FLAGS)
-LDFLAGS := -Wl,-z,defs,-z,relro,-z,now,-z,nodlopen,-z,text
+LDFLAGS := -Wl,--as-needed,-z,defs,-z,relro,-z,now,-z,nodlopen,-z,text
 TIDY_CHECKS := -checks=bugprone-*,-bugprone-macro-parentheses,cert-*,clang-analyzer-*,readability-*,-readability-else-after-return,-readability-inconsistent-declaration-parameter-name,-readability-named-parameter
 
 SOURCES := chacha.c malloc.c memory.c pages.c random.c util.c
