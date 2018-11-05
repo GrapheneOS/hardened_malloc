@@ -88,7 +88,7 @@ options are available:
   adding 8 byte canaries to the end of memory allocations. The primary purpose
   of the canaries is to render small fixed size buffer overflows harmless by
   absorbing them. The first byte of the canary is always zero, containing
-  overflows caused by a missing C string NUL terminator. The other 7 bytes are
+  overflows caused by a missing C string NULL terminator. The other 7 bytes are
   a per-slab random value. On free, integrity of the canary is checked to
   detect attacks like linear overflows or other forms of heap corruption caused
   by imprecise exploit primitives. However, checking on free will often be too
