@@ -107,6 +107,8 @@ and will be migrated to the main configuration when proper sanity checks and
 documentation are written. The following advanced options are available:
 
 ```
+#define SLAB_QUARANTINE_RANDOM_SIZE 0
+#define SLAB_QUARANTINE_QUEUE_SIZE 0
 #define GUARD_SLABS_INTERVAL 1
 #define GUARD_SIZE_DIVISOR 2
 #define REGION_QUARANTINE_RANDOM_SIZE 128
@@ -189,7 +191,7 @@ was a bit less important and if a core goal was finding latent bugs.
 * Fine-grained randomization within memory regions
     * Randomly sized guard regions for large allocations
     * Random slot selection within slabs
-    * [in-progress] Randomized delayed free for slab allocations
+    * Randomized delayed free for slab allocations
     * [in-progress] Randomized allocation of slabs
     * [more randomization coming as the implementation is matured]
 * Slab allocations are zeroed on free
@@ -204,8 +206,7 @@ was a bit less important and if a core goal was finding latent bugs.
 * Detection of write-after-free by verifying zero filling is intact
 * Memory in fresh allocations is consistently zeroed due to it either being
   fresh pages or zeroed on free after previous usage
-* [in-progress] Delayed free via a combination of FIFO and randomization for
-  slab allocations
+* Delayed free via a combination of FIFO and randomization for slab allocations
 * Random canaries placed after each slab allocation to *absorb*
   and then later detect overflows/underflows
     * High entropy per-slab random values

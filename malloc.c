@@ -28,6 +28,8 @@ extern int __register_atfork(void (*)(void), void (*)(void), void (*)(void), voi
 #define atfork pthread_atfork
 #endif
 
+#define SLAB_QUARANTINE (SLAB_QUARANTINE_RANDOM_SIZE > 0 || SLAB_QUARANTINE_QUEUE_SIZE > 0)
+
 static_assert(sizeof(void *) == 8, "64-bit only");
 
 static_assert(!WRITE_AFTER_FREE_CHECK || ZERO_ON_FREE, "WRITE_AFTER_FREE_CHECK depends on ZERO_ON_FREE");
@@ -64,6 +66,9 @@ struct slab_metadata {
     u64 canary_value;
 #ifdef SLAB_METADATA_COUNT
     u16 count;
+#endif
+#if SLAB_QUARANTINE
+    u64 quarantine[4];
 #endif
 };
 
@@ -172,6 +177,15 @@ struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
     struct libdivide_u32_t size_divisor;
     struct libdivide_u64_t slab_size_divisor;
 
+#if SLAB_QUARANTINE_RANDOM_SIZE > 0
+    void *quarantine_random[SLAB_QUARANTINE_RANDOM_SIZE];
+#endif
+
+#if SLAB_QUARANTINE_QUEUE_SIZE > 0
+    void *quarantine_queue[SLAB_QUARANTINE_QUEUE_SIZE];
+    size_t quarantine_queue_index;
+#endif
+
     // slabs with at least one allocated slot and at least one free slot
     //
     // LIFO doubly-linked list
@@ -263,6 +277,23 @@ static bool get_slot(struct slab_metadata *metadata, size_t index) {
     size_t bucket = index / 64;
     return (metadata->bitmap[bucket] >> (index - bucket * 64)) & 1UL;
 }
+
+#if SLAB_QUARANTINE
+static void set_quarantine(struct slab_metadata *metadata, size_t index) {
+    size_t bucket = index / 64;
+    metadata->quarantine[bucket] |= 1UL << (index - bucket * 64);
+}
+
+static void clear_quarantine(struct slab_metadata *metadata, size_t index) {
+    size_t bucket = index / 64;
+    metadata->quarantine[bucket] &= ~(1UL << (index - bucket * 64));
+}
+
+static bool get_quarantine(struct slab_metadata *metadata, size_t index) {
+    size_t bucket = index / 64;
+    return (metadata->quarantine[bucket] >> (index - bucket * 64)) & 1UL;
+}
+#endif
 
 static u64 get_mask(size_t slots) {
     return slots < 64 ? ~0UL << slots : 0;
@@ -547,6 +578,46 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
             memset(p, 0, size - canary_size);
         }
     }
+
+#if SLAB_QUARANTINE
+    if (get_quarantine(metadata, slot)) {
+        fatal_error("double free (quarantine)");
+    }
+
+    set_quarantine(metadata, slot);
+
+#if SLAB_QUARANTINE_RANDOM_SIZE > 0
+    size_t random_index = get_random_u16_uniform(&c->rng, 16);
+    void *substitute = c->quarantine_random[random_index];
+    c->quarantine_random[random_index] = p;
+
+    if (substitute == NULL) {
+        mutex_unlock(&c->lock);
+        return;
+    }
+
+    p = substitute;
+#endif
+
+#if SLAB_QUARANTINE_QUEUE_SIZE > 0
+    void *substitute = c->quarantine_queue[c->quarantine_queue_index];
+    c->quarantine_queue[c->quarantine_queue_index] = p;
+    c->quarantine_queue_index = (c->quarantine_queue_index + 1) % SLAB_QUARANTINE_QUEUE_SIZE;
+
+    if (substitute == NULL) {
+        mutex_unlock(&c->lock);
+        return;
+    }
+
+    p = substitute;
+#endif
+
+    metadata = get_metadata(c, p);
+    slab = get_slab(c, slab_size, metadata);
+    slot = libdivide_u32_do((char *)p - (char *)slab, &c->size_divisor);
+
+    clear_quarantine(metadata, slot);
+#endif
 
     if (!has_free_slots(slots, metadata)) {
         metadata->next = c->partial_slabs;
