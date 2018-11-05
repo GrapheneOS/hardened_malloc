@@ -211,8 +211,6 @@ was a bit less important and if a core goal was finding latent bugs.
   and then later detect overflows/underflows
     * High entropy per-slab random values
     * Leading byte is zeroed to contain C string overflows
-    * [in-progress] Mangled into a unique value per slab slot (although not
-      with a strong keyed hash due to performance limitations)
 * Possible slab locations are skipped and remain memory protected, leaving slab
   size class regions interspersed with guard pages
 * Zero size allocations are a dedicated size class with the entire region
