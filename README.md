@@ -192,8 +192,8 @@ was a bit less important and if a core goal was finding latent bugs.
     * Randomly sized guard regions for large allocations
     * Random slot selection within slabs
     * Randomized delayed free for slab allocations
+    * [in-progress] Randomized choice of slabs
     * [in-progress] Randomized allocation of slabs
-    * [more randomization coming as the implementation is matured]
 * Slab allocations are zeroed on free
 * Large allocations are purged and memory protected on free with the memory
   mapping kept reserved in a quarantine to detect use-after-free
