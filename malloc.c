@@ -1533,7 +1533,7 @@ COLD EXPORT void h_malloc_disable(void) {
 }
 
 COLD EXPORT void h_malloc_enable(void) {
-    init();
+    enforce_init();
     thread_unseal_metadata();
     full_unlock();
     thread_seal_metadata();
