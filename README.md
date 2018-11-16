@@ -1,3 +1,12 @@
+This is a security-focused general purpose memory allocator providing the
+malloc API along with various extensions. It provides substantial hardening
+against heap corruption vulnerabilities. The security-focused design also leads
+to much less metadata overhead and memory waste from fragmentation than a more
+traditional allocator design. It aims to provide decent overall performance
+with a focus on long-term performance and memory usage rather than allocator
+allocator micro-benchmarks. It has relatively fine-grained locking and will
+offer good scalability once arenas are implemented.
+
 This project currently aims to support Android, musl and glibc. It may support
 other non-Linux operating systems in the future. For Android and musl, there
 will be custom integration and other hardening features. The glibc support will
@@ -59,7 +68,9 @@ make command as follows:
     make CONFIG_EXAMPLE=false
 
 Configuration options are provided when there are significant compromises
-between portability, performance, memory usage or security.
+between portability, performance, memory usage or security. The core design
+choices are not configurable and the allocator remains very security-focused
+even with all the optional features disabled.
 
 The following boolean configuration options are available:
 
