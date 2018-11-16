@@ -59,8 +59,9 @@ make command as follows:
     make CONFIG_EXAMPLE=false
 
 Configuration options are provided when there are significant compromises
-between portability, performance, memory usage or security. The following
-options are available:
+between portability, performance, memory usage or security.
+
+The following boolean configuration options are available:
 
 * `CONFIG_NATIVE`: `true` (default) or `false` to control whether the code is
   optimized for the detected CPU on the host. If this is disabled, setting up a
@@ -102,17 +103,28 @@ options are available:
   contained within an isolated memory region with high entropy random guard
   regions around it.
 
-The following are more advanced configuration options without proper sanity
-checks and documentation written yet, so use them at your own peril:
+The following integer configuration options are available. Proper sanity checks
+for the chosen values are not written yet, so use them at your own peril:
 
-* `CONFIG_SLAB_QUARANTINE_RANDOM_SIZE`: `0` (default)
-* `CONFIG_SLAB_QUARANTINE_QUEUE_SIZE`: `0` (default)
-* `CONFIG_GUARD_SLABS_INTERVAL`: `1` (default)
-* `CONFIG_GUARD_SIZE_DIVISOR`: `2` (default)
-* `CONFIG_REGION_QUARANTINE_RANDOM_SIZE`: `128` (default)
-* `CONFIG_REGION_QUARANTINE_QUEUE_SIZE`: `1024` (default)
-* `CONFIG_REGION_QUARANTINE_SKIP_THRESHOLD`: `33554432` (default)
-* `CONFIG_FREE_SLABS_QUARANTINE_RANDOM_SIZE`: `32` (default)
+* `CONFIG_SLAB_QUARANTINE_RANDOM_SIZE`: `0` (default) to control the number of
+  slots in the random array used to randomize reuse for small memory
+  allocations
+* `CONFIG_SLAB_QUARANTINE_QUEUE_SIZE`: `0` (default) to control the number of
+  slots in the queue used to delay reuse for small memory allocations
+* `CONFIG_GUARD_SLABS_INTERVAL`: `1` (default) to control the number of slabs
+  before a slab is skipped and left as an unused memory protected guard slab
+* `CONFIG_GUARD_SIZE_DIVISOR`: `2` (default) to control the maximum size of the
+  guard regions placed on both sides of large memory allocations, relative to
+  the usable size of the memory allocation
+* `CONFIG_REGION_QUARANTINE_RANDOM_SIZE`: `128` (default) to control the number
+  of slots in the random array used to randomize region reuse for large memory
+  allocations
+* `CONFIG_REGION_QUARANTINE_QUEUE_SIZE`: `1024` (default) to control the number
+  of slots in the queue used to delay region reuse for large memory allocations
+* `CONFIG_REGION_QUARANTINE_SKIP_THRESHOLD`: `33554432` (default) to control
+  the size threshold where large allocations will not be quarantined
+* `CONFIG_FREE_SLABS_QUARANTINE_RANDOM_SIZE`: `32` (default) to control the
+  number of slots in the random array used to randomize free slab reuse
 
 There will be more control over enabled features in the future along with
 control over fairly arbitrarily chosen values like the size of empty slab
