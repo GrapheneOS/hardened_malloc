@@ -11,7 +11,6 @@
 
 #include "third_party/libdivide.h"
 
-#include "config.h"
 #include "malloc.h"
 #include "mutex.h"
 #include "memory.h"

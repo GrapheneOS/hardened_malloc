@@ -102,20 +102,17 @@ options are available:
   contained within an isolated memory region with high entropy random guard
   regions around it.
 
-More advanced compile-time configuration is available in the `config.h` file
-and will be migrated to the main configuration when proper sanity checks and
-documentation are written. The following advanced options are available:
+The following are more advanced configuration options without proper sanity
+checks and documentation written yet, so use them at your own peril:
 
-```
-#define SLAB_QUARANTINE_RANDOM_SIZE 0
-#define SLAB_QUARANTINE_QUEUE_SIZE 0
-#define GUARD_SLABS_INTERVAL 1
-#define GUARD_SIZE_DIVISOR 2
-#define REGION_QUARANTINE_RANDOM_SIZE 128
-#define REGION_QUARANTINE_QUEUE_SIZE 1024
-#define REGION_QUARANTINE_SKIP_THRESHOLD (32 * 1024 * 1024)
-#define FREE_SLABS_QUARANTINE_RANDOM_SIZE 32
-```
+* `CONFIG_SLAB_QUARANTINE_RANDOM_SIZE`: `0` (default)
+* `CONFIG_SLAB_QUARANTINE_QUEUE_SIZE`: `0` (default)
+* `CONFIG_GUARD_SLABS_INTERVAL`: `1` (default)
+* `CONFIG_GUARD_SIZE_DIVISOR`: `2` (default)
+* `CONFIG_REGION_QUARANTINE_RANDOM_SIZE`: `128` (default)
+* `CONFIG_REGION_QUARANTINE_QUEUE_SIZE`: `1024` (default)
+* `CONFIG_REGION_QUARANTINE_SKIP_THRESHOLD`: `33554432` (default)
+* `CONFIG_FREE_SLABS_QUARANTINE_RANDOM_SIZE`: `32` (default)
 
 There will be more control over enabled features in the future along with
 control over fairly arbitrarily chosen values like the size of empty slab

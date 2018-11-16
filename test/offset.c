@@ -1,8 +1,7 @@
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "../config.h"
 
 static unsigned size_classes[] = {
     /* large */ 4 * 1024 * 1024,
