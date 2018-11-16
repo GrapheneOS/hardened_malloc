@@ -1081,17 +1081,9 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
     init();
     thread_unseal_metadata();
     total_size = adjust_size_for_canaries(total_size);
-    if (ZERO_ON_FREE) {
-        void *p = allocate(total_size);
-        thread_seal_metadata();
-        return p;
-    }
     void *p = allocate(total_size);
     thread_seal_metadata();
-    if (unlikely(p == NULL)) {
-        return NULL;
-    }
-    if (size && size <= max_slab_size_class) {
+    if (!ZERO_ON_FREE && likely(p != NULL) && size && size <= max_slab_size_class) {
         memset(p, 0, total_size - canary_size);
     }
     return p;
