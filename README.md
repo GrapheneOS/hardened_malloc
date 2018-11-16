@@ -195,6 +195,8 @@ was a bit less important and if a core goal was finding latent bugs.
     * [in-progress] Randomized choice of slabs
     * [in-progress] Randomized allocation of slabs
 * Slab allocations are zeroed on free
+* Detection of write-after-free for slab allocations by verifying zero filling
+  is intact at allocation time
 * Large allocations are purged and memory protected on free with the memory
   mapping kept reserved in a quarantine to detect use-after-free
     * The quarantine is primarily based on a FIFO ring buffer, with the oldest
@@ -203,7 +205,6 @@ was a bit less important and if a core goal was finding latent bugs.
     * Another layer of the quarantine swaps with a random slot in an array to
       randomize the number of large deallocations required to push mappings out
       of the quarantine
-* Detection of write-after-free by verifying zero filling is intact
 * Memory in fresh allocations is consistently zeroed due to it either being
   fresh pages or zeroed on free after previous usage
 * Delayed free via a combination of FIFO and randomization for slab allocations
