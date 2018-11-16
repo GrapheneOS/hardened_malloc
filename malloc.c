@@ -344,10 +344,12 @@ static bool has_free_slots(size_t slots, struct slab_metadata *metadata) {
     if (slots <= 64) {
         u64 masked = metadata->bitmap[0] | get_mask(slots);
         return masked != ~0UL;
-    } else if (slots <= 128) {
+    }
+    if (slots <= 128) {
         u64 masked = metadata->bitmap[1] | get_mask(slots - 64);
         return metadata->bitmap[0] != ~0UL || masked != ~0UL;
-    } else if (slots <= 192) {
+    }
+    if (slots <= 192) {
         u64 masked = metadata->bitmap[2] | get_mask(slots - 128);
         return metadata->bitmap[0] != ~0UL || metadata->bitmap[1] != ~0UL || masked != ~0UL;
     }
@@ -434,7 +436,9 @@ static inline void *allocate_small(size_t requested_size) {
 
             mutex_unlock(&c->lock);
             return p;
-        } else if (c->free_slabs_head != NULL) {
+        }
+
+        if (c->free_slabs_head != NULL) {
             struct slab_metadata *metadata = c->free_slabs_head;
             metadata->canary_value = get_random_canary(&c->rng);
 
