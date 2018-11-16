@@ -39,9 +39,9 @@ executables using glibc or musl:
 
 It can be necessary to substantially increase the `vm.max_map_count` sysctl to
 accomodate the large number of mappings caused by guard slabs and large
-allocation guard regions. There will be a configuration option in `config.h`
-for tuning the proportion of slabs to guard slabs too, since the default 1:1
-proportion makes the address space quite sparse.
+allocation guard regions. The number of mappings can also be drastically
+reduced via a significant increase to `CONFIG_GUARD_SLABS_INTERVAL` but the
+feature has a low performance and memory usage cost so that isn't recommended.
 
 It can offer slightly better performance when integrated into the C standard
 library and there are other opportunities for similar hardening within C
