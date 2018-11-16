@@ -13,6 +13,8 @@ will be custom integration and other hardening features. The glibc support will
 be limited to replacing the malloc implementation because musl is a much more
 robust and cleaner base to build on and can cover the same use cases.
 
+# Dependencies
+
 Debian stable determines the most ancient set of supported dependencies:
 
 * glibc 2.24
