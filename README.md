@@ -4,8 +4,8 @@ against heap corruption vulnerabilities. The security-focused design also leads
 to much less metadata overhead and memory waste from fragmentation than a more
 traditional allocator design. It aims to provide decent overall performance
 with a focus on long-term performance and memory usage rather than allocator
-allocator micro-benchmarks. It has relatively fine-grained locking and will
-offer good scalability once arenas are implemented.
+micro-benchmarks. It has relatively fine-grained locking and will offer good
+scalability once arenas are implemented.
 
 This project currently aims to support Android, musl and glibc. It may support
 other non-Linux operating systems in the future. For Android and musl, there
