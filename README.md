@@ -17,16 +17,16 @@ This allocator is intended as a successor to a previous implementation based on
 extending OpenBSD malloc with various additional security features. It's still
 heavily based on the OpenBSD malloc design, albeit not on the existing code
 other than reusing the hash table implementation for the time being. The main
-differences in the design are that it's solely focused on hardening rather than
-finding bugs, uses finer-grained size classes based on jemalloc with slab sizes
-going beyond 4k, it doesn't rely on the kernel having fine-grained mmap
-randomization and it only targets 64-bit to make aggressive use of the large
-address space. There are lots of smaller differences in the implementation
-approach. It incorporates the previous extensions made to OpenBSD malloc
-including adding padding to allocations for canaries (distinct from the current
-OpenBSD malloc canaries), write-after-free detection tied to the existing
-clearing on free, queues alongside the existing randomized arrays for
-quarantining allocations and proper double-free detection for quarantined
+differences in the design are that it is solely focused on hardening rather
+than finding bugs, uses finer-grained size classes along with slab sizes going
+beyond 4k to reduce internal fragmentation, doesn't rely on the kernel having
+fine-grained mmap randomization and only targets 64-bit to make aggressive use
+of the large address space.  There are lots of smaller differences in the
+implementation approach. It incorporates the previous extensions made to
+OpenBSD malloc including adding padding to allocations for canaries (distinct
+from the current OpenBSD malloc canaries), write-after-free detection tied to
+the existing clearing on free, queues alongside the existing randomized arrays
+for quarantining allocations and proper double-free detection for quarantined
 allocations. The per-size-class memory regions with their own random bases were
 loosely inspired by the size and type-based partitioning in PartitionAlloc. The
 planned changes to OpenBSD malloc ended up being too extensive and invasive so
