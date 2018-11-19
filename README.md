@@ -321,6 +321,13 @@ classes for every power of two spacing which results in bounding the internal
 fragmentation below 20% for each size class. This also means there are 4 size
 classes for each doubling in size.
 
+The slot counts tied to the size classes are specific to this allocator rather
+than being taken from jemalloc. Slabs are always a span of pages so the slot
+count needs to be tuned to minimize waste due to rounding to the page size. For
+now, this allocator is set up only for 4096 byte pages as a small page size is
+desirable for finer-grained memory protection and randomization. It could be
+ported to larger page sizes in the future.
+
 | size class | worst case internal fragmentation | slab slots | slab size | internal fragmentation for slabs |
 | - | - | - | - | - |
 | 16 | 93.75% | 256 | 4096 | 0.0% |
