@@ -327,9 +327,6 @@ It's allocated in a dedicated region like other size classes but with the slabs
 never being made readable and writable so the only memory usage is for the slab
 metadata.
 
-The slab slot count for each size class is not yet finely tuned beyond choosing values avoiding
-internal fragmentation for slabs (i.e. avoiding wasted space due to page size rounding).
-
 The choice of size classes for slab allocation is the same as jemalloc, which
 is a careful balance between minimizing internal and external fragmentation. If
 there are more size classes, more memory is wasted on free slots available only
