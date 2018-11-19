@@ -309,12 +309,17 @@ metadata.
 The slab slot count for each size class is not yet finely tuned beyond choosing values avoiding
 internal fragmentation for slabs (i.e. avoiding wasted space due to page size rounding).
 
-The choice of size classes is the same as jemalloc, but with a much different approach to the
-slabs containing them:
-
-> size classes are multiples of the quantum [16], spaced such that there are four size classes for
-> each doubling in size, which limits internal fragmentation to approximately 20% for all but the
-> smallest size classes
+The choice of size classes for slab allocation is the same as jemalloc, which
+is a careful balance between minimizing internal and external fragmentation. If
+there are more size classes, more memory is wasted on free slots available only
+to allocation requests of those sizes (external fragmentation). If there are
+fewer size classes, the spacing between them is larger and more memory is
+wasted due to rounding up to the size classes (internal fragmentation). There
+are 4 special size classes for the smallest sizes (16, 32, 48, 64) that are
+simply spaced out by the minimum spacing (16). Afterwards, there are four size
+classes for every power of two spacing which results in bounding the internal
+fragmentation below 20% for each size class. This also means there are 4 size
+classes for each doubling in size.
 
 | size class | worst case internal fragmentation | slab slots | slab size | internal fragmentation for slabs |
 | - | - | - | - | - |
