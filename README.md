@@ -391,3 +391,30 @@ size for 2048 byte spacing and the next spacing class matches the page size of
 4096 bytes on the target platforms. This is the minimum set of small size
 classes required to avoid substantial waste from rounding. Further slab
 allocation size classes may be offered as an option in the future.
+
+# API extensions
+
+The `void free_sized(void *ptr, size_t expected_size)` function exposes the
+sized deallocation sanity checks for C. A performance-oriented allocator could
+use the same API as an optimization to avoid a potential cache miss from
+reading the size from metadata.
+
+The `size_t malloc_object_size(void *ptr)` function returns an *upper bound* on
+the accessible size of the relevant object (if any) by querying the malloc
+implementation. It's similar to the `__builtin_object_size` intrinsic used by
+`_FORTIFY_SOURCE` but via dynamically querying the malloc implementation rather
+than determining constant sizes at compile-time. The current implementation is
+just a naive placeholder returning much looser upper bounds than the intended
+implementation. It's a valid implementation of the API already, but it will
+become fully accurate once it's finished. This function is **not** currently
+safe to call from signal handlers, but another API will be provided to make
+that possible with a compile-time configuration option to avoid the necessary
+overhead if the functionality isn't being used (in a way that doesn't change
+break API compatibility based on the configuration).
+
+The `size_t malloc_object_size_fast(void *ptr)` is comparable, but avoids
+expensive operations like locking or even atomics. It provides significantly
+less useful results falling back to higher upper bounds, but is very fast. In
+this implementation, it retrieves an upper bound on the size for small memory
+allocations based on calculating the size class region. This function is safe
+to use from signal handlers already.
