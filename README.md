@@ -346,7 +346,8 @@ than being taken from jemalloc. Slabs are always a span of pages so the slot
 count needs to be tuned to minimize waste due to rounding to the page size. For
 now, this allocator is set up only for 4096 byte pages as a small page size is
 desirable for finer-grained memory protection and randomization. It could be
-ported to larger page sizes in the future.
+ported to larger page sizes in the future. The current slot counts are only a
+preliminary set of values.
 
 | size class | worst case internal fragmentation | slab slots | slab size | internal fragmentation for slabs |
 | - | - | - | - | - |
@@ -386,3 +387,9 @@ ported to larger page sizes in the future.
 | 12288 | 16.658528645833343% | 5 | 61440 | 0.0% |
 | 14336 | 14.278738839285708% | 4 | 57344 | 0.0% |
 | 16384 | 12.493896484375% | 4 | 65536 | 0.0% |
+
+The slab allocation size classes currently end at 16384 since that's the final
+size for 2048 byte spacing and the next spacing class matches the page size of
+4096 bytes on the target platforms. This is the minimum set of small size
+classes required to avoid substantial waste from rounding. Further slab
+allocation size classes may be offered as an option in the future.
