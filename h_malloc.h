@@ -5,6 +5,8 @@
 
 #include <malloc.h>
 
+__BEGIN_DECLS
+
 #ifndef H_MALLOC_PREFIX
 #define h_malloc malloc
 #define h_calloc calloc
@@ -102,5 +104,7 @@ size_t h_malloc_object_size_fast(void *ptr);
 // allocator implementation uses it to improve security by checking that the
 // passed size matches the allocated size.
 void h_free_sized(void *ptr, size_t expected_size);
+
+__END_DECLS
 
 #endif
