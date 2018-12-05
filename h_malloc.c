@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <malloc.h>
 #include <pthread.h>
 #include <sys/mman.h>
 #include <unistd.h>
