@@ -5,9 +5,10 @@
 #include <stddef.h>
 
 #define PAGE_SHIFT 12
+#ifndef PAGE_SIZE
 #define PAGE_SIZE ((size_t)1 << PAGE_SHIFT)
-#define PAGE_MASK ((size_t)(PAGE_SIZE - 1))
-#define PAGE_CEILING(s) (((s) + PAGE_MASK) & ~PAGE_MASK)
+#endif
+#define PAGE_CEILING(s) (((s) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
 
 void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotect);
 void deallocate_pages(void *usable, size_t usable_size, size_t guard_size);
