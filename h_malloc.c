@@ -210,7 +210,7 @@ struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
     size_t metadata_count_unguarded;
 };
 
-#define CLASS_REGION_SIZE (128ULL * 1024 * 1024 * 1024)
+#define CLASS_REGION_SIZE (size_t)CONFIG_CLASS_REGION_SIZE
 #define REAL_CLASS_REGION_SIZE (CLASS_REGION_SIZE * 2)
 static const size_t slab_region_size = REAL_CLASS_REGION_SIZE * N_SIZE_CLASSES;
 static_assert(PAGE_SIZE == 4096, "bitmap handling will need adjustment for other page sizes");

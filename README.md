@@ -159,6 +159,8 @@ for the chosen values are not written yet, so use them at your own peril:
   the size threshold where large allocations will not be quarantined
 * `CONFIG_FREE_SLABS_QUARANTINE_RANDOM_SIZE`: `32` (default) to control the
   number of slots in the random array used to randomize free slab reuse
+* `CONFIG_CLASS_REGION_SIZE`: `34359738368` (default) to control the size of
+  the size class regions
 
 There will be more control over enabled features in the future along with
 control over fairly arbitrarily chosen values like the size of empty slab
