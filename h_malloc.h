@@ -47,8 +47,14 @@ void h_free(void *ptr);
 // POSIX
 int h_posix_memalign(void **memptr, size_t alignment, size_t size);
 
+#ifdef __ANDROID__
+#define H_MALLOC_USABLE_SIZE_CONST const
+#else
+#define H_MALLOC_USABLE_SIZE_CONST
+#endif
+
 // glibc extensions
-size_t h_malloc_usable_size(void *ptr);
+size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *ptr);
 int h_mallopt(int param, int value);
 int h_malloc_trim(size_t pad);
 void h_malloc_stats(void);

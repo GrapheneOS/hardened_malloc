@@ -511,12 +511,12 @@ static inline void *allocate_small(size_t requested_size) {
     return p;
 }
 
-static size_t slab_size_class(void *p) {
-    size_t offset = (char *)p - (char *)ro.slab_region_start;
+static size_t slab_size_class(const void *p) {
+    size_t offset = (const char *)p - (const char *)ro.slab_region_start;
     return offset / REAL_CLASS_REGION_SIZE;
 }
 
-static size_t slab_usable_size(void *p) {
+static size_t slab_usable_size(const void *p) {
     return size_classes[slab_size_class(p)];
 }
 
@@ -742,7 +742,7 @@ static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t gua
     }
 }
 
-static size_t hash_page(void *p) {
+static size_t hash_page(const void *p) {
     uintptr_t u = (uintptr_t)p >> PAGE_SHIFT;
     size_t sum = u;
     sum = (sum << 7) - sum + (u >> 16);
@@ -814,7 +814,7 @@ static int regions_insert(void *p, size_t size, size_t guard_size) {
     return 0;
 }
 
-static struct region_metadata *regions_find(void *p) {
+static struct region_metadata *regions_find(const void *p) {
     struct region_allocator *ra = ro.region_allocator;
 
     size_t mask = ra->total - 1;
@@ -1363,7 +1363,7 @@ EXPORT void h_free_sized(void *p, size_t expected_size) {
     thread_seal_metadata();
 }
 
-EXPORT size_t h_malloc_usable_size(void *p) {
+EXPORT size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *p) {
     if (p == NULL) {
         return 0;
     }
