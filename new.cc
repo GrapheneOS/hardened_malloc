@@ -4,7 +4,7 @@
 #define noreturn
 
 extern "C" {
-#include "malloc.h"
+#include "h_malloc.h"
 #include "util.h"
 }
 

@@ -11,7 +11,7 @@
 
 #include "third_party/libdivide.h"
 
-#include "malloc.h"
+#include "h_malloc.h"
 #include "mutex.h"
 #include "memory.h"
 #include "pages.h"

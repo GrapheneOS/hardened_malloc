@@ -31,7 +31,7 @@ CXXFLAGS := -std=c++14 $(SHARED_FLAGS)
 LDFLAGS := -Wl,--as-needed,-z,defs,-z,relro,-z,now,-z,nodlopen,-z,text
 TIDY_CHECKS := -checks=bugprone-*,-bugprone-macro-parentheses,cert-*,clang-analyzer-*,readability-*,-readability-inconsistent-declaration-parameter-name,-readability-named-parameter
 
-SOURCES := chacha.c malloc.c memory.c pages.c random.c util.c
+SOURCES := chacha.c h_malloc.c memory.c pages.c random.c util.c
 OBJECTS := $(SOURCES:.c=.o)
 
 ifeq ($(CONFIG_CXX_ALLOCATOR),true)
@@ -83,9 +83,9 @@ libhardened_malloc.so: $(OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared $^ $(LDLIBS) -o $@
 
 chacha.o: chacha.c chacha.h util.h
-malloc.o: malloc.c malloc.h mutex.h memory.h pages.h random.h util.h
+h_malloc.o: h_malloc.c h_malloc.h mutex.h memory.h pages.h random.h util.h
 memory.o: memory.c memory.h util.h
-new.o: new.cc malloc.h util.h
+new.o: new.cc h_malloc.h util.h
 pages.o: pages.c pages.h memory.h util.h
 random.o: random.c random.h chacha.h util.h
 util.o: util.c util.h
