@@ -79,7 +79,7 @@ CPPFLAGS += \
     -DREGION_QUARANTINE_SKIP_THRESHOLD=$(CONFIG_REGION_QUARANTINE_SKIP_THRESHOLD) \
     -DFREE_SLABS_QUARANTINE_RANDOM_SIZE=$(CONFIG_FREE_SLABS_QUARANTINE_RANDOM_SIZE)
 
-hardened_malloc.so: $(OBJECTS)
+libhardened_malloc.so: $(OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared $^ $(LDLIBS) -o $@
 
 chacha.o: chacha.c chacha.h util.h
@@ -94,6 +94,6 @@ tidy:
 	clang-tidy $(TIDY_CHECKS) $(SOURCES) -- $(CPPFLAGS)
 
 clean:
-	rm -f hardened_malloc.so $(OBJECTS)
+	rm -f libhardened_malloc.so $(OBJECTS)
 
 .PHONY: clean tidy
