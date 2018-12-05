@@ -1,0 +1,50 @@
+common_cflags = [
+    "-std=c11",
+    "-O3",
+    //"-flto",
+    "-fPIC",
+    "-fvisibility=hidden",
+    //"-fno-plt",
+    "-pipe",
+    "-Wall",
+    "-Wextra",
+    "-Wcast-align",
+    "-Wcast-qual",
+    "-Wwrite-strings",
+    "-Wmissing-prototypes",
+    "-DH_MALLOC_PREFIX",
+    "-DZERO_ON_FREE=true",
+    "-DWRITE_AFTER_FREE_CHECK=true",
+    "-DSLOT_RANDOMIZE=true",
+    "-DSLAB_CANARY=true",
+    "-DSLAB_QUARANTINE_RANDOM_SIZE=0",
+    "-DSLAB_QUARANTINE_QUEUE_SIZE=0",
+    "-DGUARD_SLABS_INTERVAL=1",
+    "-DGUARD_SIZE_DIVISOR=2",
+    "-DREGION_QUARANTINE_RANDOM_SIZE=128",
+    "-DREGION_QUARANTINE_QUEUE_SIZE=1024",
+    "-DREGION_QUARANTINE_SKIP_THRESHOLD=33554432",
+    "-DFREE_SLABS_QUARANTINE_RANDOM_SIZE=32",
+]
+
+cc_defaults {
+    name: "hardened_malloc_defaults",
+    defaults: ["linux_bionic_supported"],
+    cflags: common_cflags,
+    stl: "none",
+}
+
+lib_src_files = [
+    "chacha.c",
+    "h_malloc.c",
+    "memory.c",
+    "pages.c",
+    "random.c",
+    "util.c",
+]
+
+cc_library_static {
+    name: "libhardened_malloc",
+    defaults: ["hardened_malloc_defaults"],
+    srcs: lib_src_files,
+}
