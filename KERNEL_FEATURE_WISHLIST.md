@@ -8,6 +8,10 @@ Very important and should be an easy sell:
 
 Somewhat important and an easy sell:
 
+* alternative to `RLIMIT_AS` for accountable mappings only
+    * memory control groups are sometimes a better option but there are still
+      users of `RLIMIT_AS` that are problematic for mitigations or simply fast
+      garbage collector implementations, etc. mapping lots of `PROT_NONE` memory
 * mremap flag to disable unmapping the source mapping
     * also needed by jemalloc for different reasons
     * not needed if the kernel gets first class support for arbitrarily sized
