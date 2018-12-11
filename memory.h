@@ -13,5 +13,6 @@ int memory_protect_rw(void *ptr, size_t size);
 int memory_protect_rw_metadata(void *ptr, size_t size);
 int memory_remap(void *old, size_t old_size, size_t new_size);
 int memory_remap_fixed(void *old, size_t old_size, void *new, size_t new_size);
+void memory_set_name(void *ptr, size_t size, const char *name);
 
 #endif

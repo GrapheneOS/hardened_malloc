@@ -119,6 +119,18 @@ static const u16 size_class_slots[] = {
     /* 2048 */ 6, 5, 4, 4
 };
 
+static const char *const size_class_labels[] = {
+    /* 0 */ "malloc 0",
+    /* 16 */ "malloc 16", "malloc 32", "malloc 48", "malloc 64", "malloc 80", "malloc 96", "malloc 112", "malloc 128",
+    /* 32 */ "malloc 160", "malloc 192", "malloc 224", "malloc 256",
+    /* 64 */ "malloc 320", "malloc 384", "malloc 448", "malloc 512",
+    /* 128 */ "malloc 640", "malloc 768", "malloc 896", "malloc 1024",
+    /* 256 */ "malloc 1280", "malloc 1536", "malloc 1792", "malloc 2048",
+    /* 512 */ "malloc 2560", "malloc 3072", "malloc 3584", "malloc 4096",
+    /* 1024 */ "malloc 5120", "malloc 6144", "malloc 7168", "malloc 8192",
+    /* 2048 */ "malloc 10240", "malloc 12288", "malloc 14336", "malloc 16384"
+};
+
 int get_metadata_key(void) {
 #ifdef USE_PKEY
     return ro.metadata_pkey;
@@ -960,6 +972,7 @@ COLD static void init_slow_path(void) {
     if (allocator_state == NULL) {
         fatal_error("failed to reserve allocator state");
     }
+    memory_set_name(allocator_state, sizeof(struct allocator_state), "malloc allocator_state");
     if (memory_protect_rw_metadata(allocator_state, offsetof(struct allocator_state, regions_a))) {
         fatal_error("failed to unprotect allocator state");
     }
@@ -994,6 +1007,7 @@ COLD static void init_slow_path(void) {
         size_t bound = (REAL_CLASS_REGION_SIZE - CLASS_REGION_SIZE) / PAGE_SIZE - 1;
         size_t gap = (get_random_u64_uniform(rng, bound) + 1) * PAGE_SIZE;
         c->class_region_start = (char *)slab_region_start + REAL_CLASS_REGION_SIZE * class + gap;
+        memory_set_name(c->class_region_start, CLASS_REGION_SIZE, size_class_labels[class]);
 
         size_t size = size_classes[class];
         if (size == 0) {

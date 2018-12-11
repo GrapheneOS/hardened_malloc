@@ -1,6 +1,15 @@
 #include <errno.h>
 
 #include <sys/mman.h>
+#include <sys/prctl.h>
+
+#ifndef PR_SET_VMA
+#define PR_SET_VMA 0x53564d41
+#endif
+
+#ifndef PR_SET_VMA_ANON_NAME
+#define PR_SET_VMA_ANON_NAME 0
+#endif
 
 #include "memory.h"
 #include "util.h"
@@ -79,4 +88,10 @@ int memory_remap_fixed(void *old, size_t old_size, void *new, size_t new_size) {
         return 1;
     }
     return 0;
+}
+
+void memory_set_name(UNUSED void *ptr, UNUSED size_t size, UNUSED const char *name) {
+#ifdef LABEL_MEMORY
+    prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, ptr, size, name);
+#endif
 }
