@@ -71,6 +71,7 @@ static union {
         int metadata_pkey;
         bool pkey_state_preserved_on_fork;
 #endif
+        bool zero_on_free;
     };
     char padding[PAGE_SIZE];
 } ro __attribute__((aligned(PAGE_SIZE)));
@@ -419,7 +420,7 @@ static void *slot_pointer(size_t size, void *slab, size_t slot) {
 }
 
 static void write_after_free_check(const char *p, size_t size) {
-    if (!WRITE_AFTER_FREE_CHECK) {
+    if (!WRITE_AFTER_FREE_CHECK || !ro.zero_on_free) {
         return;
     }
 
@@ -633,7 +634,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
             }
         }
 
-        if (ZERO_ON_FREE) {
+        if (ro.zero_on_free) {
             memset(p, 0, size - canary_size);
         }
     }
@@ -965,6 +966,17 @@ static inline void enforce_init(void) {
     }
 }
 
+COLD static void handle_camera_bug(void) {
+    const char expected[] = "/vendor/bin/hw/android.hardware.camera.provider@2.4-service_64";
+    char path[sizeof(expected)];
+    if (readlink("/proc/self/exe", path, sizeof(path)) == -1) {
+        return;
+    }
+    if (strcmp(expected, path) == 0) {
+        ro.zero_on_free = false;
+    }
+}
+
 COLD static void init_slow_path(void) {
     static struct mutex lock = MUTEX_INITIALIZER;
 
@@ -987,6 +999,9 @@ COLD static void init_slow_path(void) {
         }
     }
 #endif
+
+    ro.zero_on_free = ZERO_ON_FREE;
+    handle_camera_bug();
 
     if (sysconf(_SC_PAGESIZE) != PAGE_SIZE) {
         fatal_error("page size mismatch");
@@ -1164,7 +1179,7 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
     total_size = adjust_size_for_canaries(total_size);
     void *p = allocate(total_size);
     thread_seal_metadata();
-    if (!ZERO_ON_FREE && likely(p != NULL) && total_size && total_size <= max_slab_size_class) {
+    if (!ro.zero_on_free && likely(p != NULL) && total_size && total_size <= max_slab_size_class) {
         memset(p, 0, total_size - canary_size);
     }
     return p;
