@@ -78,6 +78,9 @@ static union {
         int metadata_pkey;
         bool pkey_state_preserved_on_fork;
 #endif
+        bool zero_on_free;
+        bool purge_slabs;
+        bool region_quarantine_protect;
     };
     char padding[PAGE_SIZE];
 } ro __attribute__((aligned(PAGE_SIZE)));
@@ -430,7 +433,7 @@ static void *slot_pointer(size_t size, void *slab, size_t slot) {
 }
 
 static void write_after_free_check(const char *p, size_t size) {
-    if (!WRITE_AFTER_FREE_CHECK) {
+    if (!WRITE_AFTER_FREE_CHECK || !ro.zero_on_free) {
         return;
     }
 
@@ -672,7 +675,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
             }
         }
 
-        if (ZERO_ON_FREE) {
+        if (ro.zero_on_free) {
             memset(p, 0, size - canary_size);
         }
     }
@@ -749,7 +752,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
         metadata->prev = NULL;
 
         if (c->empty_slabs_total + slab_size > max_empty_slabs_total) {
-            if (!memory_map_fixed(slab, slab_size)) {
+            if (ro.purge_slabs && !memory_map_fixed(slab, slab_size)) {
                 label_slab(slab, slab_size, class);
                 stats_slab_deallocate(c, slab_size);
                 enqueue_free_slab(c, metadata);
@@ -829,9 +832,13 @@ static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t gua
         return;
     }
 
-    if (unlikely(memory_map_fixed(p, size))) {
-        deallocate_pages(p, size, guard_size);
-        return;
+    if (ro.region_quarantine_protect) {
+        if (unlikely(memory_map_fixed(p, size))) {
+            deallocate_pages(p, size, guard_size);
+            return;
+        }
+    } else {
+        madvise(p, size, MADV_DONTNEED);
     }
     memory_set_name(p, size, "malloc large");
 
@@ -1050,6 +1057,24 @@ static inline void enforce_init(void) {
     }
 }
 
+COLD static void handle_hal_bugs(void) {
+    char path[256];
+    if (readlink("/proc/self/exe", path, sizeof(path)) == -1) {
+        return;
+    }
+    const char camera_provider[] = "/vendor/bin/hw/android.hardware.camera.provider@2.4-service_64";
+    const char citadel[] = "/vendor/bin/hw/android.hardware.keymaster@4.0-service.citadel";
+    if (strcmp(camera_provider, path) == 0) {
+        ro.zero_on_free = false;
+        ro.purge_slabs = false;
+        ro.region_quarantine_protect = false;
+    }
+    if (strcmp(citadel, path) == 0) {
+        ro.zero_on_free = false;
+        ro.purge_slabs = false;
+    }
+}
+
 COLD static void init_slow_path(void) {
     static struct mutex lock = MUTEX_INITIALIZER;
 
@@ -1072,6 +1097,11 @@ COLD static void init_slow_path(void) {
         }
     }
 #endif
+
+    ro.purge_slabs = true;
+    ro.zero_on_free = ZERO_ON_FREE;
+    ro.region_quarantine_protect = true;
+    handle_hal_bugs();
 
     if (sysconf(_SC_PAGESIZE) != PAGE_SIZE) {
         fatal_error("page size mismatch");
@@ -1344,7 +1374,7 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
     total_size = adjust_size_for_canaries(total_size);
     void *p = allocate(arena, total_size);
     thread_seal_metadata();
-    if (!ZERO_ON_FREE && likely(p != NULL) && total_size && total_size <= max_slab_size_class) {
+    if (!ro.zero_on_free && likely(p != NULL) && total_size && total_size <= max_slab_size_class) {
         memset(p, 0, total_size - canary_size);
     }
     return p;
