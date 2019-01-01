@@ -78,6 +78,9 @@ static union {
 #ifdef USE_PKEY
         int metadata_pkey;
 #endif
+        bool zero_on_free;
+        bool purge_slabs;
+        bool region_quarantine_protect;
     };
     char padding[PAGE_SIZE];
 } ro __attribute__((aligned(PAGE_SIZE)));
@@ -441,7 +444,7 @@ static void *slot_pointer(size_t size, void *slab, size_t slot) {
 }
 
 static void write_after_free_check(const char *p, size_t size) {
-    if (!WRITE_AFTER_FREE_CHECK) {
+    if (!WRITE_AFTER_FREE_CHECK || !ro.zero_on_free) {
         return;
     }
 
@@ -691,7 +694,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     if (!is_zero_size) {
         check_canary(metadata, p, size);
 
-        if (ZERO_ON_FREE) {
+        if (ro.zero_on_free) {
             memset(p, 0, size - canary_size);
         }
     }
@@ -768,7 +771,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
         metadata->prev = NULL;
 
         if (c->empty_slabs_total + slab_size > max_empty_slabs_total) {
-            if (!memory_map_fixed(slab, slab_size)) {
+            if (ro.purge_slabs && !memory_map_fixed(slab, slab_size)) {
                 label_slab(slab, slab_size, class);
                 stats_slab_deallocate(c, slab_size);
                 enqueue_free_slab(c, metadata);
@@ -853,7 +856,7 @@ static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t gua
         return;
     }
 
-    if (unlikely(memory_map_fixed(p, size))) {
+    if (!ro.region_quarantine_protect || unlikely(memory_map_fixed(p, size))) {
         memory_purge(p, size);
     } else {
         memory_set_name(p, size, "malloc large quarantine");
@@ -1069,6 +1072,21 @@ static inline void enforce_init(void) {
     }
 }
 
+COLD static void handle_bugs(void) {
+    char path[256];
+    if (readlink("/proc/self/exe", path, sizeof(path)) == -1) {
+        return;
+    }
+
+    // Pixel 3, Pixel 3 XL, Pixel 3a and Pixel 3a XL camera provider
+    const char camera_provider[] = "/vendor/bin/hw/android.hardware.camera.provider@2.4-service_64";
+    if (strcmp(camera_provider, path) == 0) {
+        ro.zero_on_free = false;
+        ro.purge_slabs = false;
+        ro.region_quarantine_protect = false;
+    }
+}
+
 COLD static void init_slow_path(void) {
     static struct mutex lock = MUTEX_INITIALIZER;
 
@@ -1082,6 +1100,11 @@ COLD static void init_slow_path(void) {
 #ifdef USE_PKEY
     ro.metadata_pkey = pkey_alloc(0, 0);
 #endif
+
+    ro.purge_slabs = true;
+    ro.zero_on_free = ZERO_ON_FREE;
+    ro.region_quarantine_protect = true;
+    handle_bugs();
 
     if (sysconf(_SC_PAGESIZE) != PAGE_SIZE) {
         fatal_error("runtime page size does not match compile-time page size which is not supported");
@@ -1361,7 +1384,7 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
     }
     total_size = adjust_size_for_canary(total_size);
     void *p = alloc(total_size);
-    if (!ZERO_ON_FREE && likely(p != NULL) && total_size && total_size <= MAX_SLAB_SIZE_CLASS) {
+    if (!ro.zero_on_free && likely(p != NULL) && total_size && total_size <= MAX_SLAB_SIZE_CLASS) {
         memset(p, 0, total_size - canary_size);
     }
     return p;
