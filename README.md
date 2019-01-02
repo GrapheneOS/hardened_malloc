@@ -56,7 +56,7 @@ with security patches for 3 years, but tagged releases of the Android Open
 Source Project are more than just security patches and are no longer pushed
 once no officially supported devices are using them anymore. For example, at
 the time of writing (September 2018), AOSP only has tagged releases for 8.1
-(Nexus 5X, Nexus 5X, Pixel C) and 9.0 (Pixel, Pixel XL, Pixel 2, Pixel 2 XL).
+(Nexus 5X, Nexus 6P, Pixel C) and 9.0 (Pixel, Pixel XL, Pixel 2, Pixel 2 XL).
 There are ongoing security patches for 6.0, 6.0.1, 7.0, 7.1.1, 7.1.2, 8.0, 8.1
 and 9.0 but only the active AOSP branches (8.1 and 9.0) are supported by this
 project and it doesn't make much sense to use much older releases with far
