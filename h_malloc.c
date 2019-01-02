@@ -28,7 +28,7 @@ extern int __register_atfork(void (*)(void), void (*)(void), void (*)(void), voi
 #define atfork pthread_atfork
 #endif
 
-#define SLAB_QUARANTINE (SLAB_QUARANTINE_RANDOM_SIZE > 0 || SLAB_QUARANTINE_QUEUE_SIZE > 0)
+#define SLAB_QUARANTINE (SLAB_QUARANTINE_RANDOM_LENGTH > 0 || SLAB_QUARANTINE_QUEUE_LENGTH > 0)
 
 static_assert(sizeof(void *) == 8, "64-bit only");
 
@@ -177,12 +177,12 @@ struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
     struct libdivide_u32_t size_divisor;
     struct libdivide_u64_t slab_size_divisor;
 
-#if SLAB_QUARANTINE_RANDOM_SIZE > 0
-    void *quarantine_random[SLAB_QUARANTINE_RANDOM_SIZE];
+#if SLAB_QUARANTINE_RANDOM_LENGTH > 0
+    void *quarantine_random[SLAB_QUARANTINE_RANDOM_LENGTH];
 #endif
 
-#if SLAB_QUARANTINE_QUEUE_SIZE > 0
-    void *quarantine_queue[SLAB_QUARANTINE_QUEUE_SIZE];
+#if SLAB_QUARANTINE_QUEUE_LENGTH > 0
+    void *quarantine_queue[SLAB_QUARANTINE_QUEUE_LENGTH];
     size_t quarantine_queue_index;
 #endif
 
@@ -202,7 +202,7 @@ struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
     // FIFO singly-linked list
     struct slab_metadata *free_slabs_head;
     struct slab_metadata *free_slabs_tail;
-    struct slab_metadata *free_slabs_quarantine[FREE_SLABS_QUARANTINE_RANDOM_SIZE];
+    struct slab_metadata *free_slabs_quarantine[FREE_SLABS_QUARANTINE_RANDOM_LENGTH];
 
     struct random_state rng;
     size_t metadata_allocated;
@@ -523,8 +523,8 @@ static size_t slab_usable_size(const void *p) {
 static void enqueue_free_slab(struct size_class *c, struct slab_metadata *metadata) {
     metadata->next = NULL;
 
-    static_assert(FREE_SLABS_QUARANTINE_RANDOM_SIZE < (u16)-1, "free slabs quarantine too large");
-    size_t index = get_random_u16_uniform(&c->rng, FREE_SLABS_QUARANTINE_RANDOM_SIZE);
+    static_assert(FREE_SLABS_QUARANTINE_RANDOM_LENGTH < (u16)-1, "free slabs quarantine too large");
+    size_t index = get_random_u16_uniform(&c->rng, FREE_SLABS_QUARANTINE_RANDOM_LENGTH);
     struct slab_metadata *substitute = c->free_slabs_quarantine[index];
     c->free_slabs_quarantine[index] = metadata;
 
@@ -590,8 +590,8 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
 
     set_quarantine(metadata, slot);
 
-#if SLAB_QUARANTINE_RANDOM_SIZE > 0
-    size_t random_index = get_random_u16_uniform(&c->rng, SLAB_QUARANTINE_RANDOM_SIZE);
+#if SLAB_QUARANTINE_RANDOM_LENGTH > 0
+    size_t random_index = get_random_u16_uniform(&c->rng, SLAB_QUARANTINE_RANDOM_LENGTH);
     void *random_substitute = c->quarantine_random[random_index];
     c->quarantine_random[random_index] = p;
 
@@ -603,10 +603,10 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     p = random_substitute;
 #endif
 
-#if SLAB_QUARANTINE_QUEUE_SIZE > 0
+#if SLAB_QUARANTINE_QUEUE_LENGTH > 0
     void *queue_substitute = c->quarantine_queue[c->quarantine_queue_index];
     c->quarantine_queue[c->quarantine_queue_index] = p;
-    c->quarantine_queue_index = (c->quarantine_queue_index + 1) % SLAB_QUARANTINE_QUEUE_SIZE;
+    c->quarantine_queue_index = (c->quarantine_queue_index + 1) % SLAB_QUARANTINE_QUEUE_LENGTH;
 
     if (queue_substitute == NULL) {
         mutex_unlock(&c->lock);
@@ -683,8 +683,8 @@ struct region_allocator {
     struct region_metadata *regions;
     size_t total;
     size_t free;
-    struct quarantine_info quarantine_random[REGION_QUARANTINE_RANDOM_SIZE];
-    struct quarantine_info quarantine_queue[REGION_QUARANTINE_QUEUE_SIZE];
+    struct quarantine_info quarantine_random[REGION_QUARANTINE_RANDOM_LENGTH];
+    struct quarantine_info quarantine_queue[REGION_QUARANTINE_QUEUE_LENGTH];
     size_t quarantine_queue_index;
     struct random_state rng;
 };
@@ -723,7 +723,7 @@ static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t gua
 
     mutex_lock(&ra->lock);
 
-    size_t index = get_random_u64_uniform(&ra->rng, REGION_QUARANTINE_RANDOM_SIZE);
+    size_t index = get_random_u64_uniform(&ra->rng, REGION_QUARANTINE_RANDOM_LENGTH);
     struct quarantine_info b = ra->quarantine_random[index];
     ra->quarantine_random[index] = a;
     if (b.p == NULL) {
@@ -733,7 +733,7 @@ static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t gua
 
     a = ra->quarantine_queue[ra->quarantine_queue_index];
     ra->quarantine_queue[ra->quarantine_queue_index] = b;
-    ra->quarantine_queue_index = (ra->quarantine_queue_index + 1) % REGION_QUARANTINE_QUEUE_SIZE;
+    ra->quarantine_queue_index = (ra->quarantine_queue_index + 1) % REGION_QUARANTINE_QUEUE_LENGTH;
 
     mutex_unlock(&ra->lock);
 

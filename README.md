@@ -140,24 +140,25 @@ The following boolean configuration options are available:
 The following integer configuration options are available. Proper sanity checks
 for the chosen values are not written yet, so use them at your own peril:
 
-* `CONFIG_SLAB_QUARANTINE_RANDOM_SIZE`: `0` (default) to control the number of
-  slots in the random array used to randomize reuse for small memory
+* `CONFIG_SLAB_QUARANTINE_RANDOM_LENGTH`: `0` (default) to control the number
+  of slots in the random array used to randomize reuse for small memory
   allocations
-* `CONFIG_SLAB_QUARANTINE_QUEUE_SIZE`: `0` (default) to control the number of
+* `CONFIG_SLAB_QUARANTINE_QUEUE_LENGTH`: `0` (default) to control the number of
   slots in the queue used to delay reuse for small memory allocations
 * `CONFIG_GUARD_SLABS_INTERVAL`: `1` (default) to control the number of slabs
   before a slab is skipped and left as an unused memory protected guard slab
 * `CONFIG_GUARD_SIZE_DIVISOR`: `2` (default) to control the maximum size of the
   guard regions placed on both sides of large memory allocations, relative to
   the usable size of the memory allocation
-* `CONFIG_REGION_QUARANTINE_RANDOM_SIZE`: `128` (default) to control the number
-  of slots in the random array used to randomize region reuse for large memory
+* `CONFIG_REGION_QUARANTINE_RANDOM_LENGTH`: `128` (default) to control the
+  number of slots in the random array used to randomize region reuse for large
+  memory allocations
+* `CONFIG_REGION_QUARANTINE_QUEUE_LENGTH`: `1024` (default) to control the
+  number of slots in the queue used to delay region reuse for large memory
   allocations
-* `CONFIG_REGION_QUARANTINE_QUEUE_SIZE`: `1024` (default) to control the number
-  of slots in the queue used to delay region reuse for large memory allocations
 * `CONFIG_REGION_QUARANTINE_SKIP_THRESHOLD`: `33554432` (default) to control
   the size threshold where large allocations will not be quarantined
-* `CONFIG_FREE_SLABS_QUARANTINE_RANDOM_SIZE`: `32` (default) to control the
+* `CONFIG_FREE_SLABS_QUARANTINE_RANDOM_LENGTH`: `32` (default) to control the
   number of slots in the random array used to randomize free slab reuse
 * `CONFIG_CLASS_REGION_SIZE`: `34359738368` (default) to control the size of
   the size class regions
