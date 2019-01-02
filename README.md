@@ -142,9 +142,14 @@ for the chosen values are not written yet, so use them at your own peril:
 
 * `CONFIG_SLAB_QUARANTINE_RANDOM_LENGTH`: `0` (default) to control the number
   of slots in the random array used to randomize reuse for small memory
-  allocations
+  allocations. This sets the length for the largest size class (currently
+  16384) and the quarantine length for smaller size classes is scaled to match
+  the total memory of the quarantined allocations.
 * `CONFIG_SLAB_QUARANTINE_QUEUE_LENGTH`: `0` (default) to control the number of
-  slots in the queue used to delay reuse for small memory allocations
+  slots in the queue used to delay reuse for small memory allocations. This
+  sets the length for the largest size class (currently 16384) and the
+  quarantine length for smaller size classes is scaled to match the total
+  memory of the quarantined allocations.
 * `CONFIG_GUARD_SLABS_INTERVAL`: `1` (default) to control the number of slabs
   before a slab is skipped and left as an unused memory protected guard slab
 * `CONFIG_GUARD_SIZE_DIVISOR`: `2` (default) to control the maximum size of the

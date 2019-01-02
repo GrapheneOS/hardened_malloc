@@ -74,6 +74,8 @@ struct slab_metadata {
 
 static const size_t min_align = 16;
 static const size_t max_slab_size_class = 16384;
+#define MIN_SLAB_SIZE_CLASS_SHIFT 4
+#define MAX_SLAB_SIZE_CLASS_SHIFT 14
 
 static const u16 size_classes[] = {
     /* 0 */ 0,
@@ -178,11 +180,11 @@ struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
     struct libdivide_u64_t slab_size_divisor;
 
 #if SLAB_QUARANTINE_RANDOM_LENGTH > 0
-    void *quarantine_random[SLAB_QUARANTINE_RANDOM_LENGTH];
+    void *quarantine_random[SLAB_QUARANTINE_RANDOM_LENGTH << (MAX_SLAB_SIZE_CLASS_SHIFT - MIN_SLAB_SIZE_CLASS_SHIFT)];
 #endif
 
 #if SLAB_QUARANTINE_QUEUE_LENGTH > 0
-    void *quarantine_queue[SLAB_QUARANTINE_QUEUE_LENGTH];
+    void *quarantine_queue[SLAB_QUARANTINE_QUEUE_LENGTH << (MAX_SLAB_SIZE_CLASS_SHIFT - MIN_SLAB_SIZE_CLASS_SHIFT)];
     size_t quarantine_queue_index;
 #endif
 
@@ -590,8 +592,12 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
 
     set_quarantine(metadata, slot);
 
+    size_t quarantine_shift = __builtin_clzl(size) - (63 - MAX_SLAB_SIZE_CLASS_SHIFT);
+
 #if SLAB_QUARANTINE_RANDOM_LENGTH > 0
-    size_t random_index = get_random_u16_uniform(&c->rng, SLAB_QUARANTINE_RANDOM_LENGTH);
+    size_t slab_quarantine_random_length = SLAB_QUARANTINE_RANDOM_LENGTH << quarantine_shift;
+
+    size_t random_index = get_random_u16_uniform(&c->rng, slab_quarantine_random_length);
     void *random_substitute = c->quarantine_random[random_index];
     c->quarantine_random[random_index] = p;
 
@@ -604,9 +610,11 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
 #endif
 
 #if SLAB_QUARANTINE_QUEUE_LENGTH > 0
+    size_t slab_quarantine_queue_length = SLAB_QUARANTINE_QUEUE_LENGTH << quarantine_shift;
+
     void *queue_substitute = c->quarantine_queue[c->quarantine_queue_index];
     c->quarantine_queue[c->quarantine_queue_index] = p;
-    c->quarantine_queue_index = (c->quarantine_queue_index + 1) % SLAB_QUARANTINE_QUEUE_LENGTH;
+    c->quarantine_queue_index = (c->quarantine_queue_index + 1) % slab_quarantine_queue_length;
 
     if (queue_substitute == NULL) {
         mutex_unlock(&c->lock);
