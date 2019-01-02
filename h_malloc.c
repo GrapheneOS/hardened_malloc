@@ -592,28 +592,28 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
 
 #if SLAB_QUARANTINE_RANDOM_SIZE > 0
     size_t random_index = get_random_u16_uniform(&c->rng, SLAB_QUARANTINE_RANDOM_SIZE);
-    void *substitute = c->quarantine_random[random_index];
+    void *random_substitute = c->quarantine_random[random_index];
     c->quarantine_random[random_index] = p;
 
-    if (substitute == NULL) {
+    if (random_substitute == NULL) {
         mutex_unlock(&c->lock);
         return;
     }
 
-    p = substitute;
+    p = random_substitute;
 #endif
 
 #if SLAB_QUARANTINE_QUEUE_SIZE > 0
-    void *substitute = c->quarantine_queue[c->quarantine_queue_index];
+    void *queue_substitute = c->quarantine_queue[c->quarantine_queue_index];
     c->quarantine_queue[c->quarantine_queue_index] = p;
     c->quarantine_queue_index = (c->quarantine_queue_index + 1) % SLAB_QUARANTINE_QUEUE_SIZE;
 
-    if (substitute == NULL) {
+    if (queue_substitute == NULL) {
         mutex_unlock(&c->lock);
         return;
     }
 
-    p = substitute;
+    p = queue_substitute;
 #endif
 
     metadata = get_metadata(c, p);
