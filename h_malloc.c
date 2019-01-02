@@ -591,7 +591,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     set_quarantine(metadata, slot);
 
 #if SLAB_QUARANTINE_RANDOM_SIZE > 0
-    size_t random_index = get_random_u16_uniform(&c->rng, 16);
+    size_t random_index = get_random_u16_uniform(&c->rng, SLAB_QUARANTINE_RANDOM_SIZE);
     void *substitute = c->quarantine_random[random_index];
     c->quarantine_random[random_index] = p;
 
