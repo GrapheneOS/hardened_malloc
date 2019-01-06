@@ -30,9 +30,27 @@ extern int __register_atfork(void (*)(void), void (*)(void), void (*)(void), voi
 
 #define SLAB_QUARANTINE (SLAB_QUARANTINE_RANDOM_LENGTH > 0 || SLAB_QUARANTINE_QUEUE_LENGTH > 0)
 
+#define MREMAP_MOVE_THRESHOLD (32 * 1024 * 1024)
+
 static_assert(sizeof(void *) == 8, "64-bit only");
 
 static_assert(!WRITE_AFTER_FREE_CHECK || ZERO_ON_FREE, "WRITE_AFTER_FREE_CHECK depends on ZERO_ON_FREE");
+
+static_assert(SLAB_QUARANTINE_RANDOM_LENGTH >= 0 && SLAB_QUARANTINE_RANDOM_LENGTH <= 65536,
+    "invalid slab quarantine random length");
+static_assert(SLAB_QUARANTINE_QUEUE_LENGTH >= 0 && SLAB_QUARANTINE_QUEUE_LENGTH <= 65536,
+    "invalid slab quarantine queue length");
+static_assert(REGION_QUARANTINE_RANDOM_LENGTH >= 0 && REGION_QUARANTINE_RANDOM_LENGTH <= 65536,
+    "invalid region quarantine random length");
+static_assert(REGION_QUARANTINE_QUEUE_LENGTH >= 0 && REGION_QUARANTINE_QUEUE_LENGTH <= 65536,
+    "invalid region quarantine queue length");
+static_assert(FREE_SLABS_QUARANTINE_RANDOM_LENGTH >= 0 && FREE_SLABS_QUARANTINE_RANDOM_LENGTH <= 65536,
+    "invalid free slabs quarantine random length");
+
+static_assert(REGION_QUARANTINE_SKIP_THRESHOLD >= 0,
+    "invalid region quarantine skip threshold");
+static_assert(MREMAP_MOVE_THRESHOLD >= REGION_QUARANTINE_SKIP_THRESHOLD,
+    "mremap move threshold must be above region quarantine limit");
 
 // either sizeof(u64) or 0
 static const size_t canary_size = SLAB_CANARY ? sizeof(u64) : 0;
@@ -1100,11 +1118,6 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
     }
     return p;
 }
-
-#define MREMAP_MOVE_THRESHOLD (32 * 1024 * 1024)
-
-static_assert(MREMAP_MOVE_THRESHOLD >= REGION_QUARANTINE_SKIP_THRESHOLD,
-    "mremap move threshold must be above region quarantine limit");
 
 EXPORT void *h_realloc(void *old, size_t size) {
     if (old == NULL) {
