@@ -1544,15 +1544,11 @@ COLD EXPORT int h_iterate(UNUSED uintptr_t base, UNUSED size_t size,
 
 COLD EXPORT void h_malloc_disable(void) {
     init();
-    thread_unseal_metadata();
     full_lock();
-    thread_seal_metadata();
 }
 
 COLD EXPORT void h_malloc_enable(void) {
     enforce_init();
-    thread_unseal_metadata();
     full_unlock();
-    thread_seal_metadata();
 }
 #endif
