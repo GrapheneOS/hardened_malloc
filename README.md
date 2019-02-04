@@ -406,7 +406,7 @@ allocation size classes may be offered as an option in the future.
 
 ## Scalability
 
-## Small (slab) allocations
+### Small (slab) allocations
 
 As a baseline form of fine-grained locking, the slab allocator has entirely
 separate allocators for each size class. Each size class has a dedicated lock,
@@ -441,7 +441,7 @@ attempt to use heuristics for dynamically tuning the size, but there's not a
 great one size fits all approach so it isn't currently part of this allocator
 implementation.
 
-### Thread caching (or lack thereof)
+#### Thread caching (or lack thereof)
 
 Thread caches are a commonly implemented optimization in modern allocators but
 aren't very suitable for a hardened allocator even when implemented via arrays
@@ -480,7 +480,7 @@ and it's entirely unsuitable / incompatible with a hardened allocator since it
 bypasses all of the underlying security and would destroy much of the security
 value.
 
-## Large allocations
+### Large allocations
 
 The expectation is that the allocator does not need to perform well for large
 allocations, especially in terms of scalability. When the performance for large
