@@ -402,6 +402,80 @@ size for 2048 byte spacing and the next spacing class matches the page size of
 classes required to avoid substantial waste from rounding. Further slab
 allocation size classes may be offered as an option in the future.
 
+# Memory tagging
+
+Integrating extensive support for ARMv8.5 memory tagging is planned and this
+section will be expanded cover the details on the chosen design. The approach
+for slab allocations is currently covered, but it can also be used for the
+allocator metadata region and large allocations.
+
+Memory allocations are already always multiples of naturally aligned 16 byte
+units, so memory tags are a natural fit into a malloc implementation due to the
+16 byte alignment requirement. The only extra memory consumption will come from
+the hardware supported storage for the tag values (4 bits per 16 bytes).
+
+The baseline policy will be to generate random tags for each slab allocation
+slot on first use. The highest value will be reserved for marking freed memory
+allocations to detect any accesses to freed memory so it won't be part of the
+generated range. Adjacent slots will be guaranteed to have distinct memory tags
+in order to guarantee that linear overflows are detected. There are a few ways
+of implementing this and it will end up depending on the performance costs of
+different approaches. If there's an efficient way to fetch the adjacent tag
+values without wasting extra memory, it will be possible to check for them and
+skip them either by generating a new random value in a loop or incrementing
+past them since the tiny bit of bias wouldn't matter. Another approach would be
+alternating odd and even tag values but that would substantially reduce the
+overall randomness of the tags and there's very little entropy from the start.
+
+Once a slab allocation has been freed, the tag will be set to the reserved
+value for free memory and the previous tag value will be stored inside the
+allocation itself. The next time the slot is allocated, the chosen tag value
+will be the previous value incremented by one to provide use-after-free
+detection between generations of allocations. The stored tag will be wiped
+before retagging the memory, to avoid leaking it and as part of preserving the
+security property of newly allocated memory being zeroed due to zero-on-free.
+It will eventually wrap all the way around, but this ends up providing a strong
+guarantee for many allocation cycles due to the combination of 4 bit tags with
+the FIFO quarantine feature providing delayed free. It also benefits from
+random slot allocation and the randomized portion of delayed free, which result
+in a further delay along with preventing a deterministic bypass by forcing a
+reuse after a certain number of allocation cycles. Similarly to the initial tag
+generation, tag values for adjacent allocations will be skipped by incrementing
+past them.
+
+For example, consider this slab of allocations that are not yet used with 16
+representing the tag for free memory. For the sake of simplicity, there will be
+no quarantine or other slabs for this example:
+
+    | 16 | 16 | 16 | 16 | 16 | 16 |
+
+Three slots are randomly chosen for allocations, with random tags assigned (2,
+15, 7) since these slots haven't ever been used and don't have saved values:
+
+    | 16 | 2  | 16 | 15 |  7 | 16 |
+
+The 2nd allocation slot is freed, and is set back to the tag for free memory
+(16), but with the previous tag value stored in the freed space:
+
+    | 16 | 16 | 16 | 7  | 15 | 16 |
+
+The first slot is allocated for the first time, receiving the random value 3:
+
+    | 3  | 16 | 16 | 7  | 15 | 16 |
+
+The 2nd slot is randomly chosen again, so the previous tag (2) is retrieved and
+incremented to 3 as part of the use-after-free mitigation. An adjacent
+allocation already uses the tag 3, so the tag is further incremented to 4 (it
+would be incremented to 5 if one of the adjacent tags was 4):
+
+    | 3  | 4  | 16 | 7  | 15 | 16 |
+
+The last slot is randomly chosen for the next alocation, and is assigned the
+random value 15. However, it's placed next to an allocation with the tag 15 so
+the tag is incremented and wraps around to 0:
+
+    | 3  | 4  | 16 | 7  | 15 | 0 |
+
 # API extensions
 
 The `void free_sized(void *ptr, size_t expected_size)` function exposes the
