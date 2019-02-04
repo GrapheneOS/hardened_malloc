@@ -404,6 +404,107 @@ size for 2048 byte spacing and the next spacing class matches the page size of
 classes required to avoid substantial waste from rounding. Further slab
 allocation size classes may be offered as an option in the future.
 
+## Scalability
+
+## Small (slab) allocations
+
+As a baseline form of fine-grained locking, the slab allocator has entirely
+separate allocators for each size class. Each size class has a dedicated lock,
+CSPRNG and other state.
+
+The slab allocator's scalability will primarily come from dividing up the slab
+allocation region into separate arenas assigned to threads. The arenas will
+essentially just be entirely separate slab allocators with the same sub-regions
+for each size class. Having 4 arenas will simply require reserving a region 4
+times as large and choosing the correct metadata based on address, similar to
+how finding the slab and slot index within the slab already works. The part
+that's still open to different design choices is how arenas are assigned to
+threads. One approach is statically assigning arenas via round-robin like the
+standard jemalloc implementation, or statically assigning to a random arena.
+Another option is dynamic load balancing via a heuristic like `sched_getcpu`
+for per-CPU arenas, which would offer better performance than randomly choosing
+an arena each time while being more predictable for an attacker. There are
+actually some security benefits from this assignment being completely static,
+since it isolates threads from each other. Static assignment can also reduce
+memory usage since threads may have varying usage of size classes.
+
+When there's substantial allocation or deallocation pressure, the allocator
+does end up calling into the kernel to purge / protect unused slabs by
+replacing them with fresh `PROT_NONE` regions along with unprotecting slabs
+when partially filled and cached empty slabs are depleted.  There will be
+configuration over the amount of cached empty slabs, but it's not entirely a
+performance vs. memory trade-off since memory protecting unused slabs is a nice
+opportunistic boost to security. However, it's not really part of the core
+security model or features so it's quite reasonable to use much larger empty
+slab caches when the memory usage is acceptable. It would also be reasonable to
+attempt to use heuristics for dynamically tuning the size, but there's not a
+great one size fits all approach so it isn't currently part of this allocator
+implementation.
+
+### Thread caching (or lack thereof)
+
+Thread caches are a commonly implemented optimization in modern allocators but
+aren't very suitable for a hardened allocator even when implemented via arrays
+like jemalloc rather than free lists. They would prevent the allocator from
+having perfect knowledge about which memory is free in a way that's both race
+free and works with fully out-of-line metadata. It would also interfere with
+the quality of fine-grained randomization even with randomization support in
+the thread caches. The caches would also end up with much weaker protection
+than the dedicated metadata region. Potentially worst of all, it's inherently
+incompatible with the important quarantine feature.
+
+The primary benefit from a thread cache is performing batches of allocations
+and batches of deallocations to amortize the cost of the synchronization used
+by locking. The issue is not contention but rather the cost of synchronization
+itself. Performing operations in large batches isn't necessarily a good thing
+in terms of reducing contention to improve scalability. Large thread caches
+like TCMalloc are a legacy design choice and aren't a good approach for a
+modern allocator. In jemalloc, thread caches are fairly small and have a form
+of garbage collection to clear them out when they aren't being heavily used.
+Since this is a hardened allocator with a bunch of small costs for the security
+features, the synchronization is already a smaller percentage of the overall
+time compared to a much leaner performance-oriented allocator. These benefits
+could be obtained via allocation queues and deallocation queues which would
+avoid bypassing the quarantine and wouldn't have as much of an impact on
+randomization. However, deallocation queues would also interfere with having
+global knowledge about what is free. An allocation queue alone wouldn't have
+many drawbacks, but it isn't currently planned even as an optional feature
+since it probably wouldn't be enabled by default and isn't worth the added
+complexity.
+
+The secondary benefit of thread caches is being able to avoid the underlying
+allocator implementation entirely for some allocations and deallocations when
+they're mixed together rather than many allocations being done together or many
+frees being done together. The value of this depends a lot on the application
+and it's entirely unsuitable / incompatible with a hardened allocator since it
+bypasses all of the underlying security and would destroy much of the security
+value.
+
+## Large allocations
+
+The expectation is that the allocator does not need to perform well for large
+allocations, especially in terms of scalability. When the performance for large
+allocations isn't good enough, the approach will be to enable more slab
+allocation size classes. Doubling the maximum size of slab allocations only
+requires adding 4 size classes while keeping internal waste bounded below 20%.
+
+Large allocations are implemented as a wrapper on top of the kernel memory
+mapping API. The addresses and sizes are tracked in a global data structure
+with a global lock. The current implementation is a hash table and could easily
+use fine-grained locking, but it would have little benefit since most of the
+locking is in the kernel. Most of the contention will be on the `mmap_sem` lock
+for the process in the kernel. Ideally, it could simply map memory when
+allocating and unmap memory when freeing. However, this is a hardened allocator
+and the security features require extra system calls due to lack of direct
+support for this kind of hardening in the kernel. Randomly sized guard regions
+are placed around each allocation which requires mapping a `PROT_NONE` region
+including the guard regions and then unprotecting the usable area between them.
+The quarantine implementation requires clobbering the mapping with a fresh
+`PROT_NONE` mapping using `MAP_FIXED` on free to hold onto the region while
+it's in the quarantine, until it's eventually unmapped when it's pushed out of
+the quarantine. This means there are 2x as many system calls for allocating and
+freeing as there would be if the kernel supported these features directly.
+
 ## Memory tagging
 
 Integrating extensive support for ARMv8.5 memory tagging is planned and this
