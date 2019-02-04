@@ -1,3 +1,5 @@
+# Hardened malloc
+
 This is a security-focused general purpose memory allocator providing the
 malloc API along with various extensions. It provides substantial hardening
 against heap corruption vulnerabilities. The security-focused design also leads
@@ -34,7 +36,7 @@ this project was started as a fresh implementation better able to accomplish
 the goals. For 32-bit, a port of OpenBSD malloc with small extensions can be
 used instead as this allocator fundamentally doesn't support that environment.
 
-# Dependencies
+## Dependencies
 
 Debian stable determines the most ancient set of supported dependencies:
 
@@ -62,7 +64,7 @@ and 9.0 but only the active AOSP branches (8.1 and 9.0) are supported by this
 project and it doesn't make much sense to use much older releases with far
 less privacy and security hardening.
 
-# Testing
+## Testing
 
 The `preload.sh` script can be used for testing with dynamically linked
 executables using glibc or musl:
@@ -83,7 +85,7 @@ this allocator offers across different size classes. The intention is that this
 will be offered as part of hardened variants of the Bionic and musl C standard
 libraries.
 
-# Configuration
+## Configuration
 
 You can set some configuration options at compile-time via arguments to the
 make command as follows:
@@ -175,7 +177,7 @@ control over fairly arbitrarily chosen values like the size of empty slab
 caches (making them smaller improves security and reduces memory usage while
 larger caches can substantially improves performance).
 
-# Basic design
+## Basic design
 
 The current design is very simple and will become a bit more sophisticated as
 the basic features are completed and the implementation is hardened and
@@ -219,7 +221,7 @@ explicitly not on detecting bugs that are impossible to exploit with it in use
 like an 8 byte overflow. The design choices would be different if performance
 was a bit less important and if a core goal was finding latent bugs.
 
-# Security properties
+## Security properties
 
 * Fully out-of-line metadata
 * Deterministic detection of any invalid free (unallocated, unaligned, etc.)
@@ -302,7 +304,7 @@ was a bit less important and if a core goal was finding latent bugs.
     * guarantee distinct tags for adjacent memory allocations by incrementing
       past matching values for deterministic detection of linear overflows
 
-# Randomness
+## Randomness
 
 The current implementation of random number generation for randomization-based
 mitigations is based on generating a keystream from a stream cipher (ChaCha8)
@@ -330,7 +332,7 @@ The random range generation functions are a highly optimized implementation
 too. Traditional uniform random number generation within a range is very high
 overhead and can easily dwarf the cost of an efficient CSPRNG.
 
-# Size classes
+## Size classes
 
 The zero byte size class is a special case of the smallest regular size class.
 It's allocated in a dedicated region like other size classes but with the slabs
@@ -402,7 +404,7 @@ size for 2048 byte spacing and the next spacing class matches the page size of
 classes required to avoid substantial waste from rounding. Further slab
 allocation size classes may be offered as an option in the future.
 
-# Memory tagging
+## Memory tagging
 
 Integrating extensive support for ARMv8.5 memory tagging is planned and this
 section will be expanded cover the details on the chosen design. The approach
@@ -476,7 +478,7 @@ the tag is incremented and wraps around to 0:
 
     | 3  | 4  | 16 | 7  | 15 | 0 |
 
-# API extensions
+## API extensions
 
 The `void free_sized(void *ptr, size_t expected_size)` function exposes the
 sized deallocation sanity checks for C. A performance-oriented allocator could
