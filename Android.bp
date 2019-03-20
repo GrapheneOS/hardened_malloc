@@ -24,7 +24,6 @@ common_cflags = [
     "-DREGION_QUARANTINE_SKIP_THRESHOLD=33554432", // 32MiB
     "-DFREE_SLABS_QUARANTINE_RANDOM_LENGTH=32",
     "-DCONFIG_CLASS_REGION_SIZE=1073741824", // 1GiB
-    "-DLABEL_MEMORY",
 ]
 
 cc_defaults {
@@ -48,4 +47,9 @@ cc_library_static {
     name: "libhardened_malloc",
     defaults: ["hardened_malloc_defaults"],
     srcs: lib_src_files,
+    product_variables: {
+        debuggable: {
+            cflags: ["-DLABEL_MEMORY"],
+        },
+    },
 }
