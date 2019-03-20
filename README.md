@@ -605,3 +605,33 @@ less useful results falling back to higher upper bounds, but is very fast. In
 this implementation, it retrieves an upper bound on the size for small memory
 allocations based on calculating the size class region. This function is safe
 to use from signal handlers already.
+
+## System calls
+
+This is intended to aid with creating system call whitelists via seccomp-bpf
+and will change over time.
+
+System calls used by all build configurations:
+
+* `futex(uaddr, FUTEX_WAIT_PRIVATE, val, NULL)` (via `pthread_mutex_lock`)
+* `futex(uaddr, FUTEX_WAKE_PRIVATE, val)` (via `pthread_mutex_unlock`)
+* `getrandom(buf, buflen, 0)` (to seed and regularly reseed the CSPRNG)
+* `mmap(NULL, size, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0)`
+* `mmap(ptr, size, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_FIXED, -1, 0)`
+* `mprotect(ptr, size, PROT_READ)`
+* `mprotect(ptr, size, PROT_READ|PROT_WRITE)`
+* `mremap(old, old_size, new_size, 0)`
+* `mremap(old, old_size, new_size, MREMAP_MAYMOVE|MREMAP_FIXED, new)`
+* `munmap`
+* `write(STDERR_FILENO, buf, len)` (before aborting due to memory corruption)
+
+Additional system calls when `CONFIG_SEAL_METADATA=true` is set:
+
+* `pkey_alloc`
+* `pkey_mprotect` instead of `mprotect` with an additional `pkey` parameter,
+  but otherwise the same (regular `mprotect` is never called)
+* `uname` (to detect old buggy kernel versions)
+
+Additional system calls for Android builds with `LABEL_MEMORY`:
+
+* `prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, ptr, size, name)`
