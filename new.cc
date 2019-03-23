@@ -3,10 +3,8 @@
 
 #define noreturn
 
-extern "C" {
 #include "h_malloc.h"
 #include "util.h"
-}
 
 COLD static void *handle_out_of_memory(size_t size, bool nothrow) {
     void *ptr = nullptr;
