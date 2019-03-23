@@ -17,7 +17,7 @@ CONFIG_FREE_SLABS_QUARANTINE_RANDOM_LENGTH := 32
 CONFIG_CLASS_REGION_SIZE := 137438953472 # 128GiB
 
 define safe_flag
-$(shell $(CC) -E $1 - </dev/null >/dev/null 2>&1 && echo $1)
+$(shell $(CC) -E $1 - </dev/null >/dev/null 2>&1 && echo $1 || echo $2)
 endef
 
 CPPFLAGS := -D_GNU_SOURCE
@@ -28,7 +28,7 @@ ifeq ($(CONFIG_NATIVE),true)
 endif
 
 CFLAGS := -std=c11 $(SHARED_FLAGS) -Wmissing-prototypes
-CXXFLAGS := -std=c++14 $(SHARED_FLAGS)
+CXXFLAGS := $(call safe_flag,-std=c++17,-std=c++14) $(SHARED_FLAGS)
 LDFLAGS := -Wl,--as-needed,-z,defs,-z,relro,-z,now,-z,nodlopen,-z,text
 TIDY_CHECKS := -checks=bugprone-*,-bugprone-macro-parentheses,cert-*,clang-analyzer-*,readability-*,-readability-inconsistent-declaration-parameter-name,-readability-named-parameter
 
