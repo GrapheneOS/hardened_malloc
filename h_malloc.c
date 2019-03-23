@@ -972,7 +972,7 @@ COLD static void init_slow_path(void) {
         fatal_error("page size mismatch");
     }
 
-    struct random_state *rng = allocate_pages(sizeof(struct random_state), PAGE_SIZE, true);
+    struct random_state *rng = allocate_pages(sizeof(struct random_state), PAGE_SIZE, true, "malloc init rng");
     if (rng == NULL) {
         fatal_error("failed to allocate init rng");
     }
@@ -982,11 +982,10 @@ COLD static void init_slow_path(void) {
         (get_random_u64_uniform(rng, REAL_CLASS_REGION_SIZE / PAGE_SIZE) + 1) * PAGE_SIZE;
 
     struct allocator_state *allocator_state =
-        allocate_pages(sizeof(struct allocator_state), metadata_guard_size, false);
+        allocate_pages(sizeof(struct allocator_state), metadata_guard_size, false, "malloc allocator_state");
     if (allocator_state == NULL) {
         fatal_error("failed to reserve allocator state");
     }
-    memory_set_name(allocator_state, sizeof(struct allocator_state), "malloc allocator_state");
     if (memory_protect_rw_metadata(allocator_state, offsetof(struct allocator_state, regions_a))) {
         fatal_error("failed to unprotect allocator state");
     }
@@ -1076,7 +1075,7 @@ static void *allocate(size_t size) {
     size_t guard_size = get_guard_size(&ra->rng, size);
     mutex_unlock(&ra->lock);
 
-    void *p = allocate_pages(size, guard_size, true);
+    void *p = allocate_pages(size, guard_size, true, "malloc large");
     if (p == NULL) {
         return NULL;
     }

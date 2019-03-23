@@ -10,7 +10,7 @@
 #endif
 #define PAGE_CEILING(s) (((s) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
 
-void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotect);
+void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotect, const char *name);
 void deallocate_pages(void *usable, size_t usable_size, size_t guard_size);
 void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t guard_size);
 

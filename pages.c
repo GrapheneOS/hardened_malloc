@@ -8,7 +8,7 @@ static uintptr_t alignment_ceiling(uintptr_t s, uintptr_t alignment) {
     return ((s) + (alignment - 1)) & ((~alignment) + 1);
 }
 
-void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotect) {
+void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotect, const char *name) {
     size_t real_size;
     if (unlikely(__builtin_add_overflow(usable_size, guard_size * 2, &real_size))) {
         errno = ENOMEM;
@@ -18,6 +18,7 @@ void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotect) {
     if (unlikely(real == NULL)) {
         return NULL;
     }
+    memory_set_name(real, real_size, name);
     void *usable = (char *)real + guard_size;
     if (unprotect && unlikely(memory_protect_rw(usable, usable_size))) {
         memory_unmap(real, real_size);
