@@ -1200,6 +1200,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
                     thread_seal_metadata();
                     return NULL;
                 }
+                memory_set_name(new_end, old_guard_size, "malloc large");
                 void *new_guard_end = (char *)new_end + old_guard_size;
                 regions_quarantine_deallocate_pages(new_guard_end, old_rounded_size - rounded_size, 0);
 
