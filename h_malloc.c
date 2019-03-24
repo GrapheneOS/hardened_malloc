@@ -1304,7 +1304,7 @@ static int alloc_aligned(void **memptr, size_t alignment, size_t size, size_t mi
     size_t guard_size = get_guard_size(&ra->rng, size);
     mutex_unlock(&ra->lock);
 
-    void *p = allocate_pages_aligned(size, alignment, guard_size);
+    void *p = allocate_pages_aligned(size, alignment, guard_size, "malloc large");
     if (p == NULL) {
         return ENOMEM;
     }

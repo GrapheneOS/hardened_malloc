@@ -27,11 +27,7 @@ void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotect, cons
     return usable;
 }
 
-void deallocate_pages(void *usable, size_t usable_size, size_t guard_size) {
-    memory_unmap((char *)usable - guard_size, usable_size + guard_size * 2);
-}
-
-void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t guard_size) {
+void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t guard_size, const char *name) {
     usable_size = PAGE_CEILING(usable_size);
     if (unlikely(!usable_size)) {
         errno = ENOMEM;
@@ -54,6 +50,7 @@ void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t guard_
     if (unlikely(real == NULL)) {
         return NULL;
     }
+    memory_set_name(real, real_alloc_size, name);
 
     void *usable = (char *)real + guard_size;
 
@@ -81,4 +78,8 @@ void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t guard_
     }
 
     return base;
+}
+
+void deallocate_pages(void *usable, size_t usable_size, size_t guard_size) {
+    memory_unmap((char *)usable - guard_size, usable_size + guard_size * 2);
 }
