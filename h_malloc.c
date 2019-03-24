@@ -1009,6 +1009,7 @@ COLD static void init_slow_path(void) {
         fatal_error("failed to allocate slab region");
     }
     ro.slab_region_end = (char *)slab_region_start + slab_region_size;
+    memory_set_name(slab_region_start, slab_region_size, "malloc slab region gap");
 
     ro.size_class_metadata = allocator_state->size_class_metadata;
     for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
