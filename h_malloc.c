@@ -755,6 +755,7 @@ static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t gua
         deallocate_pages(p, size, guard_size);
         return;
     }
+    memory_set_name(p, size, "malloc large");
 
     struct quarantine_info a =
         (struct quarantine_info){(char *)p - guard_size, size + guard_size * 2};
