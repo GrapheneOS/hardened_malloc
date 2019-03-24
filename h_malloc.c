@@ -689,6 +689,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
 
         if (c->empty_slabs_total + slab_size > max_empty_slabs_total) {
             if (!memory_map_fixed(slab, slab_size)) {
+                memory_set_name(slab, slab_size, size_class_labels[class]);
                 enqueue_free_slab(c, metadata);
                 mutex_unlock(&c->lock);
                 return;
@@ -1509,6 +1510,7 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
             if (memory_map_fixed(slab, slab_size)) {
                 break;
             }
+            memory_set_name(slab, slab_size, size_class_labels[class]);
 
             struct slab_metadata *trimmed = iterator;
             iterator = iterator->next;
