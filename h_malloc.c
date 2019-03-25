@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <threads.h>
 
 #include <malloc.h>
 #include <pthread.h>
@@ -56,13 +57,22 @@ static_assert(MREMAP_MOVE_THRESHOLD >= REGION_QUARANTINE_SKIP_THRESHOLD,
 // either sizeof(u64) or 0
 static const size_t canary_size = SLAB_CANARY ? sizeof(u64) : 0;
 
+static_assert(N_ARENA >= 1, "must have at least 1 arena");
+static_assert(N_ARENA <= 4, "currently only support up to 4 arenas (as an initial arbitrary limitation)");
 #define CACHELINE_SIZE 64
+
+#if N_ARENA > 1
+__attribute__((tls_model("initial-exec")))
+static thread_local unsigned thread_arena = N_ARENA;
+#else
+static const unsigned thread_arena = 0;
+#endif
 
 static union {
     struct {
         void *_Atomic slab_region_start;
         void *slab_region_end;
-        struct size_class *size_class_metadata;
+        struct size_class *size_class_metadata[N_ARENA];
         struct region_allocator *region_allocator;
         struct region_metadata *regions[2];
 #ifdef USE_PKEY
@@ -246,7 +256,8 @@ struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
 
 #define CLASS_REGION_SIZE (size_t)CONFIG_CLASS_REGION_SIZE
 #define REAL_CLASS_REGION_SIZE (CLASS_REGION_SIZE * 2)
-static const size_t slab_region_size = REAL_CLASS_REGION_SIZE * N_SIZE_CLASSES;
+#define ARENA_SIZE (REAL_CLASS_REGION_SIZE * N_SIZE_CLASSES)
+static const size_t slab_region_size = ARENA_SIZE * N_ARENA;
 static_assert(PAGE_SIZE == 4096, "bitmap handling will need adjustment for other page sizes");
 
 static void *get_slab(struct size_class *c, size_t slab_size, struct slab_metadata *metadata) {
@@ -442,7 +453,14 @@ static u64 get_random_canary(struct random_state *rng) {
 static inline void *allocate_small(size_t requested_size) {
     struct size_info info = get_size_info(requested_size);
     size_t size = info.size ? info.size : 16;
-    struct size_class *c = &ro.size_class_metadata[info.class];
+
+#if N_ARENA > 1
+    if (unlikely(thread_arena == N_ARENA)) {
+        thread_arena = hash_page(&thread_arena) % N_ARENA;
+    }
+#endif
+
+    struct size_class *c = &ro.size_class_metadata[thread_arena][info.class];
     size_t slots = size_class_slots[info.class];
     size_t slab_size = get_slab_size(slots, size);
 
@@ -545,13 +563,23 @@ static inline void *allocate_small(size_t requested_size) {
     return p;
 }
 
-static size_t slab_size_class(const void *p) {
+struct slab_size_class_info {
+    unsigned arena;
+    size_t class;
+};
+
+static struct slab_size_class_info slab_size_class(const void *p) {
     size_t offset = (const char *)p - (const char *)ro.slab_region_start;
-    return offset / REAL_CLASS_REGION_SIZE;
+    unsigned arena = 0;
+    if (N_ARENA > 1) {
+        arena = offset / ARENA_SIZE;
+        offset -= arena * ARENA_SIZE;
+    }
+    return (struct slab_size_class_info){arena, offset / REAL_CLASS_REGION_SIZE};
 }
 
 static size_t slab_usable_size(const void *p) {
-    return size_classes[slab_size_class(p)];
+    return size_classes[slab_size_class(p).class];
 }
 
 static void enqueue_free_slab(struct size_class *c, struct slab_metadata *metadata) {
@@ -575,9 +603,10 @@ static void enqueue_free_slab(struct size_class *c, struct slab_metadata *metada
 }
 
 static inline void deallocate_small(void *p, const size_t *expected_size) {
-    size_t class = slab_size_class(p);
+    struct slab_size_class_info size_class_info = slab_size_class(p);
+    size_t class = size_class_info.class;
 
-    struct size_class *c = &ro.size_class_metadata[class];
+    struct size_class *c = &ro.size_class_metadata[size_class_info.arena][class];
     size_t size = size_classes[class];
     if (expected_size && size != *expected_size) {
         fatal_error("sized deallocation mismatch (small)");
@@ -735,14 +764,14 @@ struct __attribute__((aligned(PAGE_SIZE))) slab_info_mapping {
 };
 
 struct __attribute__((aligned(PAGE_SIZE))) allocator_state {
-    struct size_class size_class_metadata[N_SIZE_CLASSES];
+    struct size_class size_class_metadata[N_ARENA][N_SIZE_CLASSES];
     struct region_allocator region_allocator;
     // padding until next page boundary for mprotect
     struct region_metadata regions_a[MAX_REGION_TABLE_SIZE] __attribute__((aligned(PAGE_SIZE)));
     // padding until next page boundary for mprotect
     struct region_metadata regions_b[MAX_REGION_TABLE_SIZE] __attribute__((aligned(PAGE_SIZE)));
     // padding until next page boundary for mprotect
-    struct slab_info_mapping slab_info_mapping[N_SIZE_CLASSES];
+    struct slab_info_mapping slab_info_mapping[N_ARENA][N_SIZE_CLASSES];
     // padding until next page boundary for mprotect
 };
 
@@ -891,8 +920,10 @@ static void regions_delete(struct region_metadata *region) {
 static void full_lock(void) {
     thread_unseal_metadata();
     mutex_lock(&ro.region_allocator->lock);
-    for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
-        mutex_lock(&ro.size_class_metadata[class].lock);
+    for (unsigned arena = 0; arena < N_ARENA; arena++) {
+        for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
+            mutex_lock(&ro.size_class_metadata[arena][class].lock);
+        }
     }
     thread_seal_metadata();
 }
@@ -900,8 +931,10 @@ static void full_lock(void) {
 static void full_unlock(void) {
     thread_unseal_metadata();
     mutex_unlock(&ro.region_allocator->lock);
-    for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
-        mutex_unlock(&ro.size_class_metadata[class].lock);
+    for (unsigned arena = 0; arena < N_ARENA; arena++) {
+        for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
+            mutex_unlock(&ro.size_class_metadata[arena][class].lock);
+        }
     }
     thread_seal_metadata();
 }
@@ -920,10 +953,12 @@ static void post_fork_child(void) {
 
     mutex_init(&ro.region_allocator->lock);
     random_state_init(&ro.region_allocator->rng);
-    for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
-        struct size_class *c = &ro.size_class_metadata[class];
-        mutex_init(&c->lock);
-        random_state_init(&c->rng);
+    for (unsigned arena = 0; arena < N_ARENA; arena++) {
+        for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
+            struct size_class *c = &ro.size_class_metadata[arena][class];
+            mutex_init(&c->lock);
+            random_state_init(&c->rng);
+        }
     }
     thread_seal_metadata();
 }
@@ -1004,26 +1039,28 @@ COLD static void init_slow_path(void) {
     ro.slab_region_end = (char *)slab_region_start + slab_region_size;
     memory_set_name(slab_region_start, slab_region_size, "malloc slab region gap");
 
-    ro.size_class_metadata = allocator_state->size_class_metadata;
-    for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
-        struct size_class *c = &ro.size_class_metadata[class];
+    for (unsigned arena = 0; arena < N_ARENA; arena++) {
+        ro.size_class_metadata[arena] = allocator_state->size_class_metadata[arena];
+        for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
+            struct size_class *c = &ro.size_class_metadata[arena][class];
 
-        mutex_init(&c->lock);
-        random_state_init(&c->rng);
+            mutex_init(&c->lock);
+            random_state_init(&c->rng);
 
-        size_t bound = (REAL_CLASS_REGION_SIZE - CLASS_REGION_SIZE) / PAGE_SIZE - 1;
-        size_t gap = (get_random_u64_uniform(rng, bound) + 1) * PAGE_SIZE;
-        c->class_region_start = (char *)slab_region_start + REAL_CLASS_REGION_SIZE * class + gap;
-        memory_set_name(c->class_region_start, CLASS_REGION_SIZE, size_class_labels[class]);
+            size_t bound = (REAL_CLASS_REGION_SIZE - CLASS_REGION_SIZE) / PAGE_SIZE - 1;
+            size_t gap = (get_random_u64_uniform(rng, bound) + 1) * PAGE_SIZE;
+            c->class_region_start = (char *)slab_region_start + ARENA_SIZE * arena + REAL_CLASS_REGION_SIZE * class + gap;
+            memory_set_name(c->class_region_start, CLASS_REGION_SIZE, size_class_labels[class]);
 
-        size_t size = size_classes[class];
-        if (size == 0) {
-            size = 16;
+            size_t size = size_classes[class];
+            if (size == 0) {
+                size = 16;
+            }
+            c->size_divisor = libdivide_u32_gen(size);
+            size_t slab_size = get_slab_size(size_class_slots[class], size);
+            c->slab_size_divisor = libdivide_u64_gen(slab_size);
+            c->slab_info = allocator_state->slab_info_mapping[arena][class].slab_info;
         }
-        c->size_divisor = libdivide_u32_gen(size);
-        size_t slab_size = get_slab_size(size_class_slots[class], size);
-        c->slab_size_divisor = libdivide_u64_gen(slab_size);
-        c->slab_info = allocator_state->slab_info_mapping[class].slab_info;
     }
 
     deallocate_pages(rng, sizeof(struct random_state), PAGE_SIZE);
@@ -1490,30 +1527,32 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
 
     bool is_trimmed = false;
 
-    // skip zero byte size class since there's nothing to change
-    for (unsigned class = 1; class < N_SIZE_CLASSES; class++) {
-        struct size_class *c = &ro.size_class_metadata[class];
-        size_t slab_size = get_slab_size(size_class_slots[class], size_classes[class]);
+    for (unsigned arena = 0; arena < N_ARENA; arena++) {
+        // skip zero byte size class since there's nothing to change
+        for (unsigned class = 1; class < N_SIZE_CLASSES; class++) {
+            struct size_class *c = &ro.size_class_metadata[arena][class];
+            size_t slab_size = get_slab_size(size_class_slots[class], size_classes[class]);
 
-        mutex_lock(&c->lock);
-        struct slab_metadata *iterator = c->empty_slabs;
-        while (iterator) {
-            void *slab = get_slab(c, slab_size, iterator);
-            if (memory_map_fixed(slab, slab_size)) {
-                break;
+            mutex_lock(&c->lock);
+            struct slab_metadata *iterator = c->empty_slabs;
+            while (iterator) {
+                void *slab = get_slab(c, slab_size, iterator);
+                if (memory_map_fixed(slab, slab_size)) {
+                    break;
+                }
+                memory_set_name(slab, slab_size, size_class_labels[class]);
+
+                struct slab_metadata *trimmed = iterator;
+                iterator = iterator->next;
+                c->empty_slabs_total -= slab_size;
+
+                enqueue_free_slab(c, trimmed);
+
+                is_trimmed = true;
             }
-            memory_set_name(slab, slab_size, size_class_labels[class]);
-
-            struct slab_metadata *trimmed = iterator;
-            iterator = iterator->next;
-            c->empty_slabs_total -= slab_size;
-
-            enqueue_free_slab(c, trimmed);
-
-            is_trimmed = true;
+            c->empty_slabs = iterator;
+            mutex_unlock(&c->lock);
         }
-        c->empty_slabs = iterator;
-        mutex_unlock(&c->lock);
     }
 
     thread_seal_metadata();

@@ -171,6 +171,7 @@ for the chosen values are not written yet, so use them at your own peril:
   number of slots in the random array used to randomize free slab reuse
 * `CONFIG_CLASS_REGION_SIZE`: `34359738368` (default) to control the size of
   the size class regions
+* `CONFIG_N_ARENA`: `1` (default) to control the number of arenas
 
 There will be more control over enabled features in the future along with
 control over fairly arbitrarily chosen values like the size of empty slab
