@@ -6,8 +6,9 @@ against heap corruption vulnerabilities. The security-focused design also leads
 to much less metadata overhead and memory waste from fragmentation than a more
 traditional allocator design. It aims to provide decent overall performance
 with a focus on long-term performance and memory usage rather than allocator
-micro-benchmarks. It has relatively fine-grained locking and will offer good
-scalability once arenas are implemented.
+micro-benchmarks. It offers scalability via a configurable number of entirely
+independently arenas, with the internal locking within arenas further divided
+up per size class.
 
 This project currently aims to support Android, musl and glibc. It may support
 other non-Linux operating systems in the future. For Android and musl, there
@@ -413,21 +414,22 @@ As a baseline form of fine-grained locking, the slab allocator has entirely
 separate allocators for each size class. Each size class has a dedicated lock,
 CSPRNG and other state.
 
-The slab allocator's scalability will primarily come from dividing up the slab
-allocation region into separate arenas assigned to threads. The arenas will
-essentially just be entirely separate slab allocators with the same sub-regions
-for each size class. Having 4 arenas will simply require reserving a region 4
-times as large and choosing the correct metadata based on address, similar to
-how finding the slab and slot index within the slab already works. The part
-that's still open to different design choices is how arenas are assigned to
-threads. One approach is statically assigning arenas via round-robin like the
-standard jemalloc implementation, or statically assigning to a random arena.
-Another option is dynamic load balancing via a heuristic like `sched_getcpu`
-for per-CPU arenas, which would offer better performance than randomly choosing
-an arena each time while being more predictable for an attacker. There are
-actually some security benefits from this assignment being completely static,
-since it isolates threads from each other. Static assignment can also reduce
-memory usage since threads may have varying usage of size classes.
+The slab allocator's scalability primarily comes from dividing up the slab
+allocation region into independent arenas assigned to threads. The arenas are
+just entirely separate slab allocators with their own sub-regions for each size
+class. Using 4 arenas reserves a region 4 times as large and the relevant slab
+allocator metadata is determined based on address, as part of the same approach
+to finding the per-size-class metadata. The part that's still open to different
+design choices is how arenas are assigned to threads. One approach is
+statically assigning arenas via round-robin like the standard jemalloc
+implementation, or statically assigning to a random arena which is essentially
+the current implementation.  Another option is dynamic load balancing via a
+heuristic like `sched_getcpu` for per-CPU arenas, which would offer better
+performance than randomly choosing an arena each time while being more
+predictable for an attacker. There are actually some security benefits from
+this assignment being completely static, since it isolates threads from each
+other. Static assignment can also reduce memory usage since threads may have
+varying usage of size classes.
 
 When there's substantial allocation or deallocation pressure, the allocator
 does end up calling into the kernel to purge / protect unused slabs by
