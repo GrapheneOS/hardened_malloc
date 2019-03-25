@@ -88,7 +88,7 @@ struct slab_metadata {
     u16 count;
 #endif
 #if SLAB_QUARANTINE
-    u64 quarantine[4];
+    u64 quarantine_bitmap[4];
 #endif
 };
 
@@ -315,17 +315,17 @@ static bool get_slot(struct slab_metadata *metadata, size_t index) {
 #if SLAB_QUARANTINE
 static void set_quarantine(struct slab_metadata *metadata, size_t index) {
     size_t bucket = index / 64;
-    metadata->quarantine[bucket] |= 1UL << (index - bucket * 64);
+    metadata->quarantine_bitmap[bucket] |= 1UL << (index - bucket * 64);
 }
 
 static void clear_quarantine(struct slab_metadata *metadata, size_t index) {
     size_t bucket = index / 64;
-    metadata->quarantine[bucket] &= ~(1UL << (index - bucket * 64));
+    metadata->quarantine_bitmap[bucket] &= ~(1UL << (index - bucket * 64));
 }
 
 static bool get_quarantine(struct slab_metadata *metadata, size_t index) {
     size_t bucket = index / 64;
-    return (metadata->quarantine[bucket] >> (index - bucket * 64)) & 1UL;
+    return (metadata->quarantine_bitmap[bucket] >> (index - bucket * 64)) & 1UL;
 }
 #endif
 
