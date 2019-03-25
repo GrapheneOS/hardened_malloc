@@ -22,7 +22,7 @@
 #include "util.h"
 
 // use __register_atfork directly to avoid linking with libpthread for glibc < 2.28
-#ifdef __GLIBC__
+#if defined(__GLIBC__) && !__GLIBC_PREREQ(2, 28)
 extern void *__dso_handle;
 extern int __register_atfork(void (*)(void), void (*)(void), void (*)(void), void *);
 #define atfork(prepare, parent, child) __register_atfork(prepare, parent, child, __dso_handle)
