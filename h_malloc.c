@@ -784,15 +784,6 @@ static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t gua
     }
 }
 
-static size_t hash_page(const void *p) {
-    uintptr_t u = (uintptr_t)p >> PAGE_SHIFT;
-    size_t sum = u;
-    sum = (sum << 7) - sum + (u >> 16);
-    sum = (sum << 7) - sum + (u >> 32);
-    sum = (sum << 7) - sum + (u >> 48);
-    return sum;
-}
-
 static int regions_grow(void) {
     struct region_allocator *ra = ro.region_allocator;
 
