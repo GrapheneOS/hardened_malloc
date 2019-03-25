@@ -21,17 +21,7 @@
 #include "random.h"
 #include "util.h"
 
-// use __register_atfork directly to avoid linking with libpthread for glibc < 2.28
-#if defined(__GLIBC__) && !__GLIBC_PREREQ(2, 28)
-extern void *__dso_handle;
-extern int __register_atfork(void (*)(void), void (*)(void), void (*)(void), void *);
-#define atfork(prepare, parent, child) __register_atfork(prepare, parent, child, __dso_handle)
-#else
-#define atfork pthread_atfork
-#endif
-
 #define SLAB_QUARANTINE (SLAB_QUARANTINE_RANDOM_LENGTH > 0 || SLAB_QUARANTINE_QUEUE_LENGTH > 0)
-
 #define MREMAP_MOVE_THRESHOLD (32 * 1024 * 1024)
 
 static_assert(sizeof(void *) == 8, "64-bit only");
