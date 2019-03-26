@@ -1060,6 +1060,7 @@ COLD static void init_slow_path(void) {
     if (memory_protect_ro(&ro, sizeof(ro))) {
         fatal_error("failed to protect allocator data");
     }
+    memory_set_name(&ro, sizeof(ro), "malloc read-only after init");
 
     mutex_unlock(&lock);
 
