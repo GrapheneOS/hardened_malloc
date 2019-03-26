@@ -39,20 +39,30 @@ typedef uint64_t u64;
 typedef unsigned __int128 u128;
 
 // use __register_atfork directly to avoid linking with libpthread for glibc < 2.28
-#if defined(__GLIBC__) && !__GLIBC_PREREQ(2, 28)
+#ifdef __GLIBC__
+#if !__GLIBC_PREREQ(2, 28)
 extern void *__dso_handle;
 extern int __register_atfork(void (*)(void), void (*)(void), void (*)(void), void *);
 #define atfork(prepare, parent, child) __register_atfork(prepare, parent, child, __dso_handle)
-#else
+#endif
+#endif
+
+#ifndef atfork
 #define atfork pthread_atfork
 #endif
 
 #ifdef CONFIG_SEAL_METADATA
-#if defined(__GLIBC__) && __GLIBC_PREREQ(2, 27)
+
+#ifdef __GLIBC__
+#if __GLIBC_PREREQ(2, 27)
 #define USE_PKEY
-#else
+#endif
+#endif
+
+#ifndef USE_PKEY
 #error "CONFIG_SEAL_METADATA requires Memory Protection Key support"
 #endif
-#endif
+
+#endif // CONFIG_SEAL_METADATA
 
 #endif
