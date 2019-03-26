@@ -4,7 +4,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#if N_ARENA > 1
 #include <threads.h>
+#endif
 
 #include <malloc.h>
 #include <pthread.h>
