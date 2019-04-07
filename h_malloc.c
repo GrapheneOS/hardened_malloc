@@ -1182,13 +1182,6 @@ static void deallocate_large(void *p, const size_t *expected_size) {
     regions_quarantine_deallocate_pages(p, size, guard_size);
 }
 
-static size_t adjust_size_for_canaries(size_t size) {
-    if (size > 0 && size <= max_slab_size_class) {
-        return size + canary_size;
-    }
-    return size;
-}
-
 static int alloc_aligned(void **memptr, size_t alignment, size_t size, size_t min_alignment) {
     if ((alignment - 1) & alignment || alignment < min_alignment) {
         return EINVAL;
@@ -1240,13 +1233,24 @@ static void *alloc_aligned_simple(size_t alignment, size_t size) {
     return ptr;
 }
 
-EXPORT void *h_malloc(size_t size) {
+static size_t adjust_size_for_canaries(size_t size) {
+    if (size > 0 && size <= max_slab_size_class) {
+        return size + canary_size;
+    }
+    return size;
+}
+
+static inline void *alloc(size_t size) {
     init();
     thread_unseal_metadata();
     size = adjust_size_for_canaries(size);
     void *p = allocate(size);
     thread_seal_metadata();
     return p;
+}
+
+EXPORT void *h_malloc(size_t size) {
+    return alloc(size);
 }
 
 EXPORT void *h_calloc(size_t nmemb, size_t size) {
@@ -1268,12 +1272,7 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
 
 EXPORT void *h_realloc(void *old, size_t size) {
     if (old == NULL) {
-        init();
-        thread_unseal_metadata();
-        size = adjust_size_for_canaries(size);
-        void *p = allocate(size);
-        thread_seal_metadata();
-        return p;
+        return alloc(size);
     }
 
     size = adjust_size_for_canaries(size);
