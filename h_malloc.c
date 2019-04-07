@@ -1189,6 +1189,57 @@ static size_t adjust_size_for_canaries(size_t size) {
     return size;
 }
 
+static int alloc_aligned(void **memptr, size_t alignment, size_t size, size_t min_alignment) {
+    if ((alignment - 1) & alignment || alignment < min_alignment) {
+        return EINVAL;
+    }
+
+    if (alignment <= PAGE_SIZE) {
+        if (size <= max_slab_size_class && alignment > min_align) {
+            size = get_size_info_align(size, alignment).size;
+        }
+
+        void *p = allocate(size);
+        if (p == NULL) {
+            return ENOMEM;
+        }
+        *memptr = p;
+        return 0;
+    }
+
+    struct region_allocator *ra = ro.region_allocator;
+
+    mutex_lock(&ra->lock);
+    size_t guard_size = get_guard_size(&ra->rng, size);
+    mutex_unlock(&ra->lock);
+
+    void *p = allocate_pages_aligned(size, alignment, guard_size, "malloc large");
+    if (p == NULL) {
+        return ENOMEM;
+    }
+
+    mutex_lock(&ra->lock);
+    if (regions_insert(p, size, guard_size)) {
+        mutex_unlock(&ra->lock);
+        deallocate_pages(p, size, guard_size);
+        return ENOMEM;
+    }
+    mutex_unlock(&ra->lock);
+
+    *memptr = p;
+    return 0;
+}
+
+static void *alloc_aligned_simple(size_t alignment, size_t size) {
+    void *ptr;
+    int ret = alloc_aligned(&ptr, alignment, size, 1);
+    if (ret) {
+        errno = ret;
+        return NULL;
+    }
+    return ptr;
+}
+
 EXPORT void *h_malloc(size_t size) {
     init();
     thread_unseal_metadata();
@@ -1348,57 +1399,6 @@ EXPORT void *h_realloc(void *old, size_t size) {
     }
     thread_seal_metadata();
     return new;
-}
-
-static int alloc_aligned(void **memptr, size_t alignment, size_t size, size_t min_alignment) {
-    if ((alignment - 1) & alignment || alignment < min_alignment) {
-        return EINVAL;
-    }
-
-    if (alignment <= PAGE_SIZE) {
-        if (size <= max_slab_size_class && alignment > min_align) {
-            size = get_size_info_align(size, alignment).size;
-        }
-
-        void *p = allocate(size);
-        if (p == NULL) {
-            return ENOMEM;
-        }
-        *memptr = p;
-        return 0;
-    }
-
-    struct region_allocator *ra = ro.region_allocator;
-
-    mutex_lock(&ra->lock);
-    size_t guard_size = get_guard_size(&ra->rng, size);
-    mutex_unlock(&ra->lock);
-
-    void *p = allocate_pages_aligned(size, alignment, guard_size, "malloc large");
-    if (p == NULL) {
-        return ENOMEM;
-    }
-
-    mutex_lock(&ra->lock);
-    if (regions_insert(p, size, guard_size)) {
-        mutex_unlock(&ra->lock);
-        deallocate_pages(p, size, guard_size);
-        return ENOMEM;
-    }
-    mutex_unlock(&ra->lock);
-
-    *memptr = p;
-    return 0;
-}
-
-static void *alloc_aligned_simple(size_t alignment, size_t size) {
-    void *ptr;
-    int ret = alloc_aligned(&ptr, alignment, size, 1);
-    if (ret) {
-        errno = ret;
-        return NULL;
-    }
-    return ptr;
 }
 
 EXPORT int h_posix_memalign(void **memptr, size_t alignment, size_t size) {
