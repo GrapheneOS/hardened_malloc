@@ -1645,19 +1645,69 @@ COLD EXPORT int h_malloc_set_state(UNUSED void *state) {
 
 #ifdef __ANDROID__
 EXPORT size_t __mallinfo_narenas(void) {
-    return 0;
+    // Consider region allocator to be an arena with index N_ARENA.
+    return N_ARENA + 1;
 }
 
 EXPORT size_t __mallinfo_nbins(void) {
-    return 0;
+    return N_SIZE_CLASSES;
 }
 
+// This internal Android API uses mallinfo in a non-standard way to implement malloc_info:
+//
+// hblkhd: total mapped memory as usual
+// ordblks: large allocations
+// uordblks: huge allocations
+// fsmblks: small allocations
+// (other fields are unused)
 EXPORT struct mallinfo __mallinfo_arena_info(UNUSED size_t arena) {
-    return (struct mallinfo){0};
+    struct mallinfo info = {0};
+
+#if STATS
+    if (arena < N_ARENA) {
+        // skip zero byte size class
+        for (unsigned class = 1; class < N_SIZE_CLASSES; class++) {
+            struct size_class *c = &ro.size_class_metadata[arena][class];
+
+            mutex_lock(&c->lock);
+            info.hblkhd += c->slab_allocated;
+            info.fsmblks += c->allocated;
+            mutex_unlock(&c->lock);
+        }
+    } else if (arena == N_ARENA) {
+        struct region_allocator *ra = ro.region_allocator;
+        mutex_lock(&ra->lock);
+        info.hblkhd = ra->allocated;
+        // our large allocations are roughly comparable to jemalloc huge allocations
+        info.uordblks = ra->allocated;
+        mutex_unlock(&ra->lock);
+    }
+#endif
+
+    return info;
 }
 
+// This internal Android API uses mallinfo in a non-standard way to implement malloc_info:
+//
+// ordblks: total allocated space
+// uordblks: nmalloc (not implemented here yet)
+// fordblks: dmalloc (not implemented here yet)
+// (other fields are unused)
 EXPORT struct mallinfo __mallinfo_bin_info(UNUSED size_t arena, UNUSED size_t bin) {
-    return (struct mallinfo){0};
+    struct mallinfo info = {0};
+
+#if STATS
+    // skip zero byte size class for consistency
+    if (arena < N_ARENA && bin > 0 && bin < N_SIZE_CLASSES) {
+        struct size_class *c = &ro.size_class_metadata[arena][bin];
+
+        mutex_lock(&c->lock);
+        info.ordblks = c->allocated;
+        mutex_unlock(&c->lock);
+    }
+#endif
+
+    return info;
 }
 
 COLD EXPORT int h_iterate(UNUSED uintptr_t base, UNUSED size_t size,
