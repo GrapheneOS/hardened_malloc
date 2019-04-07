@@ -1557,6 +1557,12 @@ EXPORT size_t h_malloc_object_size_fast(void *p) {
 }
 
 EXPORT int h_mallopt(UNUSED int param, UNUSED int value) {
+#ifdef __ANDROID__
+    if (param == M_PURGE) {
+        h_malloc_trim(0);
+        return 1;
+    }
+#endif
     return 0;
 }
 
