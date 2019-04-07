@@ -135,35 +135,6 @@ static const char *const size_class_labels[] = {
     /* 2048 */ "malloc 10240", "malloc 12288", "malloc 14336", "malloc 16384"
 };
 
-int get_metadata_key(void) {
-#ifdef USE_PKEY
-    return ro.metadata_pkey;
-#else
-    return -1;
-#endif
-}
-
-#ifdef USE_PKEY
-static inline void thread_set_metadata_access(unsigned access) {
-    if (ro.metadata_pkey == -1) {
-        return;
-    }
-    pkey_set(ro.metadata_pkey, access);
-}
-#endif
-
-static inline void thread_unseal_metadata(void) {
-#ifdef USE_PKEY
-    thread_set_metadata_access(0);
-#endif
-}
-
-static inline void thread_seal_metadata(void) {
-#ifdef USE_PKEY
-    thread_set_metadata_access(PKEY_DISABLE_ACCESS);
-#endif
-}
-
 #define N_SIZE_CLASSES (sizeof(size_classes) / sizeof(size_classes[0]))
 
 struct size_info {
@@ -946,6 +917,35 @@ static void regions_delete(struct region_metadata *region) {
             break;
         }
     }
+}
+
+int get_metadata_key(void) {
+#ifdef USE_PKEY
+    return ro.metadata_pkey;
+#else
+    return -1;
+#endif
+}
+
+#ifdef USE_PKEY
+static inline void thread_set_metadata_access(unsigned access) {
+    if (ro.metadata_pkey == -1) {
+        return;
+    }
+    pkey_set(ro.metadata_pkey, access);
+}
+#endif
+
+static inline void thread_unseal_metadata(void) {
+#ifdef USE_PKEY
+    thread_set_metadata_access(0);
+#endif
+}
+
+static inline void thread_seal_metadata(void) {
+#ifdef USE_PKEY
+    thread_set_metadata_access(PKEY_DISABLE_ACCESS);
+#endif
 }
 
 static void full_lock(void) {
