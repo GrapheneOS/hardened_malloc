@@ -10,11 +10,12 @@ micro-benchmarks. It offers scalability via a configurable number of entirely
 independently arenas, with the internal locking within arenas further divided
 up per size class.
 
-This project currently aims to support Android, musl and glibc. It may support
-other non-Linux operating systems in the future. For Android and musl, there
-will be custom integration and other hardening features. The glibc support will
-be limited to replacing the malloc implementation because musl is a much more
-robust and cleaner base to build on and can cover the same use cases.
+This project currently supports Bionic (Android), musl and glibc. It may
+support other non-Linux operating systems in the future. For Android, there's
+custom integration and other hardening features which is also planned for musl
+in the future. The glibc support will be limited to replacing the malloc
+implementation because musl is a much more robust and cleaner base to build on
+and can cover the same use cases.
 
 This allocator is intended as a successor to a previous implementation based on
 extending OpenBSD malloc with various additional security features. It's still
