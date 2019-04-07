@@ -1628,10 +1628,12 @@ EXPORT struct mallinfo h_mallinfo(void) {
 }
 #endif
 
+#ifdef __GLIBC__
 EXPORT int h_malloc_info(UNUSED int options, UNUSED FILE *fp) {
     errno = ENOSYS;
     return -1;
 }
+#endif
 
 COLD EXPORT void *h_malloc_get_state(void) {
     return NULL;
