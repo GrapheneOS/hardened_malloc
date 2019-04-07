@@ -53,17 +53,8 @@ For external malloc replacement with musl, musl 1.1.20 is required. However,
 there will be custom integration offering better performance in the future
 along with other hardening for the C standard library implementation.
 
-Major releases of Android will be supported until tags stop being pushed to
-the Android Open Source Project (AOSP). Google supports each major release
-with security patches for 3 years, but tagged releases of the Android Open
-Source Project are more than just security patches and are no longer pushed
-once no officially supported devices are using them anymore. For example, at
-the time of writing (September 2018), AOSP only has tagged releases for 8.1
-(Nexus 5X, Nexus 6P, Pixel C) and 9.0 (Pixel, Pixel XL, Pixel 2, Pixel 2 XL).
-There are ongoing security patches for 6.0, 6.0.1, 7.0, 7.1.1, 7.1.2, 8.0, 8.1
-and 9.0 but only the active AOSP branches (8.1 and 9.0) are supported by this
-project and it doesn't make much sense to use much older releases with far
-less privacy and security hardening.
+For Android, only current generation Android Open Source Project branches will
+be supported, which currently means pie-qpr2-release.
 
 ## Testing
 
