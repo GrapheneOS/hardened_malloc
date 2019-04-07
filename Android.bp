@@ -25,6 +25,7 @@ common_cflags = [
     "-DFREE_SLABS_QUARANTINE_RANDOM_LENGTH=32",
     "-DCONFIG_CLASS_REGION_SIZE=1073741824", // 1GiB
     "-DN_ARENA=1",
+    "-DSTATS=false",
 ]
 
 cc_defaults {

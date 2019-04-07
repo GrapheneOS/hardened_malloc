@@ -240,6 +240,11 @@ struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
     struct slab_metadata *free_slabs_tail;
     struct slab_metadata *free_slabs_quarantine[FREE_SLABS_QUARANTINE_RANDOM_LENGTH];
 
+#if STATS
+    size_t allocated;
+    size_t slab_allocated;
+#endif
+
     struct random_state rng;
     size_t metadata_allocated;
     size_t metadata_count;
@@ -478,6 +483,9 @@ static inline void *allocate_small(size_t requested_size) {
                 set_canary(metadata, p, size);
             }
 
+#if STATS
+            c->allocated += size;
+#endif
             mutex_unlock(&c->lock);
             return p;
         }
@@ -491,6 +499,9 @@ static inline void *allocate_small(size_t requested_size) {
                 mutex_unlock(&c->lock);
                 return NULL;
             }
+#if STATS
+            c->slab_allocated += slab_size;
+#endif
 
             c->free_slabs_head = c->free_slabs_head->next;
             if (c->free_slabs_head == NULL) {
@@ -509,6 +520,9 @@ static inline void *allocate_small(size_t requested_size) {
                 set_canary(metadata, p, size);
             }
 
+#if STATS
+            c->allocated += size;
+#endif
             mutex_unlock(&c->lock);
             return p;
         }
@@ -518,6 +532,9 @@ static inline void *allocate_small(size_t requested_size) {
             mutex_unlock(&c->lock);
             return NULL;
         }
+#if STATS
+        c->slab_allocated += slab_size;
+#endif
         metadata->canary_value = get_random_canary(&c->rng);
 
         c->partial_slabs = metadata;
@@ -529,6 +546,9 @@ static inline void *allocate_small(size_t requested_size) {
             set_canary(metadata, p, size);
         }
 
+#if STATS
+        c->allocated += size;
+#endif
         mutex_unlock(&c->lock);
         return p;
     }
@@ -551,6 +571,9 @@ static inline void *allocate_small(size_t requested_size) {
         set_canary(metadata, p, size);
     }
 
+#if STATS
+    c->allocated += size;
+#endif
     mutex_unlock(&c->lock);
     return p;
 }
@@ -611,6 +634,9 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     size_t slab_size = get_slab_size(slots, size);
 
     mutex_lock(&c->lock);
+#if STATS
+    c->allocated -= size;
+#endif
 
     struct slab_metadata *metadata = get_metadata(c, p);
     void *slab = get_slab(c, slab_size, metadata);
@@ -711,6 +737,9 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
         if (c->empty_slabs_total + slab_size > max_empty_slabs_total) {
             if (!memory_map_fixed(slab, slab_size)) {
                 memory_set_name(slab, slab_size, size_class_labels[class]);
+#if STATS
+                c->slab_allocated -= slab_size;
+#endif
                 enqueue_free_slab(c, metadata);
                 mutex_unlock(&c->lock);
                 return;
@@ -745,6 +774,9 @@ struct region_allocator {
     struct region_metadata *regions;
     size_t total;
     size_t free;
+#if STATS
+    size_t allocated;
+#endif
     struct quarantine_info quarantine_random[REGION_QUARANTINE_RANDOM_LENGTH];
     struct quarantine_info quarantine_queue[REGION_QUARANTINE_QUEUE_LENGTH];
     size_t quarantine_queue_index;
@@ -1110,6 +1142,9 @@ static void *allocate(size_t size) {
         deallocate_pages(p, size, guard_size);
         return NULL;
     }
+#if STATS
+    ra->allocated += size;
+#endif
     mutex_unlock(&ra->lock);
 
     return p;
@@ -1132,6 +1167,9 @@ static void deallocate_large(void *p, const size_t *expected_size) {
     }
     size_t guard_size = region->guard_size;
     regions_delete(region);
+#if STATS
+    ra->allocated -= size;
+#endif
     mutex_unlock(&ra->lock);
 
     regions_quarantine_deallocate_pages(p, size, guard_size);
@@ -1534,6 +1572,9 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
                     break;
                 }
                 memory_set_name(slab, slab_size, size_class_labels[class]);
+#if STATS
+                c->slab_allocated -= slab_size;
+#endif
 
                 struct slab_metadata *trimmed = iterator;
                 iterator = iterator->next;
@@ -1557,7 +1598,33 @@ EXPORT void h_malloc_stats(void) {}
 
 #if defined(__GLIBC__) || defined(__ANDROID__)
 EXPORT struct mallinfo h_mallinfo(void) {
-    return (struct mallinfo){0};
+    struct mallinfo info = {0};
+
+    // glibc mallinfo type definition and implementation are both broken
+#if STATS && !defined(__GLIBC__)
+    struct region_allocator *ra = ro.region_allocator;
+    mutex_lock(&ra->lock);
+    info.hblkhd += ra->allocated;
+    info.uordblks += ra->allocated;
+    mutex_unlock(&ra->lock);
+
+    for (unsigned arena = 0; arena < N_ARENA; arena++) {
+        // skip zero byte size class
+        for (unsigned class = 1; class < N_SIZE_CLASSES; class++) {
+            struct size_class *c = &ro.size_class_metadata[arena][class];
+
+            mutex_lock(&c->lock);
+            info.hblkhd += c->slab_allocated;
+            info.uordblks += c->allocated;
+            mutex_unlock(&c->lock);
+        }
+    }
+
+    info.fordblks = info.hblkhd - info.uordblks;
+    info.usmblks = info.hblkhd;
+#endif
+
+    return info;
 }
 #endif
 

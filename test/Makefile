@@ -8,7 +8,8 @@ CPPFLAGS += \
     -DSLAB_CANARY=$(CONFIG_SLAB_CANARY)
 
 EXECUTABLES := \
-    offset
+    offset \
+    mallinfo
 
 all: $(EXECUTABLES)
 
