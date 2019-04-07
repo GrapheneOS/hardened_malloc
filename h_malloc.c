@@ -1609,8 +1609,7 @@ EXPORT struct mallinfo h_mallinfo(void) {
     mutex_unlock(&ra->lock);
 
     for (unsigned arena = 0; arena < N_ARENA; arena++) {
-        // skip zero byte size class
-        for (unsigned class = 1; class < N_SIZE_CLASSES; class++) {
+        for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
             struct size_class *c = &ro.size_class_metadata[arena][class];
 
             mutex_lock(&c->lock);
@@ -1665,8 +1664,7 @@ EXPORT struct mallinfo __mallinfo_arena_info(UNUSED size_t arena) {
 
 #if STATS
     if (arena < N_ARENA) {
-        // skip zero byte size class
-        for (unsigned class = 1; class < N_SIZE_CLASSES; class++) {
+        for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
             struct size_class *c = &ro.size_class_metadata[arena][class];
 
             mutex_lock(&c->lock);
@@ -1697,8 +1695,7 @@ EXPORT struct mallinfo __mallinfo_bin_info(UNUSED size_t arena, UNUSED size_t bi
     struct mallinfo info = {0};
 
 #if STATS
-    // skip zero byte size class for consistency
-    if (arena < N_ARENA && bin > 0 && bin < N_SIZE_CLASSES) {
+    if (arena < N_ARENA && bin < N_SIZE_CLASSES) {
         struct size_class *c = &ro.size_class_metadata[arena][bin];
 
         mutex_lock(&c->lock);
