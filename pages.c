@@ -4,13 +4,18 @@
 #include "pages.h"
 #include "util.h"
 
+static bool add_guards(size_t size, size_t guard_size, size_t *total_size) {
+    return __builtin_add_overflow(size, guard_size, total_size) ||
+        __builtin_add_overflow(*total_size, guard_size, total_size);
+}
+
 static uintptr_t alignment_ceiling(uintptr_t s, uintptr_t alignment) {
     return ((s) + (alignment - 1)) & ((~alignment) + 1);
 }
 
 void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotect, const char *name) {
     size_t real_size;
-    if (unlikely(__builtin_add_overflow(usable_size, guard_size * 2, &real_size))) {
+    if (unlikely(add_guards(usable_size, guard_size, &real_size))) {
         errno = ENOMEM;
         return NULL;
     }
@@ -41,7 +46,7 @@ void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t guard_
     }
 
     size_t real_alloc_size;
-    if (unlikely(__builtin_add_overflow(alloc_size, guard_size * 2, &real_alloc_size))) {
+    if (unlikely(add_guards(alloc_size, guard_size, &real_alloc_size))) {
         errno = ENOMEM;
         return NULL;
     }
