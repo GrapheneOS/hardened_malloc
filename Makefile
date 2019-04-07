@@ -73,6 +73,10 @@ ifeq (,$(filter $(CONFIG_LARGE_SIZE_CLASSES),true false))
     $(error CONFIG_LARGE_SIZE_CLASSES must be true or false)
 endif
 
+ifeq (,$(filter $(CONFIG_STATS),true false))
+    $(error CONFIG_STATS must be true or false)
+endif
+
 CPPFLAGS += \
     -DZERO_ON_FREE=$(CONFIG_ZERO_ON_FREE) \
     -DWRITE_AFTER_FREE_CHECK=$(CONFIG_WRITE_AFTER_FREE_CHECK) \
@@ -89,7 +93,7 @@ CPPFLAGS += \
     -DFREE_SLABS_QUARANTINE_RANDOM_LENGTH=$(CONFIG_FREE_SLABS_QUARANTINE_RANDOM_LENGTH) \
     -DCONFIG_CLASS_REGION_SIZE=$(CONFIG_CLASS_REGION_SIZE) \
     -DN_ARENA=$(CONFIG_N_ARENA) \
-    -DSTATS=$(CONFIG_STATS)
+    -DCONFIG_STATS=$(CONFIG_STATS)
 
 libhardened_malloc.so: $(OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared $^ $(LDLIBS) -o $@

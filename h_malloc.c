@@ -211,7 +211,7 @@ struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
     struct slab_metadata *free_slabs_tail;
     struct slab_metadata *free_slabs_quarantine[FREE_SLABS_QUARANTINE_RANDOM_LENGTH];
 
-#if STATS
+#if CONFIG_STATS
     u64 nmalloc; // may wrap (per jemalloc API)
     u64 ndalloc; // may wrap (per jemalloc API)
     size_t allocated;
@@ -456,7 +456,7 @@ static inline void *allocate_small(size_t requested_size) {
                 set_canary(metadata, p, size);
             }
 
-#if STATS
+#if CONFIG_STATS
             c->allocated += size;
             c->nmalloc++;
 #endif
@@ -473,7 +473,7 @@ static inline void *allocate_small(size_t requested_size) {
                 mutex_unlock(&c->lock);
                 return NULL;
             }
-#if STATS
+#if CONFIG_STATS
             c->slab_allocated += slab_size;
 #endif
 
@@ -494,7 +494,7 @@ static inline void *allocate_small(size_t requested_size) {
                 set_canary(metadata, p, size);
             }
 
-#if STATS
+#if CONFIG_STATS
             c->allocated += size;
             c->nmalloc++;
 #endif
@@ -507,7 +507,7 @@ static inline void *allocate_small(size_t requested_size) {
             mutex_unlock(&c->lock);
             return NULL;
         }
-#if STATS
+#if CONFIG_STATS
         c->slab_allocated += slab_size;
 #endif
         metadata->canary_value = get_random_canary(&c->rng);
@@ -521,7 +521,7 @@ static inline void *allocate_small(size_t requested_size) {
             set_canary(metadata, p, size);
         }
 
-#if STATS
+#if CONFIG_STATS
         c->allocated += size;
         c->nmalloc++;
 #endif
@@ -547,7 +547,7 @@ static inline void *allocate_small(size_t requested_size) {
         set_canary(metadata, p, size);
     }
 
-#if STATS
+#if CONFIG_STATS
     c->allocated += size;
     c->nmalloc++;
 #endif
@@ -611,7 +611,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     size_t slab_size = get_slab_size(slots, size);
 
     mutex_lock(&c->lock);
-#if STATS
+#if CONFIG_STATS
     c->allocated -= size;
     c->ndalloc++;
 #endif
@@ -715,7 +715,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
         if (c->empty_slabs_total + slab_size > max_empty_slabs_total) {
             if (!memory_map_fixed(slab, slab_size)) {
                 memory_set_name(slab, slab_size, size_class_labels[class]);
-#if STATS
+#if CONFIG_STATS
                 c->slab_allocated -= slab_size;
 #endif
                 enqueue_free_slab(c, metadata);
@@ -752,7 +752,7 @@ struct region_allocator {
     struct region_metadata *regions;
     size_t total;
     size_t free;
-#if STATS
+#if CONFIG_STATS
     size_t allocated;
 #endif
     struct quarantine_info quarantine_random[REGION_QUARANTINE_RANDOM_LENGTH];
@@ -1171,7 +1171,7 @@ static void *allocate_large(size_t size) {
         deallocate_pages(p, size, guard_size);
         return NULL;
     }
-#if STATS
+#if CONFIG_STATS
     ra->allocated += size;
 #endif
     mutex_unlock(&ra->lock);
@@ -1200,7 +1200,7 @@ static void deallocate_large(void *p, const size_t *expected_size) {
     }
     size_t guard_size = region->guard_size;
     regions_delete(region);
-#if STATS
+#if CONFIG_STATS
     ra->allocated -= size;
 #endif
     mutex_unlock(&ra->lock);
@@ -1623,7 +1623,7 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
                     break;
                 }
                 memory_set_name(slab, slab_size, size_class_labels[class]);
-#if STATS
+#if CONFIG_STATS
                 c->slab_allocated -= slab_size;
 #endif
 
@@ -1652,7 +1652,7 @@ EXPORT struct mallinfo h_mallinfo(void) {
     struct mallinfo info = {0};
 
     // glibc mallinfo type definition and implementation are both broken
-#if STATS && !defined(__GLIBC__)
+#if CONFIG_STATS && !defined(__GLIBC__)
     struct region_allocator *ra = ro.region_allocator;
     mutex_lock(&ra->lock);
     info.hblkhd += ra->allocated;
@@ -1713,7 +1713,7 @@ EXPORT size_t __mallinfo_nbins(void) {
 EXPORT struct mallinfo __mallinfo_arena_info(UNUSED size_t arena) {
     struct mallinfo info = {0};
 
-#if STATS
+#if CONFIG_STATS
     if (arena < N_ARENA) {
         for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
             struct size_class *c = &ro.size_class_metadata[arena][class];
@@ -1745,7 +1745,7 @@ EXPORT struct mallinfo __mallinfo_arena_info(UNUSED size_t arena) {
 EXPORT struct mallinfo __mallinfo_bin_info(UNUSED size_t arena, UNUSED size_t bin) {
     struct mallinfo info = {0};
 
-#if STATS
+#if CONFIG_STATS
     if (arena < N_ARENA && bin < N_SIZE_CLASSES) {
         struct size_class *c = &ro.size_class_metadata[arena][bin];
 
