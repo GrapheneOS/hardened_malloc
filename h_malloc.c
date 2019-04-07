@@ -1461,7 +1461,9 @@ EXPORT void h_free(void *p) {
     thread_seal_metadata();
 }
 
+#ifdef __GLIBC__
 EXPORT void h_cfree(void *ptr) ALIAS(h_free);
+#endif
 
 EXPORT void h_free_sized(void *p, size_t expected_size) {
     if (p == NULL) {
@@ -1639,7 +1641,6 @@ EXPORT int h_malloc_info(UNUSED int options, UNUSED FILE *fp) {
     errno = ENOSYS;
     return -1;
 }
-#endif
 
 COLD EXPORT void *h_malloc_get_state(void) {
     return NULL;
@@ -1648,6 +1649,7 @@ COLD EXPORT void *h_malloc_get_state(void) {
 COLD EXPORT int h_malloc_set_state(UNUSED void *state) {
     return -2;
 }
+#endif
 
 #ifdef __ANDROID__
 EXPORT size_t __mallinfo_narenas(void) {

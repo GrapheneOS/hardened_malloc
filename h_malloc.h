@@ -63,15 +63,19 @@ void h_malloc_stats(void);
 #if defined(__GLIBC__) || defined(__ANDROID__)
 struct mallinfo h_mallinfo(void);
 #endif
+#ifdef __GLIBC__
 int h_malloc_info(int options, FILE *fp);
+#endif
 
 // obsolete glibc extensions
 void *h_memalign(size_t alignment, size_t size);
 void *h_valloc(size_t size);
 void *h_pvalloc(size_t size);
+#ifdef __GLIBC__
 void h_cfree(void *ptr);
 void *h_malloc_get_state(void);
 int h_malloc_set_state(void *state);
+#endif
 
 // Android extensions
 #ifdef __ANDROID__
