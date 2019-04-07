@@ -164,6 +164,9 @@ for the chosen values are not written yet, so use them at your own peril:
 * `CONFIG_CLASS_REGION_SIZE`: `34359738368` (default) to control the size of
   the size class regions
 * `CONFIG_N_ARENA`: `1` (default) to control the number of arenas
+* `CONFIG_STATS`: `false` (default) to control whether stats on allocation /
+  deallocation count and active allocations are tracked. This is currently only
+  exposed via the mallinfo APIs on Android.
 
 There will be more control over enabled features in the future along with
 control over fairly arbitrarily chosen values like the size of empty slab
