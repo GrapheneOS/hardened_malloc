@@ -1123,11 +1123,37 @@ COLD __attribute__((constructor(101))) static void trigger_early_init(void) {
     h_free(h_malloc(16));
 }
 
+// Returns 0 on overflow.
+static size_t get_large_size_class(size_t size) {
+    if (CONFIG_LARGE_SIZE_CLASSES) {
+        // Continue small size class growth pattern of power of 2 spacing classes:
+        //
+        // 4 KiB [20 KiB, 24 KiB, 28 KiB, 32 KiB]
+        // 8 KiB [40 KiB, 48 KiB, 54 KiB, 64 KiB]
+        // 16 KiB [80 KiB, 96 KiB, 112 KiB, 128 KiB]
+        // 32 KiB [160 KiB, 192 KiB, 224 KiB, 256 KiB]
+        // 512 KiB [2560 KiB, 3 MiB, 3584 KiB, 4 MiB]
+        // 1 MiB [5 MiB, 6 MiB, 7 MiB, 8 MiB]
+        // etc.
+        size_t spacing_shift = 64 - __builtin_clzl(size - 1) - 3;
+        size_t spacing_class = 1ULL << spacing_shift;
+        return (size + (spacing_class - 1)) & ~(spacing_class - 1);
+    } else {
+        return PAGE_CEILING(size);
+    }
+}
+
 static size_t get_guard_size(struct random_state *state, size_t size) {
     return (get_random_u64_uniform(state, size / PAGE_SIZE / GUARD_SIZE_DIVISOR) + 1) * PAGE_SIZE;
 }
 
 static void *allocate_large(size_t size) {
+    size = get_large_size_class(size);
+    if (unlikely(!size)) {
+        errno = ENOMEM;
+        return NULL;
+    }
+
     struct region_allocator *ra = ro.region_allocator;
 
     mutex_lock(&ra->lock);
@@ -1198,6 +1224,11 @@ static int alloc_aligned(void **memptr, size_t alignment, size_t size, size_t mi
         }
         *memptr = p;
         return 0;
+    }
+
+    size = get_large_size_class(size);
+    if (unlikely(!size)) {
+        return ENOMEM;
     }
 
     struct region_allocator *ra = ro.region_allocator;
@@ -1277,6 +1308,14 @@ EXPORT void *h_realloc(void *old, size_t size) {
 
     size = adjust_size_for_canaries(size);
 
+    if (size > max_slab_size_class) {
+        size = get_large_size_class(size);
+        if (unlikely(!size)) {
+            errno = ENOMEM;
+            return NULL;
+        }
+    }
+
     size_t old_size;
     if (old >= get_slab_region_start() && old < ro.slab_region_end) {
         old_size = slab_usable_size(old);
@@ -1297,28 +1336,24 @@ EXPORT void *h_realloc(void *old, size_t size) {
         }
         old_size = region->size;
         size_t old_guard_size = region->guard_size;
-        if (PAGE_CEILING(old_size) == PAGE_CEILING(size)) {
-            region->size = size;
+        if (old_size == size) {
             mutex_unlock(&ra->lock);
             thread_seal_metadata();
             return old;
         }
         mutex_unlock(&ra->lock);
 
-        size_t old_rounded_size = PAGE_CEILING(old_size);
-        size_t rounded_size = PAGE_CEILING(size);
-
         if (size > max_slab_size_class) {
             // in-place shrink
             if (size < old_size) {
-                void *new_end = (char *)old + rounded_size;
+                void *new_end = (char *)old + size;
                 if (memory_map_fixed(new_end, old_guard_size)) {
                     thread_seal_metadata();
                     return NULL;
                 }
                 memory_set_name(new_end, old_guard_size, "malloc large");
                 void *new_guard_end = (char *)new_end + old_guard_size;
-                regions_quarantine_deallocate_pages(new_guard_end, old_rounded_size - rounded_size, 0);
+                regions_quarantine_deallocate_pages(new_guard_end, old_size - size, 0);
 
                 mutex_lock(&ra->lock);
                 struct region_metadata *region = regions_find(old);
@@ -1333,10 +1368,10 @@ EXPORT void *h_realloc(void *old, size_t size) {
             }
 
             // in-place growth
-            void *guard_end = (char *)old + old_rounded_size + old_guard_size;
-            size_t extra = rounded_size - old_rounded_size;
-            if (!memory_remap((char *)old + old_rounded_size, old_guard_size, old_guard_size + extra)) {
-                if (memory_protect_rw((char *)old + old_rounded_size, extra)) {
+            void *guard_end = (char *)old + old_size + old_guard_size;
+            size_t extra = size - old_size;
+            if (!memory_remap((char *)old + old_size, old_guard_size, old_guard_size + extra)) {
+                if (memory_protect_rw((char *)old + old_size, extra)) {
                     memory_unmap(guard_end, extra);
                 } else {
                     mutex_lock(&ra->lock);

@@ -167,6 +167,9 @@ for the chosen values are not written yet, so use them at your own peril:
 * `CONFIG_STATS`: `false` (default) to control whether stats on allocation /
   deallocation count and active allocations are tracked. This is currently only
   exposed via the mallinfo APIs on Android.
+* `CONFIG_LARGE_SIZE_CLASSES`: `true` (default) to control whether large
+  allocations use the slab allocation size class scheme instead of page size
+  granularity (see the section on size classes below)
 
 There will be more control over enabled features in the future along with
 control over fairly arbitrarily chosen values like the size of empty slab
@@ -399,6 +402,14 @@ size for 2048 byte spacing and the next spacing class matches the page size of
 4096 bytes on the target platforms. This is the minimum set of small size
 classes required to avoid substantial waste from rounding. Further slab
 allocation size classes may be offered as an option in the future.
+
+The `CONFIG_LARGE_SIZE_CLASSES` option controls whether large allocations use
+the same size class scheme providing 4 size classes for every doubling of size.
+It increases virtual memory consumption but drastically improves performance
+where realloc is used without proper growth factors, which is fairly common and
+destroys performance in some commonly used programs. If large size classes are
+disabled, the granularity is instead the page size, which is currently always
+4096 bytes on supported platforms.
 
 ## Scalability
 
