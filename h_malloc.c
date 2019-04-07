@@ -241,6 +241,8 @@ struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
     struct slab_metadata *free_slabs_quarantine[FREE_SLABS_QUARANTINE_RANDOM_LENGTH];
 
 #if STATS
+    u64 nmalloc; // may wrap (per jemalloc API)
+    u64 ndalloc; // may wrap (per jemalloc API)
     size_t allocated;
     size_t slab_allocated;
 #endif
@@ -485,6 +487,7 @@ static inline void *allocate_small(size_t requested_size) {
 
 #if STATS
             c->allocated += size;
+            c->nmalloc++;
 #endif
             mutex_unlock(&c->lock);
             return p;
@@ -522,6 +525,7 @@ static inline void *allocate_small(size_t requested_size) {
 
 #if STATS
             c->allocated += size;
+            c->nmalloc++;
 #endif
             mutex_unlock(&c->lock);
             return p;
@@ -548,6 +552,7 @@ static inline void *allocate_small(size_t requested_size) {
 
 #if STATS
         c->allocated += size;
+        c->nmalloc++;
 #endif
         mutex_unlock(&c->lock);
         return p;
@@ -573,6 +578,7 @@ static inline void *allocate_small(size_t requested_size) {
 
 #if STATS
     c->allocated += size;
+    c->nmalloc++;
 #endif
     mutex_unlock(&c->lock);
     return p;
@@ -636,6 +642,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     mutex_lock(&c->lock);
 #if STATS
     c->allocated -= size;
+    c->ndalloc++;
 #endif
 
     struct slab_metadata *metadata = get_metadata(c, p);
@@ -1688,8 +1695,8 @@ EXPORT struct mallinfo __mallinfo_arena_info(UNUSED size_t arena) {
 // This internal Android API uses mallinfo in a non-standard way to implement malloc_info:
 //
 // ordblks: total allocated space
-// uordblks: nmalloc (not implemented here yet)
-// fordblks: dmalloc (not implemented here yet)
+// uordblks: nmalloc
+// fordblks: ndalloc
 // (other fields are unused)
 EXPORT struct mallinfo __mallinfo_bin_info(UNUSED size_t arena, UNUSED size_t bin) {
     struct mallinfo info = {0};
@@ -1700,6 +1707,8 @@ EXPORT struct mallinfo __mallinfo_bin_info(UNUSED size_t arena, UNUSED size_t bi
 
         mutex_lock(&c->lock);
         info.ordblks = c->allocated;
+        info.uordblks = c->nmalloc;
+        info.fordblks = c->ndalloc;
         mutex_unlock(&c->lock);
     }
 #endif
