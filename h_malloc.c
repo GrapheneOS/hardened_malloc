@@ -1421,6 +1421,7 @@ EXPORT void *h_aligned_alloc(size_t alignment, size_t size) {
 
 EXPORT void *h_memalign(size_t alignment, size_t size) ALIAS(h_aligned_alloc);
 
+#ifndef __ANDROID__
 EXPORT void *h_valloc(size_t size) {
     init();
     thread_unseal_metadata();
@@ -1443,6 +1444,7 @@ EXPORT void *h_pvalloc(size_t size) {
     thread_seal_metadata();
     return p;
 }
+#endif
 
 EXPORT void h_free(void *p) {
     if (p == NULL) {

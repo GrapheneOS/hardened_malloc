@@ -69,8 +69,10 @@ int h_malloc_info(int options, FILE *fp);
 
 // obsolete glibc extensions
 void *h_memalign(size_t alignment, size_t size);
+#ifndef __ANDROID__
 void *h_valloc(size_t size);
 void *h_pvalloc(size_t size);
+#endif
 #ifdef __GLIBC__
 void h_cfree(void *ptr);
 void *h_malloc_get_state(void);
