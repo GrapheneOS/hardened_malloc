@@ -91,7 +91,7 @@ void h_malloc_disable(void);
 void h_malloc_enable(void);
 #endif
 
-// custom extensions
+// hardened_malloc extensions
 
 // return an upper bound on object size for any pointer based on malloc metadata
 size_t h_malloc_object_size(void *ptr);
