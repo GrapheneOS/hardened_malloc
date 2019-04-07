@@ -125,7 +125,8 @@ static const u16 size_class_slots[] = {
 
 static const char *const size_class_labels[] = {
     /* 0 */ "malloc 0",
-    /* 16 */ "malloc 16", "malloc 32", "malloc 48", "malloc 64", "malloc 80", "malloc 96", "malloc 112", "malloc 128",
+    /* 16 */ "malloc 16", "malloc 32", "malloc 48", "malloc 64",
+    /* 16 */ "malloc 80", "malloc 96", "malloc 112", "malloc 128",
     /* 32 */ "malloc 160", "malloc 192", "malloc 224", "malloc 256",
     /* 64 */ "malloc 320", "malloc 384", "malloc 448", "malloc 512",
     /* 128 */ "malloc 640", "malloc 768", "malloc 896", "malloc 1024",
@@ -134,6 +135,10 @@ static const char *const size_class_labels[] = {
     /* 1024 */ "malloc 5120", "malloc 6144", "malloc 7168", "malloc 8192",
     /* 2048 */ "malloc 10240", "malloc 12288", "malloc 14336", "malloc 16384"
 };
+
+static void label_slab(void *slab, size_t slab_size, unsigned class) {
+    memory_set_name(slab, slab_size, size_class_labels[class]);
+}
 
 #define N_SIZE_CLASSES (sizeof(size_classes) / sizeof(size_classes[0]))
 
@@ -714,7 +719,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
 
         if (c->empty_slabs_total + slab_size > max_empty_slabs_total) {
             if (!memory_map_fixed(slab, slab_size)) {
-                memory_set_name(slab, slab_size, size_class_labels[class]);
+                label_slab(slab, slab_size, class);
 #if CONFIG_STATS
                 c->slab_allocated -= slab_size;
 #endif
@@ -1081,7 +1086,7 @@ COLD static void init_slow_path(void) {
             size_t bound = (REAL_CLASS_REGION_SIZE - CLASS_REGION_SIZE) / PAGE_SIZE - 1;
             size_t gap = (get_random_u64_uniform(rng, bound) + 1) * PAGE_SIZE;
             c->class_region_start = (char *)slab_region_start + ARENA_SIZE * arena + REAL_CLASS_REGION_SIZE * class + gap;
-            memory_set_name(c->class_region_start, CLASS_REGION_SIZE, size_class_labels[class]);
+            label_slab(c->class_region_start, CLASS_REGION_SIZE, class);
 
             size_t size = size_classes[class];
             if (size == 0) {
@@ -1622,7 +1627,7 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
                 if (memory_map_fixed(slab, slab_size)) {
                     break;
                 }
-                memory_set_name(slab, slab_size, size_class_labels[class]);
+                label_slab(slab, slab_size, class);
 #if CONFIG_STATS
                 c->slab_allocated -= slab_size;
 #endif
