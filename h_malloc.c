@@ -1127,11 +1127,7 @@ static size_t get_guard_size(struct random_state *state, size_t size) {
     return (get_random_u64_uniform(state, size / PAGE_SIZE / GUARD_SIZE_DIVISOR) + 1) * PAGE_SIZE;
 }
 
-static void *allocate(size_t size) {
-    if (size <= max_slab_size_class) {
-        return allocate_small(size);
-    }
-
+static void *allocate_large(size_t size) {
     struct region_allocator *ra = ro.region_allocator;
 
     mutex_lock(&ra->lock);
@@ -1155,6 +1151,10 @@ static void *allocate(size_t size) {
     mutex_unlock(&ra->lock);
 
     return p;
+}
+
+static inline void *allocate(size_t size) {
+    return size <= max_slab_size_class ? allocate_small(size) : allocate_large(size);
 }
 
 static void deallocate_large(void *p, const size_t *expected_size) {
