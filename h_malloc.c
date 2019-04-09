@@ -425,6 +425,44 @@ static u64 get_random_canary(struct random_state *rng) {
     return get_random_u64(rng) & canary_mask;
 }
 
+static inline void stats_small_allocate(UNUSED struct size_class *c, UNUSED size_t size) {
+#if STATS
+    c->allocated += size;
+    c->nmalloc++;
+#endif
+}
+
+static inline void stats_small_deallocate(UNUSED struct size_class *c, UNUSED size_t size) {
+#if STATS
+    c->allocated -= size;
+    c->ndalloc++;
+#endif
+}
+
+static inline void stats_slab_allocate(UNUSED struct size_class *c, UNUSED size_t slab_size) {
+#if STATS
+    c->slab_allocated += slab_size;
+#endif
+}
+
+static inline void stats_slab_deallocate(UNUSED struct size_class *c, UNUSED size_t size) {
+#if STATS
+    c->slab_allocated -= slab_size;
+#endif
+}
+
+static inline void stats_large_allocate(UNUSED struct region_allocator *ra, UNUSED size_t size) {
+#if STATS
+    ra->allocated += size;
+#endif
+}
+
+static inline void stats_large_deallocate(UNUSED struct region_allocator *ra, UNUSED size_t size) {
+#if STATS
+    ra->allocated -= size;
+#endif
+}
+
 static inline void *allocate_small(size_t requested_size) {
     struct size_info info = get_size_info(requested_size);
     size_t size = info.size ? info.size : 16;
@@ -460,11 +498,8 @@ static inline void *allocate_small(size_t requested_size) {
                 write_after_free_check(p, size - canary_size);
                 set_canary(metadata, p, size);
             }
+            stats_small_allocate(c, size);
 
-#if CONFIG_STATS
-            c->allocated += size;
-            c->nmalloc++;
-#endif
             mutex_unlock(&c->lock);
             return p;
         }
@@ -478,9 +513,6 @@ static inline void *allocate_small(size_t requested_size) {
                 mutex_unlock(&c->lock);
                 return NULL;
             }
-#if CONFIG_STATS
-            c->slab_allocated += slab_size;
-#endif
 
             c->free_slabs_head = c->free_slabs_head->next;
             if (c->free_slabs_head == NULL) {
@@ -498,11 +530,9 @@ static inline void *allocate_small(size_t requested_size) {
             if (requested_size) {
                 set_canary(metadata, p, size);
             }
+            stats_slab_allocate(c, slab_size);
+            stats_small_allocate(c, size);
 
-#if CONFIG_STATS
-            c->allocated += size;
-            c->nmalloc++;
-#endif
             mutex_unlock(&c->lock);
             return p;
         }
@@ -512,9 +542,6 @@ static inline void *allocate_small(size_t requested_size) {
             mutex_unlock(&c->lock);
             return NULL;
         }
-#if CONFIG_STATS
-        c->slab_allocated += slab_size;
-#endif
         metadata->canary_value = get_random_canary(&c->rng);
 
         c->partial_slabs = metadata;
@@ -525,11 +552,9 @@ static inline void *allocate_small(size_t requested_size) {
         if (requested_size) {
             set_canary(metadata, p, size);
         }
+        stats_slab_allocate(c, slab_size);
+        stats_small_allocate(c, size);
 
-#if CONFIG_STATS
-        c->allocated += size;
-        c->nmalloc++;
-#endif
         mutex_unlock(&c->lock);
         return p;
     }
@@ -551,11 +576,8 @@ static inline void *allocate_small(size_t requested_size) {
         write_after_free_check(p, size - canary_size);
         set_canary(metadata, p, size);
     }
+    stats_small_allocate(c, size);
 
-#if CONFIG_STATS
-    c->allocated += size;
-    c->nmalloc++;
-#endif
     mutex_unlock(&c->lock);
     return p;
 }
@@ -616,10 +638,8 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     size_t slab_size = get_slab_size(slots, size);
 
     mutex_lock(&c->lock);
-#if CONFIG_STATS
-    c->allocated -= size;
-    c->ndalloc++;
-#endif
+
+    stats_small_deallocate(c, size);
 
     struct slab_metadata *metadata = get_metadata(c, p);
     void *slab = get_slab(c, slab_size, metadata);
@@ -720,9 +740,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
         if (c->empty_slabs_total + slab_size > max_empty_slabs_total) {
             if (!memory_map_fixed(slab, slab_size)) {
                 label_slab(slab, slab_size, class);
-#if CONFIG_STATS
-                c->slab_allocated -= slab_size;
-#endif
+                stats_slab_deallocate(c, slab_size);
                 enqueue_free_slab(c, metadata);
                 mutex_unlock(&c->lock);
                 return;
@@ -1175,9 +1193,7 @@ static void *allocate_large(size_t size) {
         deallocate_pages(p, size, guard_size);
         return NULL;
     }
-#if CONFIG_STATS
-    ra->allocated += size;
-#endif
+    stats_large_allocate(ra, size);
     mutex_unlock(&ra->lock);
 
     return p;
@@ -1204,9 +1220,7 @@ static void deallocate_large(void *p, const size_t *expected_size) {
     }
     size_t guard_size = region->guard_size;
     regions_delete(region);
-#if CONFIG_STATS
-    ra->allocated -= size;
-#endif
+    stats_large_deallocate(ra, size);
     mutex_unlock(&ra->lock);
 
     regions_quarantine_deallocate_pages(p, size, guard_size);
@@ -1627,9 +1641,7 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
                     break;
                 }
                 label_slab(slab, slab_size, class);
-#if CONFIG_STATS
-                c->slab_allocated -= slab_size;
-#endif
+                stats_slab_deallocate(c, slab_size);
 
                 struct slab_metadata *trimmed = iterator;
                 iterator = iterator->next;
