@@ -1386,23 +1386,26 @@ EXPORT void *h_realloc(void *old, size_t size) {
                 return old;
             }
 
-            // in-place growth
-            void *guard_end = (char *)old + old_size + old_guard_size;
-            size_t extra = size - old_size;
-            if (!memory_remap((char *)old + old_size, old_guard_size, old_guard_size + extra)) {
-                if (memory_protect_rw((char *)old + old_size, extra)) {
-                    memory_unmap(guard_end, extra);
-                } else {
-                    mutex_lock(&ra->lock);
-                    struct region_metadata *region = regions_find(old);
-                    if (region == NULL) {
-                        fatal_error("invalid realloc");
-                    }
-                    region->size = size;
-                    mutex_unlock(&ra->lock);
+            static const bool vma_merging_reliable = false;
+            if (vma_merging_reliable) {
+                // in-place growth
+                void *guard_end = (char *)old + old_size + old_guard_size;
+                size_t extra = size - old_size;
+                if (!memory_remap((char *)old + old_size, old_guard_size, old_guard_size + extra)) {
+                    if (memory_protect_rw((char *)old + old_size, extra)) {
+                        memory_unmap(guard_end, extra);
+                    } else {
+                        mutex_lock(&ra->lock);
+                        struct region_metadata *region = regions_find(old);
+                        if (region == NULL) {
+                            fatal_error("invalid realloc");
+                        }
+                        region->size = size;
+                        mutex_unlock(&ra->lock);
 
-                    thread_seal_metadata();
-                    return old;
+                        thread_seal_metadata();
+                        return old;
+                    }
                 }
             }
 
