@@ -4,6 +4,9 @@
 
 #include "chacha.h"
 
+// ChaCha8
+static const unsigned rounds = 8;
+
 #define U8C(v) (v##U)
 #define U32C(v) (v##U)
 
@@ -108,7 +111,7 @@ void chacha_keystream_bytes(chacha_ctx *x, u8 *c, u32 bytes) {
         u32 x13 = j13;
         u32 x14 = j14;
         u32 x15 = j15;
-        for (unsigned i = 8; i > 0; i -= 2) {
+        for (unsigned i = rounds; i > 0; i -= 2) {
             QUARTERROUND(x0, x4, x8, x12)
             QUARTERROUND(x1, x5, x9, x13)
             QUARTERROUND(x2, x6, x10, x14)
