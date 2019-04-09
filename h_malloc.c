@@ -1143,9 +1143,8 @@ static size_t get_large_size_class(size_t size) {
         size_t spacing_shift = 64 - __builtin_clzl(size - 1) - 3;
         size_t spacing_class = 1ULL << spacing_shift;
         return (size + (spacing_class - 1)) & ~(spacing_class - 1);
-    } else {
-        return PAGE_CEILING(size);
     }
+    return PAGE_CEILING(size);
 }
 
 static size_t get_guard_size(struct random_state *state, size_t size) {
