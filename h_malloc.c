@@ -56,6 +56,7 @@ static_assert(N_ARENA <= 4, "currently only support up to 4 arenas (as an initia
 #if N_ARENA > 1
 __attribute__((tls_model("initial-exec")))
 static thread_local unsigned thread_arena = N_ARENA;
+static _Atomic unsigned thread_arena_counter = 0;
 #else
 static const unsigned thread_arena = 0;
 #endif
@@ -469,7 +470,7 @@ static inline void *allocate_small(size_t requested_size) {
 
 #if N_ARENA > 1
     if (unlikely(thread_arena == N_ARENA)) {
-        thread_arena = hash_page(&thread_arena) % N_ARENA;
+        thread_arena = thread_arena_counter++ % N_ARENA;
     }
 #endif
 
