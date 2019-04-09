@@ -63,55 +63,52 @@ void chacha_ivsetup(chacha_ctx *x, const u8 *iv) {
 }
 
 void chacha_keystream_bytes(chacha_ctx *x, u8 *c, u32 bytes) {
-    u32 x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15;
-    u32 j0, j1, j2, j3, j4, j5, j6, j7, j8, j9, j10, j11, j12, j13, j14, j15;
-    u8 *ctarget;
-    u8 tmp[64];
-    unsigned i;
-
     if (!bytes) {
         return;
     }
 
-    j0 = x->input[0];
-    j1 = x->input[1];
-    j2 = x->input[2];
-    j3 = x->input[3];
-    j4 = x->input[4];
-    j5 = x->input[5];
-    j6 = x->input[6];
-    j7 = x->input[7];
-    j8 = x->input[8];
-    j9 = x->input[9];
-    j10 = x->input[10];
-    j11 = x->input[11];
-    j12 = x->input[12];
-    j13 = x->input[13];
-    j14 = x->input[14];
-    j15 = x->input[15];
+    u8 *ctarget;
+    u8 tmp[64];
+
+    u32 j0 = x->input[0];
+    u32 j1 = x->input[1];
+    u32 j2 = x->input[2];
+    u32 j3 = x->input[3];
+    u32 j4 = x->input[4];
+    u32 j5 = x->input[5];
+    u32 j6 = x->input[6];
+    u32 j7 = x->input[7];
+    u32 j8 = x->input[8];
+    u32 j9 = x->input[9];
+    u32 j10 = x->input[10];
+    u32 j11 = x->input[11];
+    u32 j12 = x->input[12];
+    u32 j13 = x->input[13];
+    u32 j14 = x->input[14];
+    u32 j15 = x->input[15];
 
     for (;;) {
         if (bytes < 64) {
             ctarget = c;
             c = tmp;
         }
-        x0 = j0;
-        x1 = j1;
-        x2 = j2;
-        x3 = j3;
-        x4 = j4;
-        x5 = j5;
-        x6 = j6;
-        x7 = j7;
-        x8 = j8;
-        x9 = j9;
-        x10 = j10;
-        x11 = j11;
-        x12 = j12;
-        x13 = j13;
-        x14 = j14;
-        x15 = j15;
-        for (i = 8; i > 0; i -= 2) {
+        u32 x0 = j0;
+        u32 x1 = j1;
+        u32 x2 = j2;
+        u32 x3 = j3;
+        u32 x4 = j4;
+        u32 x5 = j5;
+        u32 x6 = j6;
+        u32 x7 = j7;
+        u32 x8 = j8;
+        u32 x9 = j9;
+        u32 x10 = j10;
+        u32 x11 = j11;
+        u32 x12 = j12;
+        u32 x13 = j13;
+        u32 x14 = j14;
+        u32 x15 = j15;
+        for (unsigned i = 8; i > 0; i -= 2) {
             QUARTERROUND(x0, x4, x8, x12)
             QUARTERROUND(x1, x5, x9, x13)
             QUARTERROUND(x2, x6, x10, x14)
@@ -163,7 +160,7 @@ void chacha_keystream_bytes(chacha_ctx *x, u8 *c, u32 bytes) {
 
         if (bytes <= 64) {
             if (bytes < 64) {
-                for (i = 0; i < bytes; ++i) {
+                for (unsigned i = 0; i < bytes; ++i) {
                     ctarget[i] = c[i];
                 }
             }
