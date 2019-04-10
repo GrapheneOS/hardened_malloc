@@ -469,7 +469,7 @@ static inline void *allocate_small(size_t requested_size) {
     size_t size = info.size ? info.size : 16;
 
 #if N_ARENA > 1
-    if (unlikely(thread_arena == N_ARENA)) {
+    if (unlikely(thread_arena >= N_ARENA)) {
         thread_arena = thread_arena_counter++ % N_ARENA;
     }
 #endif
