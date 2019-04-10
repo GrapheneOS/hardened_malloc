@@ -102,8 +102,8 @@ static const size_t min_align = 16;
 static const size_t max_slab_size_class = 16384;
 #define MAX_SLAB_SIZE_CLASS_SHIFT 14
 #else
-static const size_t max_slab_size_class = 65536;
-#define MAX_SLAB_SIZE_CLASS_SHIFT 16
+static const size_t max_slab_size_class = 131072;
+#define MAX_SLAB_SIZE_CLASS_SHIFT 17
 #endif
 
 static const u32 size_classes[] = {
