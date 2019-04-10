@@ -134,7 +134,7 @@ static const u16 size_class_slots[] = {
     /* 2048 */ 6, 5, 4, 4,
 #if CONFIG_EXTENDED_SIZE_CLASSES
     /* 4096 */ 2, 2, 2, 2,
-    /* 8192 */ 2, 2, 2, 2,
+    /* 8192 */ 1, 1, 1, 1,
 #endif
 };
 
@@ -501,7 +501,7 @@ static inline void *allocate_small(size_t requested_size) {
             metadata->next = NULL;
             metadata->prev = NULL;
 
-            c->partial_slabs = metadata;
+            c->partial_slabs = slots > 1 ? metadata : NULL;
 
             void *slab = get_slab(c, slab_size, metadata);
             size_t slot = get_free_slot(&c->rng, slots, metadata);
@@ -535,7 +535,7 @@ static inline void *allocate_small(size_t requested_size) {
             metadata->next = NULL;
             metadata->prev = NULL;
 
-            c->partial_slabs = metadata;
+            c->partial_slabs = slots > 1 ? metadata : NULL;
 
             size_t slot = get_free_slot(&c->rng, slots, metadata);
             set_slot(metadata, slot);
@@ -557,7 +557,7 @@ static inline void *allocate_small(size_t requested_size) {
         }
         metadata->canary_value = get_random_canary(&c->rng);
 
-        c->partial_slabs = metadata;
+        c->partial_slabs = slots > 1 ? metadata : NULL;
         void *slab = get_slab(c, slab_size, metadata);
         size_t slot = get_free_slot(&c->rng, slots, metadata);
         set_slot(metadata, slot);
@@ -726,6 +726,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     clear_quarantine(metadata, slot);
 #endif
 
+    // triggered even for slots == 1 and then undone below
     if (!has_free_slots(slots, metadata)) {
         metadata->next = c->partial_slabs;
         metadata->prev = NULL;
