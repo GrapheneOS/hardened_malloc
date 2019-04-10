@@ -468,12 +468,6 @@ static inline void *allocate_small(size_t requested_size) {
     struct size_info info = get_size_info(requested_size);
     size_t size = info.size ? info.size : 16;
 
-#if N_ARENA > 1
-    if (unlikely(thread_arena >= N_ARENA)) {
-        thread_arena = thread_arena_counter++ % N_ARENA;
-    }
-#endif
-
     struct size_class *c = &ro.size_class_metadata[thread_arena][info.class];
     size_t slots = size_class_slots[info.class];
     size_t slab_size = get_slab_size(slots, size);
@@ -1136,9 +1130,18 @@ COLD static void init_slow_path(void) {
 }
 
 static inline void init(void) {
+#if N_ARENA > 1
+    if (unlikely(thread_arena >= N_ARENA)) {
+        thread_arena = thread_arena_counter++ % N_ARENA;
+        if (unlikely(!is_init())) {
+            init_slow_path();
+        }
+    }
+#else
     if (unlikely(!is_init())) {
         init_slow_path();
     }
+#endif
 }
 
 // trigger early initialization to set up pthread_atfork and protect state as soon as possible
