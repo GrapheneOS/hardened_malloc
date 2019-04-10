@@ -168,6 +168,10 @@ for the chosen values are not written yet, so use them at your own peril:
 * `CONFIG_STATS`: `false` (default) to control whether stats on allocation /
   deallocation count and active allocations are tracked. This is currently only
   exposed via the mallinfo APIs on Android.
+* `CONFIG_EXTENDED_SIZE_CLASSES`: `true` (default) to control whether small
+  size class go up to 64k instead of the minimum requirement for avoiding
+  memory waste of 16k. The option to extend it even further will be offered in
+  the future when better support for larger slab allocations is added.
 * `CONFIG_LARGE_SIZE_CLASSES`: `true` (default) to control whether large
   allocations use the slab allocation size class scheme instead of page size
   granularity (see the section on size classes below)
@@ -398,11 +402,33 @@ preliminary set of values.
 | 14336 | 14.278738839285708% | 4 | 57344 | 0.0% |
 | 16384 | 12.493896484375% | 4 | 65536 | 0.0% |
 
-The slab allocation size classes currently end at 16384 since that's the final
-size for 2048 byte spacing and the next spacing class matches the page size of
-4096 bytes on the target platforms. This is the minimum set of small size
-classes required to avoid substantial waste from rounding. Further slab
-allocation size classes may be offered as an option in the future.
+The slab allocation size classes end at 16384 since that's the final size for
+2048 byte spacing and the next spacing class matches the page size of 4096
+bytes on the target platforms. This is the minimum set of small size classes
+required to avoid substantial waste from rounding.
+
+The `CONFIG_EXTENDED_SIZE_CLASSES` option extends the size classes up to 65536,
+with a final spacing class of 16384. This offers improved performance compared
+to the minimum set of size classes. The security story is complicated, since
+the slab allocation has both advantages like size class isolation completely
+avoiding reuse of any of the address space for any other size classes or other
+data. It also has disadvantages like caching a small number of empty slabs and
+deterministic guard sizes. The cache will be configurable in the future, making
+it possible to disable slab caching for the largest slab allocation sizes, to
+force unmapping them immediately and putting them in the slab quarantine, which
+eliminates most of the security disadvantage at the expense of also giving up
+most of the performance advantage, but while retaining the isolation.
+
+| size class | worst case internal fragmentation | slab slots | slab size | internal fragmentation for slabs |
+| - | - | - | - | - |
+| 20480 | 19.9951171875% | 2 | 40960 | 0.0% |
+| 24576 | 16.66259765625% | 2 | 49152 | 0.0% |
+| 28672 | 14.2822265625% | 2 | 57344 | 0.0% |
+| 32768 | 12.4969482421875% | 2 | 65536 | 0.0% |
+| 40960 | 19.99755859375% | 2 | 81920 | 0.0% |
+| 49152 | 16.664632161458343% | 2 | 98304 | 0.0% |
+| 57344 | 14.283970424107139% | 2 | 114688 | 0.0% |
+| 65536 | 12.49847412109375% | 2 | 131072 | 0.0% |
 
 The `CONFIG_LARGE_SIZE_CLASSES` option controls whether large allocations use
 the same size class scheme providing 4 size classes for every doubling of size.
