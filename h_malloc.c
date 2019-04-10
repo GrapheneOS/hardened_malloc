@@ -119,6 +119,7 @@ static const u32 size_classes[] = {
 #if CONFIG_EXTENDED_SIZE_CLASSES
     /* 4096 */ 20480, 24576, 28672, 32768,
     /* 8192 */ 40960, 49152, 57344, 65536,
+    /* 16384 */ 81920, 98304, 114688, 131072,
 #endif
 };
 
@@ -135,6 +136,7 @@ static const u16 size_class_slots[] = {
 #if CONFIG_EXTENDED_SIZE_CLASSES
     /* 4096 */ 2, 2, 2, 2,
     /* 8192 */ 1, 1, 1, 1,
+    /* 16384 */ 1, 1, 1, 1,
 #endif
 };
 
@@ -152,6 +154,7 @@ static const char *const size_class_labels[] = {
 #if CONFIG_EXTENDED_SIZE_CLASSES
     /* 4096 */ "malloc 20480", "malloc 24576", "malloc 28672", "malloc 32768",
     /* 8192 */ "malloc 40960", "malloc 49152", "malloc 57344", "malloc 65536",
+    /* 16384 */ "malloc 81920", "malloc 98304", "malloc 114688", "malloc 131072",
 #endif
 };
 

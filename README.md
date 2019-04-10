@@ -407,17 +407,18 @@ The slab allocation size classes end at 16384 since that's the final size for
 bytes on the target platforms. This is the minimum set of small size classes
 required to avoid substantial waste from rounding.
 
-The `CONFIG_EXTENDED_SIZE_CLASSES` option extends the size classes up to 65536,
-with a final spacing class of 16384. This offers improved performance compared
-to the minimum set of size classes. The security story is complicated, since
-the slab allocation has both advantages like size class isolation completely
-avoiding reuse of any of the address space for any other size classes or other
-data. It also has disadvantages like caching a small number of empty slabs and
-deterministic guard sizes. The cache will be configurable in the future, making
-it possible to disable slab caching for the largest slab allocation sizes, to
-force unmapping them immediately and putting them in the slab quarantine, which
-eliminates most of the security disadvantage at the expense of also giving up
-most of the performance advantage, but while retaining the isolation.
+The `CONFIG_EXTENDED_SIZE_CLASSES` option extends the size classes up to
+131072, with a final spacing class of 16384. This offers improved performance
+compared to the minimum set of size classes. The security story is complicated,
+since the slab allocation has both advantages like size class isolation
+completely avoiding reuse of any of the address space for any other size
+classes or other data. It also has disadvantages like caching a small number of
+empty slabs and deterministic guard sizes. The cache will be configurable in
+the future, making it possible to disable slab caching for the largest slab
+allocation sizes, to force unmapping them immediately and putting them in the
+slab quarantine, which eliminates most of the security disadvantage at the
+expense of also giving up most of the performance advantage, but while
+retaining the isolation.
 
 | size class | worst case internal fragmentation | slab slots | slab size | internal fragmentation for slabs |
 | - | - | - | - | - |
@@ -425,10 +426,14 @@ most of the performance advantage, but while retaining the isolation.
 | 24576 | 16.66259765625% | 2 | 49152 | 0.0% |
 | 28672 | 14.2822265625% | 2 | 57344 | 0.0% |
 | 32768 | 12.4969482421875% | 2 | 65536 | 0.0% |
-| 40960 | 19.99755859375% | 2 | 81920 | 0.0% |
-| 49152 | 16.664632161458343% | 2 | 98304 | 0.0% |
-| 57344 | 14.283970424107139% | 2 | 114688 | 0.0% |
-| 65536 | 12.49847412109375% | 2 | 131072 | 0.0% |
+| 40960 | 19.99755859375% | 1 | 40960 | 0.0% |
+| 49152 | 16.664632161458343% | 1 | 49152 | 0.0% |
+| 57344 | 14.283970424107139% | 1 | 57344 | 0.0% |
+| 65536 | 12.49847412109375% | 1 | 65536 | 0.0% |
+| 81920 | 19.998779296875% | 1 | 81920 | 0.0% |
+| 98304 | 16.6656494140625% | 1 | 98304 | 0.0% |
+| 114688 | 14.284842354910708% | 1 | 114688 | 0.0% |
+| 131072 | 12.499237060546875% | 1 | 131072 | 0.0% |
 
 The `CONFIG_LARGE_SIZE_CLASSES` option controls whether large allocations use
 the same size class scheme providing 4 size classes for every doubling of size.
