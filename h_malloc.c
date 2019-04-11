@@ -448,40 +448,28 @@ static u64 get_random_canary(struct random_state *rng) {
 }
 
 static inline void stats_small_allocate(UNUSED struct size_class *c, UNUSED size_t size) {
-#if STATS
+#if CONFIG_STATS
     c->allocated += size;
     c->nmalloc++;
 #endif
 }
 
 static inline void stats_small_deallocate(UNUSED struct size_class *c, UNUSED size_t size) {
-#if STATS
+#if CONFIG_STATS
     c->allocated -= size;
     c->ndalloc++;
 #endif
 }
 
 static inline void stats_slab_allocate(UNUSED struct size_class *c, UNUSED size_t slab_size) {
-#if STATS
+#if CONFIG_STATS
     c->slab_allocated += slab_size;
 #endif
 }
 
-static inline void stats_slab_deallocate(UNUSED struct size_class *c, UNUSED size_t size) {
-#if STATS
+static inline void stats_slab_deallocate(UNUSED struct size_class *c, UNUSED size_t slab_size) {
+#if CONFIG_STATS
     c->slab_allocated -= slab_size;
-#endif
-}
-
-static inline void stats_large_allocate(UNUSED struct region_allocator *ra, UNUSED size_t size) {
-#if STATS
-    ra->allocated += size;
-#endif
-}
-
-static inline void stats_large_deallocate(UNUSED struct region_allocator *ra, UNUSED size_t size) {
-#if STATS
-    ra->allocated -= size;
 #endif
 }
 
@@ -800,6 +788,18 @@ struct region_allocator {
     size_t quarantine_queue_index;
     struct random_state rng;
 };
+
+static inline void stats_large_allocate(UNUSED struct region_allocator *ra, UNUSED size_t size) {
+#if CONFIG_STATS
+    ra->allocated += size;
+#endif
+}
+
+static inline void stats_large_deallocate(UNUSED struct region_allocator *ra, UNUSED size_t size) {
+#if CONFIG_STATS
+    ra->allocated -= size;
+#endif
+}
 
 struct __attribute__((aligned(PAGE_SIZE))) slab_info_mapping {
     struct slab_metadata slab_info[MAX_METADATA_MAX];
