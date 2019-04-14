@@ -1436,7 +1436,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
 
             size_t copy_size = min(size, old_size);
             if (copy_size >= MREMAP_MOVE_THRESHOLD) {
-                void *new = allocate(size);
+                void *new = allocate_large(size);
                 if (new == NULL) {
                     thread_seal_metadata();
                     return NULL;
