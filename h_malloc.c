@@ -1698,6 +1698,10 @@ EXPORT struct mallinfo h_mallinfo(void) {
 
     // glibc mallinfo type definition and implementation are both broken
 #if CONFIG_STATS && !defined(__GLIBC__)
+    if (!is_init()) {
+        return info;
+    }
+
     struct region_allocator *ra = ro.region_allocator;
     mutex_lock(&ra->lock);
     info.hblkhd += ra->allocated;
@@ -1791,6 +1795,10 @@ EXPORT struct mallinfo __mallinfo_bin_info(UNUSED size_t arena, UNUSED size_t bi
     struct mallinfo info = {0};
 
 #if CONFIG_STATS
+    if (!is_init()) {
+        return info;
+    }
+
     if (arena < N_ARENA && bin < N_SIZE_CLASSES) {
         struct size_class *c = &ro.size_class_metadata[arena][bin];
 
