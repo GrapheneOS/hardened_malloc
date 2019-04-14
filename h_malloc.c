@@ -56,7 +56,7 @@ static_assert(N_ARENA <= 4, "currently only support up to 4 arenas (as an initia
 #if N_ARENA > 1
 __attribute__((tls_model("initial-exec")))
 static thread_local unsigned thread_arena = N_ARENA;
-static _Atomic unsigned thread_arena_counter = 0;
+static atomic_uint thread_arena_counter = 0;
 #else
 static const unsigned thread_arena = 0;
 #endif
@@ -473,11 +473,11 @@ static inline void stats_slab_deallocate(UNUSED struct size_class *c, UNUSED siz
 #endif
 }
 
-static inline void *allocate_small(size_t requested_size) {
+static inline void *allocate_small(unsigned arena, size_t requested_size) {
     struct size_info info = get_size_info(requested_size);
     size_t size = info.size ? info.size : 16;
 
-    struct size_class *c = &ro.size_class_metadata[thread_arena][info.class];
+    struct size_class *c = &ro.size_class_metadata[arena][info.class];
     size_t slots = size_class_slots[info.class];
     size_t slab_size = get_slab_size(slots, size);
 
@@ -1151,19 +1151,18 @@ COLD static void init_slow_path(void) {
     }
 }
 
-static inline void init(void) {
+static inline unsigned init(void) {
+    unsigned arena = thread_arena;
 #if N_ARENA > 1
-    if (unlikely(thread_arena >= N_ARENA)) {
-        thread_arena = thread_arena_counter++ % N_ARENA;
-        if (unlikely(!is_init())) {
-            init_slow_path();
-        }
+    if (likely(arena < N_ARENA)) {
+        return arena;
     }
-#else
+    thread_arena = arena = thread_arena_counter++ % N_ARENA;
+#endif
     if (unlikely(!is_init())) {
         init_slow_path();
     }
-#endif
+    return arena;
 }
 
 // trigger early initialization to set up pthread_atfork and protect state as soon as possible
@@ -1225,8 +1224,8 @@ static void *allocate_large(size_t size) {
     return p;
 }
 
-static inline void *allocate(size_t size) {
-    return size <= max_slab_size_class ? allocate_small(size) : allocate_large(size);
+static inline void *allocate(unsigned arena, size_t size) {
+    return size <= max_slab_size_class ? allocate_small(arena, size) : allocate_large(size);
 }
 
 static void deallocate_large(void *p, const size_t *expected_size) {
@@ -1252,7 +1251,7 @@ static void deallocate_large(void *p, const size_t *expected_size) {
     regions_quarantine_deallocate_pages(p, size, guard_size);
 }
 
-static int alloc_aligned(void **memptr, size_t alignment, size_t size, size_t min_alignment) {
+static int alloc_aligned(unsigned arena, void **memptr, size_t alignment, size_t size, size_t min_alignment) {
     if ((alignment - 1) & alignment || alignment < min_alignment) {
         return EINVAL;
     }
@@ -1262,7 +1261,7 @@ static int alloc_aligned(void **memptr, size_t alignment, size_t size, size_t mi
             size = get_size_info_align(size, alignment).size;
         }
 
-        void *p = allocate(size);
+        void *p = allocate(arena, size);
         if (p == NULL) {
             return ENOMEM;
         }
@@ -1298,9 +1297,9 @@ static int alloc_aligned(void **memptr, size_t alignment, size_t size, size_t mi
     return 0;
 }
 
-static void *alloc_aligned_simple(size_t alignment, size_t size) {
+static void *alloc_aligned_simple(unsigned arena, size_t alignment, size_t size) {
     void *ptr;
-    int ret = alloc_aligned(&ptr, alignment, size, 1);
+    int ret = alloc_aligned(arena, &ptr, alignment, size, 1);
     if (ret) {
         errno = ret;
         return NULL;
@@ -1316,10 +1315,10 @@ static size_t adjust_size_for_canaries(size_t size) {
 }
 
 static inline void *alloc(size_t size) {
-    init();
+    unsigned arena = init();
     thread_unseal_metadata();
     size = adjust_size_for_canaries(size);
-    void *p = allocate(size);
+    void *p = allocate(arena, size);
     thread_seal_metadata();
     return p;
 }
@@ -1334,10 +1333,10 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
         errno = ENOMEM;
         return NULL;
     }
-    init();
+    unsigned arena = init();
     thread_unseal_metadata();
     total_size = adjust_size_for_canaries(total_size);
-    void *p = allocate(total_size);
+    void *p = allocate(arena, total_size);
     thread_seal_metadata();
     if (!ZERO_ON_FREE && likely(p != NULL) && total_size && total_size <= max_slab_size_class) {
         memset(p, 0, total_size - canary_size);
@@ -1463,7 +1462,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
         }
     }
 
-    void *new = allocate(size);
+    void *new = allocate(thread_arena, size);
     if (new == NULL) {
         thread_seal_metadata();
         return NULL;
@@ -1483,19 +1482,19 @@ EXPORT void *h_realloc(void *old, size_t size) {
 }
 
 EXPORT int h_posix_memalign(void **memptr, size_t alignment, size_t size) {
-    init();
+    unsigned arena = init();
     thread_unseal_metadata();
     size = adjust_size_for_canaries(size);
-    int ret = alloc_aligned(memptr, alignment, size, sizeof(void *));
+    int ret = alloc_aligned(arena, memptr, alignment, size, sizeof(void *));
     thread_seal_metadata();
     return ret;
 }
 
 EXPORT void *h_aligned_alloc(size_t alignment, size_t size) {
-    init();
+    unsigned arena = init();
     thread_unseal_metadata();
     size = adjust_size_for_canaries(size);
-    void *p = alloc_aligned_simple(alignment, size);
+    void *p = alloc_aligned_simple(arena, alignment, size);
     thread_seal_metadata();
     return p;
 }
@@ -1504,10 +1503,10 @@ EXPORT void *h_memalign(size_t alignment, size_t size) ALIAS(h_aligned_alloc);
 
 #ifndef __ANDROID__
 EXPORT void *h_valloc(size_t size) {
-    init();
+    unsigned arena = init();
     thread_unseal_metadata();
     size = adjust_size_for_canaries(size);
-    void *p = alloc_aligned_simple(PAGE_SIZE, size);
+    void *p = alloc_aligned_simple(arena, PAGE_SIZE, size);
     thread_seal_metadata();
     return p;
 }
@@ -1518,10 +1517,10 @@ EXPORT void *h_pvalloc(size_t size) {
         errno = ENOMEM;
         return NULL;
     }
-    init();
+    unsigned arena = init();
     thread_unseal_metadata();
     size = adjust_size_for_canaries(size);
-    void *p = alloc_aligned_simple(PAGE_SIZE, size);
+    void *p = alloc_aligned_simple(arena, PAGE_SIZE, size);
     thread_seal_metadata();
     return p;
 }
