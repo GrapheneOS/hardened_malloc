@@ -1604,7 +1604,7 @@ EXPORT size_t h_malloc_object_size(void *p) {
     }
 
     if (unlikely(slab_region_start == NULL)) {
-        return 0;
+        return SIZE_MAX;
     }
 
     thread_unseal_metadata();
