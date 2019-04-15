@@ -39,8 +39,7 @@ void random_state_init(struct random_state *state) {
     get_random_seed(rnd, sizeof(rnd));
     chacha_keysetup(&state->ctx, rnd);
     chacha_ivsetup(&state->ctx, rnd + CHACHA_KEY_SIZE);
-    chacha_keystream_bytes(&state->ctx, state->cache, RANDOM_CACHE_SIZE);
-    state->index = 0;
+    state->index = RANDOM_CACHE_SIZE;
     state->reseed = 0;
 }
 
@@ -49,19 +48,17 @@ void random_state_init_from_random_state(struct random_state *state, struct rand
     get_random_bytes(source, rnd, sizeof(rnd));
     chacha_keysetup(&state->ctx, rnd);
     chacha_ivsetup(&state->ctx, rnd + CHACHA_KEY_SIZE);
-    chacha_keystream_bytes(&state->ctx, state->cache, RANDOM_CACHE_SIZE);
-    state->index = 0;
+    state->index = RANDOM_CACHE_SIZE;
     state->reseed = 0;
 }
 
 static void refill(struct random_state *state) {
-    if (state->reseed < RANDOM_RESEED_SIZE) {
-        chacha_keystream_bytes(&state->ctx, state->cache, RANDOM_CACHE_SIZE);
-        state->index = 0;
-        state->reseed += RANDOM_CACHE_SIZE;
-    } else {
+    if (state->reseed >= RANDOM_RESEED_SIZE) {
         random_state_init(state);
     }
+    chacha_keystream_bytes(&state->ctx, state->cache, RANDOM_CACHE_SIZE);
+    state->index = 0;
+    state->reseed += RANDOM_CACHE_SIZE;
 }
 
 void get_random_bytes(struct random_state *state, void *buf, size_t size) {
