@@ -772,7 +772,7 @@ struct quarantine_info {
     size_t size;
 };
 
-#define INITIAL_REGION_TABLE_SIZE 256
+#define INITIAL_REGION_TABLE_SIZE 128
 #define MAX_REGION_TABLE_SIZE (CLASS_REGION_SIZE / PAGE_SIZE / sizeof(struct region_metadata))
 
 struct region_allocator {
