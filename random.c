@@ -18,7 +18,7 @@ static ssize_t getrandom(void *buf, size_t buflen, unsigned int flags) {
 #endif
 
 static void get_random_seed(void *buf, size_t size) {
-    while (size > 0) {
+    while (size) {
         ssize_t r;
 
         do {
@@ -51,6 +51,28 @@ static void refill(struct random_state *state) {
         state->reseed += RANDOM_CACHE_SIZE;
     } else {
         random_state_init(state);
+    }
+}
+
+void get_random_bytes(struct random_state *state, void *buf, size_t size) {
+    // avoid needless copying to and from the cache as an optimization
+    if (size > RANDOM_CACHE_SIZE / 2) {
+        chacha_keystream_bytes(&state->ctx, buf, size);
+        return;
+    }
+
+    while (size) {
+        if (state->index == RANDOM_CACHE_SIZE) {
+            refill(state);
+        }
+
+        size_t remaining = RANDOM_CACHE_SIZE - state->index;
+        size_t copy_size = min(size, remaining);
+        memcpy(buf, state->cache + state->index, copy_size);
+        state->index += copy_size;
+
+        buf = (char *)buf + copy_size;
+        size -= copy_size;
     }
 }
 
