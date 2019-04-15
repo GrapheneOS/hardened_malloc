@@ -1093,7 +1093,7 @@ COLD static void init_slow_path(void) {
     struct region_allocator *ra = ro.region_allocator;
 
     mutex_init(&ra->lock);
-    random_state_init(&ra->rng);
+    random_state_init_from_random_state(&ra->rng, rng);
     ro.regions[0] = allocator_state->regions_a;
     ro.regions[1] = allocator_state->regions_b;
     ra->regions = ro.regions[0];
@@ -1116,7 +1116,7 @@ COLD static void init_slow_path(void) {
             struct size_class *c = &ro.size_class_metadata[arena][class];
 
             mutex_init(&c->lock);
-            random_state_init(&c->rng);
+            random_state_init_from_random_state(&c->rng, rng);
 
             size_t bound = (REAL_CLASS_REGION_SIZE - CLASS_REGION_SIZE) / PAGE_SIZE - 1;
             size_t gap = (get_random_u64_uniform(rng, bound) + 1) * PAGE_SIZE;

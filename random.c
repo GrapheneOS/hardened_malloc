@@ -44,6 +44,16 @@ void random_state_init(struct random_state *state) {
     state->reseed = 0;
 }
 
+void random_state_init_from_random_state(struct random_state *state, struct random_state *source) {
+    u8 rnd[CHACHA_KEY_SIZE + CHACHA_IV_SIZE];
+    get_random_bytes(source, rnd, sizeof(rnd));
+    chacha_keysetup(&state->ctx, rnd);
+    chacha_ivsetup(&state->ctx, rnd + CHACHA_KEY_SIZE);
+    chacha_keystream_bytes(&state->ctx, state->cache, RANDOM_CACHE_SIZE);
+    state->index = 0;
+    state->reseed = 0;
+}
+
 static void refill(struct random_state *state) {
     if (state->reseed < RANDOM_RESEED_SIZE) {
         chacha_keystream_bytes(&state->ctx, state->cache, RANDOM_CACHE_SIZE);
