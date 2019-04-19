@@ -1,9 +1,11 @@
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdatomic.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #if N_ARENA > 1
 #include <threads.h>
 #endif
@@ -1726,14 +1728,64 @@ EXPORT struct mallinfo h_mallinfo(void) {
 }
 #endif
 
-#ifdef __GLIBC__
+#ifndef __ANDROID__
 EXPORT int h_malloc_info(int options, UNUSED FILE *fp) {
     if (options) {
         errno = EINVAL;
         return -1;
     }
+
+#if CONFIG_STATS
+    fputs("<malloc version=\"hardened_malloc-1\">", fp);
+    for (unsigned arena = 0; arena < N_ARENA; arena++) {
+        fprintf(fp, "<heap nr=\"%u\">", arena);
+
+        for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
+            struct size_class *c = &ro.size_class_metadata[arena][class];
+
+            u64 nmalloc;
+            u64 ndalloc;
+            size_t slab_allocated;
+            size_t allocated;
+
+            mutex_lock(&c->lock);
+            nmalloc = c->nmalloc;
+            ndalloc = c->ndalloc;
+            slab_allocated = c->slab_allocated;
+            allocated = c->allocated;
+            mutex_unlock(&c->lock);
+
+            if (nmalloc || ndalloc || slab_allocated || allocated) {
+                fprintf(fp, "<bin nr=\"%u\" size=\"%" PRIu32 "\">", class, size_classes[class]);
+                fprintf(fp, "<nmalloc>%" PRIu64 "</nmalloc>", nmalloc);
+                fprintf(fp, "<ndalloc>%" PRIu64 "</ndalloc>", ndalloc);
+                fprintf(fp, "<slab_allocated>%zu</slab_allocated>", slab_allocated);
+                fprintf(fp, "<allocated>%zu</allocated>", allocated);
+                fputs("</bin>", fp);
+            }
+        }
+
+        fputs("</heap>", fp);
+    }
+
+    size_t region_allocated;
+
+    struct region_allocator *ra = ro.region_allocator;
+    mutex_lock(&ra->lock);
+    region_allocated = ra->allocated;
+    mutex_unlock(&ra->lock);
+
+    fprintf(fp, "<heap nr=\"%u\">", N_ARENA);
+    fprintf(fp, "<allocated_large>%zu</allocated_large>", region_allocated);
+    fputs("</heap>", fp);
+
+    fputs("</malloc>", fp);
+
+    return 0;
+#else
     errno = ENOSYS;
     return -1;
+#endif
 }
 
 COLD EXPORT void *h_malloc_get_state(void) {
