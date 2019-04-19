@@ -1727,7 +1727,11 @@ EXPORT struct mallinfo h_mallinfo(void) {
 #endif
 
 #ifdef __GLIBC__
-EXPORT int h_malloc_info(UNUSED int options, UNUSED FILE *fp) {
+EXPORT int h_malloc_info(int options, UNUSED FILE *fp) {
+    if (options) {
+        errno = EINVAL;
+        return -1;
+    }
     errno = ENOSYS;
     return -1;
 }
