@@ -260,7 +260,8 @@ was a bit less important and if a core goal was finding latent bugs.
 * Fine-grained randomization within memory regions
     * Randomly sized guard regions for large allocations
     * Random slot selection within slabs
-    * Randomized delayed free for slab allocations
+    * Randomized delayed free for small and large allocations along with slabs
+      themselves
     * [in-progress] Randomized choice of slabs
     * [in-progress] Randomized allocation of slabs
 * Slab allocations are zeroed on free
