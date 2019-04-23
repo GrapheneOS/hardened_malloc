@@ -227,7 +227,17 @@ was a bit less important and if a core goal was finding latent bugs.
 
 ## Security properties
 
-* Fully out-of-line metadata
+* Fully out-of-line metadata/state with protection from corruption
+    * Address space for allocator state is entirely reserved during
+      initialization and never reused for allocations or anything else
+    * State within global variables is entirely read-only after initialization
+      with pointers to the isolated allocator state so leaking the address of
+      the library doesn't leak the address of writable state
+    * Allocator state is located within a dedicated region with high entropy
+      randomly sized guard regions around it
+    * Protection via Memory Protection Keys (MPK) on x86\_64 (disabled by
+      default due to low benefit-cost ratio on top of baseline protections)
+    * [future] Protection via MTE on ARMv8.5+
 * Deterministic detection of any invalid free (unallocated, unaligned, etc.)
     * Validation of the size passed for C++14 sized deallocation by `delete`
       even for code compiled with earlier standards (detects type confusion if
@@ -275,17 +285,6 @@ was a bit less important and if a core goal was finding latent bugs.
   size class regions interspersed with guard pages
 * Zero size allocations are a dedicated size class with the entire region
   remaining non-readable and non-writable
-* Protected allocator state (including all metadata)
-    * Address space for state is entirely reserved during initialization and
-      never reused for allocations or anything else
-    * State within global variables is entirely read-only after initialization
-      with pointers to the isolated allocator state so leaking the address of
-      the library doesn't leak the address of writable state
-    * Allocator state is located within a dedicated region with high entropy
-      randomly sized guard regions around it
-    * Protection via Memory Protection Keys (MPK) on x86\_64 (disabled by
-      default due to low benefit-cost ratio on top of baseline protections)
-    * [future] Protection via MTE on ARMv8.5+
 * Extension for retrieving the size of allocations with fallback
   to a sentinel for pointers not managed by the allocator
     * Can also return accurate values for pointers *within* small allocations
