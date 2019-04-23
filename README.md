@@ -244,6 +244,7 @@ was a bit less important and if a core goal was finding latent bugs.
       the size is different) and by various containers using the allocator API
       directly
 * Isolated memory region for slab allocations
+    * Top-level isolated regions for each arena
     * Divided up into isolated inner regions for each size class
         * High entropy random base for each size class region
         * No deterministic / low entropy offsets between allocations with
