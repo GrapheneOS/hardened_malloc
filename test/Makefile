@@ -9,7 +9,8 @@ CPPFLAGS += \
 
 EXECUTABLES := \
     offset \
-    mallinfo
+    mallinfo \
+    large_array_growth
 
 all: $(EXECUTABLES)
 
