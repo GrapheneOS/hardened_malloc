@@ -1049,12 +1049,13 @@ static inline void enforce_init(void) {
 }
 
 COLD static void handle_camera_bug(void) {
-    const char expected[] = "/vendor/bin/hw/android.hardware.camera.provider@2.4-service_64";
-    char path[sizeof(expected)];
+    char path[256];
     if (readlink("/proc/self/exe", path, sizeof(path)) == -1) {
         return;
     }
-    if (strcmp(expected, path) == 0) {
+    const char camera_provider[] = "/vendor/bin/hw/android.hardware.camera.provider@2.4-service_64";
+    const char citadel[] = "/vendor/bin/hw/android.hardware.keymaster@4.0-service.citadel";
+    if (strcmp(camera_provider, path) == 0 || strcmp(citadel, path) == 0) {
         ro.zero_on_free = false;
         ro.purge_slabs = false;
     }
