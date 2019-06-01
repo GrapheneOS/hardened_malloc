@@ -666,6 +666,12 @@ System calls used by all build configurations:
 * `munmap`
 * `write(STDERR_FILENO, buf, len)` (before aborting due to memory corruption)
 
+The main distinction from a typical malloc implementation is the use of
+getrandom. A common compatibility issue is that existing system call whitelists
+often omit getrandom partly due to older code using the legacy `/dev/urandom`
+interface along with the overall lack of security features in mainstream libc
+implementations.
+
 Additional system calls when `CONFIG_SEAL_METADATA=true` is set:
 
 * `pkey_alloc`
