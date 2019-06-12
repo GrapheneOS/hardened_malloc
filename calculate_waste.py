@@ -49,7 +49,7 @@ for size, slots, fragmentation in zip(size_classes, size_class_slots, fragmentat
     used = size * slots
     real = page_align(used)
     print("| ", end='')
-    print(size, str(fragmentation) + "%", slots, real, str(100 - used / real * 100) + "%", sep=" | ", end=" |\n")
+    print(size, f"{fragmentation:.4}%", slots, real, str(100 - used / real * 100) + "%", sep=" | ", end=" |\n")
 
 if len(argv) < 2:
     exit()
