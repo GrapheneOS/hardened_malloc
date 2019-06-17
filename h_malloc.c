@@ -1474,7 +1474,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
         return NULL;
     }
     size_t copy_size = min(size, old_size);
-    if (size > 0 && size <= max_slab_size_class) {
+    if (copy_size > 0 && copy_size <= max_slab_size_class) {
         copy_size -= canary_size;
     }
     memcpy(new, old, copy_size);
