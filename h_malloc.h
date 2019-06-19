@@ -74,7 +74,7 @@ void *h_valloc(size_t size);
 void *h_pvalloc(size_t size);
 #endif
 #ifdef __GLIBC__
-void h_cfree(void *ptr);
+void h_cfree(void *ptr) __THROW;
 void *h_malloc_get_state(void);
 int h_malloc_set_state(void *state);
 #endif
