@@ -313,17 +313,18 @@ was a bit less important and if a core goal was finding latent bugs.
 
 The current implementation of random number generation for randomization-based
 mitigations is based on generating a keystream from a stream cipher (ChaCha8)
-in small chunks. A separate CSPRNG is used for each small size class, large
-allocations, etc. in order to fit into the existing fine-grained locking model
-without needing to waste memory per thread by having the CSPRNG state in Thread
-Local Storage. Similarly, it's protected via the same approach taken for the
-rest of the metadata. The stream cipher is regularly reseeded from the OS to
-provide backtracking and prediction resistance with a negligible cost. The
-reseed interval simply needs to be adjusted to the point that it stops
-registering as having any significant performance impact. The performance
-impact on recent Linux kernels is primarily from the high cost of system calls
-and locking since the implementation is quite efficient (ChaCha20), especially
-for just generating the key and nonce for another stream cipher (ChaCha8).
+in small chunks. Separate CSPRNGs are used for each small size class in each
+arena, large allocations and initialization in order to fit into the
+fine-grained locking model without needing to waste memory per thread by
+having the CSPRNG state in Thread Local Storage. Similarly, it's protected via
+the same approach taken for the rest of the metadata. The stream cipher is
+regularly reseeded from the OS to provide backtracking and prediction
+resistance with a negligible cost. The reseed interval simply needs to be
+adjusted to the point that it stops registering as having any significant
+performance impact. The performance impact on recent Linux kernels is
+primarily from the high cost of system calls and locking since the
+implementation is quite efficient (ChaCha20), especially for just generating
+the key and nonce for another stream cipher (ChaCha8).
 
 ChaCha8 is a great fit because it's extremely fast across platforms without
 relying on hardware support or complex platform-specific code. The security
