@@ -169,9 +169,9 @@ for the chosen values are not written yet, so use them at your own peril:
   deallocation count and active allocations are tracked. This is currently only
   exposed via the mallinfo APIs on Android.
 * `CONFIG_EXTENDED_SIZE_CLASSES`: `true` (default) to control whether small
-  size class go up to 64k instead of the minimum requirement for avoiding
-  memory waste of 16k. The option to extend it even further will be offered in
-  the future when better support for larger slab allocations is added.
+  size class go up to 128kiB instead of the minimum requirement for avoiding
+  memory waste of 16kiB. The option to extend it even further will be offered
+  in the future when better support for larger slab allocations is added.
 * `CONFIG_LARGE_SIZE_CLASSES`: `true` (default) to control whether large
   allocations use the slab allocation size class scheme instead of page size
   granularity (see the section on size classes below)
