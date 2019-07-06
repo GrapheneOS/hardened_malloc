@@ -1416,6 +1416,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
                 return old;
             }
 
+#ifdef HAVE_COMPATIBLE_MREMAP
             static const bool vma_merging_reliable = false;
             if (vma_merging_reliable) {
                 // in-place growth
@@ -1465,6 +1466,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
                 thread_seal_metadata();
                 return new;
             }
+#endif
         }
     }
 

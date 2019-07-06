@@ -68,6 +68,7 @@ int memory_protect_rw_metadata(void *ptr, size_t size) {
     return memory_protect_prot(ptr, size, PROT_READ|PROT_WRITE, get_metadata_key());
 }
 
+#ifdef HAVE_COMPATIBLE_MREMAP
 int memory_remap(void *old, size_t old_size, size_t new_size) {
     void *ptr = mremap(old, old_size, new_size, 0);
     if (unlikely(ptr == MAP_FAILED)) {
@@ -89,6 +90,7 @@ int memory_remap_fixed(void *old, size_t old_size, void *new, size_t new_size) {
     }
     return 0;
 }
+#endif
 
 void memory_set_name(UNUSED void *ptr, UNUSED size_t size, UNUSED const char *name) {
 #ifdef LABEL_MEMORY
