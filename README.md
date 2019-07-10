@@ -40,7 +40,8 @@ used instead as this allocator fundamentally doesn't support that environment.
 
 ## Dependencies
 
-Debian stable determines the most ancient set of supported dependencies:
+Debian oldstable (currently Debian 9) determines the most ancient set of
+supported dependencies:
 
 * glibc 2.24
 * Linux 4.9
