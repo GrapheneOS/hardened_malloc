@@ -133,8 +133,7 @@ The following boolean configuration options are available:
   contained within an isolated memory region with high entropy random guard
   regions around it.
 
-The following integer configuration options are available. Proper sanity checks
-for the chosen values are not written yet, so use them at your own peril:
+The following integer configuration options are available:
 
 * `CONFIG_SLAB_QUARANTINE_RANDOM_LENGTH`: `1` (default) to control the number
   of slots in the random array used to randomize reuse for small memory
