@@ -47,8 +47,12 @@ static_assert(REGION_QUARANTINE_QUEUE_LENGTH >= 0 && REGION_QUARANTINE_QUEUE_LEN
 static_assert(FREE_SLABS_QUARANTINE_RANDOM_LENGTH >= 0 && FREE_SLABS_QUARANTINE_RANDOM_LENGTH <= 65536,
     "invalid free slabs quarantine random length");
 
+static_assert(GUARD_SLABS_INTERVAL >= 1, "invalid guard slabs interval (minimum 1)");
+static_assert(GUARD_SIZE_DIVISOR >= 1, "invalid guard size divisor (minimum 1)");
+static_assert(CONFIG_CLASS_REGION_SIZE >= 1048576, "invalid class region size (minimum 1048576)");
+static_assert(CONFIG_CLASS_REGION_SIZE <= 1099511627776, "invalid class region size (maximum 1099511627776)");
 static_assert(REGION_QUARANTINE_SKIP_THRESHOLD >= 0,
-    "invalid region quarantine skip threshold");
+    "invalid region quarantine skip threshold (minimum 0)");
 static_assert(MREMAP_MOVE_THRESHOLD >= REGION_QUARANTINE_SKIP_THRESHOLD,
     "mremap move threshold must be above region quarantine limit");
 
