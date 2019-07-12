@@ -60,7 +60,7 @@ static_assert(MREMAP_MOVE_THRESHOLD >= REGION_QUARANTINE_SKIP_THRESHOLD,
 static const size_t canary_size = SLAB_CANARY ? sizeof(u64) : 0;
 
 static_assert(N_ARENA >= 1, "must have at least 1 arena");
-static_assert(N_ARENA <= 4, "currently only support up to 4 arenas (as an initial arbitrary limitation)");
+static_assert(N_ARENA <= 256, "maximum number of arenas is currently 256");
 #define CACHELINE_SIZE 64
 
 #if N_ARENA > 1
