@@ -25,7 +25,7 @@ $(shell $(CC) -E $1 - </dev/null >/dev/null 2>&1 && echo $1 || echo $2)
 endef
 
 CPPFLAGS := -D_GNU_SOURCE
-SHARED_FLAGS := -O3 -flto -fPIC -fvisibility=hidden $(call safe_flag,-fno-plt) -pipe -Wall -Wextra $(call safe_flag,-Wcast-align=strict) -Wcast-qual -Wwrite-strings
+SHARED_FLAGS := -O3 -flto -fPIC -fvisibility=hidden $(call safe_flag,-fno-plt) $(call safe_flag,-fstack-clash-protection) -pipe -Wall -Wextra $(call safe_flag,-Wcast-align=strict) -Wcast-qual -Wwrite-strings
 
 ifeq ($(CONFIG_NATIVE),true)
     SHARED_FLAGS += -march=native
