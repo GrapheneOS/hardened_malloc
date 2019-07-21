@@ -1,4 +1,4 @@
-hardened-malloc (0.9-1) unstable; urgency=medium
+hardened-malloc (0:0.9-1) unstable; urgency=medium
 
   * New upstream version (local package).
 
