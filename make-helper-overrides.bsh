@@ -1,0 +1,15 @@
+#!/bin/bash
+
+## Copyright (C) 2016 - 2016 Patrick Schleizer <adrelanos@riseup.net>
+## See the file COPYING for copying conditions.
+
+make_install_hook_post() {
+   if [ ! -d "$DESTDIR/usr/lib" ]; then
+      mkdir --parents "$DESTDIR/usr/lib"
+   fi
+   cp libhardened_malloc.so "$DESTDIR/usr/lib/libhardened_malloc.so"
+}
+
+make_all_hook_post() {
+   make libhardened_malloc.so
+}

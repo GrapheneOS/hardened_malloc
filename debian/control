@@ -1,0 +1,28 @@
+## Copyright (C) 2019 - 2019 Patrick Schleizer <adrelanos@riseup.net>
+## See the file COPYING for copying conditions.
+
+Source: hardened-malloc
+Section: misc
+Priority: optional
+Maintainer: Patrick Schleizer <adrelanos@riseup.net>
+Build-Depends: debhelper (>= 12), genmkfile
+Homepage: https://github.com/GrapheneOS/hardened_malloc
+Vcs-Browser: https://github.com/GrapheneOS/hardened_malloc
+Vcs-Git: https://github.com/GrapheneOS/hardened_malloc.git
+Standards-Version: 4.3.0
+
+Package: hardened-malloc
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: security-focused general purpose memory allocator
+ This is a security-focused general purpose memory allocator providing the
+ malloc API along with various extensions. It provides substantial hardening
+ against heap corruption vulnerabilities. The security-focused design also
+ leads to much less metadata overhead and memory waste from fragmentation than
+ a more traditional allocator design. It aims to provide decent overall
+ performance with a focus on long-term performance and memory usage rather than
+ allocator micro-benchmarks. It offers scalability via a configurable number of
+ entirely independently arenas, with the internal locking within arenas further
+ divided up per size class.
+ .
+ It can be added as a preloaded library using /etc/ld.so.preload.

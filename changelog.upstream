@@ -1,0 +1,2438 @@
+commit d80919fa1e8042a070a3f9b2560ff2ecac8a75da
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Jul 12 03:43:19 2019 -0400
+
+    substantially raise the arbitrary arena limit
+
+commit 410e9efb93a8e30e080abf1a1c3fdd2247f8a64b
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Jul 11 17:07:36 2019 -0400
+
+    extend configuration sanity checks
+
+commit 7bcfa500beb3f2c6b0197e569287ce4386039f4c
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Jul 11 15:50:32 2019 -0400
+
+    remove note about lack of sanity checks for config
+
+commit 72a08f88fb05966fd90b24e924f76735f0890069
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Jul 10 18:08:14 2019 -0400
+
+    supports Debian oldstable due to Buster release
+
+commit a32e26b8e9987177ef7573594b2aab2104ca9d3f
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Jul 5 21:59:44 2019 -0400
+
+    avoid trying to use mremap outside of Linux
+
+commit 934ab4cb5917b02ce6709f74b7df3f38cf89ccb7
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Jul 5 17:57:41 2019 -0400
+
+    explain extended size classes impact on quarantine
+
+commit 060f74b9932149cb648a4d8fa507145596646943
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Jul 5 17:55:25 2019 -0400
+
+    extended size classes now go up to 128k not 64k
+
+commit 4d4277319a3d2a724ac00af23f35ec395a54e32d
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Jun 23 19:20:16 2019 -0400
+
+    clarifications to randomization documentation
+
+commit a579257a26204a4b224324b85fe57c6fde70e7f3
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Jun 23 00:37:45 2019 -0400
+
+    update libdivide to 1.1
+
+commit bb65d088dc5e35c146b47b4fc3bfd4cc7d870b86
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Jun 19 01:00:22 2019 -0400
+
+    drop default class region size to 32GiB
+
+commit 706c1970b502e23e7f5a63638bb57d9f68a5c2ae
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Jun 18 22:54:49 2019 -0400
+
+    add GitHub funding metadata
+
+commit dba11c00915273dca718bf2004b3afc0316aed20
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Jun 18 22:50:10 2019 -0400
+
+    fix warning with glibc from cfree
+
+commit 539d4f0d37eaea097e69a1ebe405d4bb991253f2
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Jun 18 15:51:13 2019 -0400
+
+    add extended size classes to offset test
+
+commit bc75c4db7bfa9ef095ec49d87b2f98f9f6d16198
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Jun 17 00:23:03 2019 -0400
+
+    realloc: use copy_size to check for canaries
+    
+    This avoids unnecessarily copying the canary when doing a realloc from a
+    small size to a large size. It also avoids trying to copy a non-existent
+    canary out of a zero-size allocation, which are memory protected.
+
+commit 37474e117c08a0c38dea53f603339b5914e9cd01
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Jun 12 13:28:03 2019 -0400
+
+    limit precision for fragmentation in table
+
+commit 12525f28618ef577ea931a1dc151cd19a462aa73
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Jun 6 08:10:57 2019 -0400
+
+    work around old glibc releases without threads.h
+
+commit 5449f4a94edd86024ec3478e586da692c46f136a
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Jun 6 07:32:52 2019 -0400
+
+    use safe_flag for -fno-plt
+    
+    This isn't supported by the ancient Clang release in Debian Stable.
+
+commit 64a1f590201a4cbe5dba8a119fc4570b7db0bc5b
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Jun 1 04:06:43 2019 -0400
+
+    note about getrandom with syscall whitelists
+
+commit b40ba9754b92508737d70364e7b39a7c7828edec
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Apr 30 16:54:58 2019 -0400
+
+    add malloc_info test
+
+commit f6f4402ff334204a666c84331662d9506de35793
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Apr 30 16:52:38 2019 -0400
+
+    expand test gitignore
+
+commit 2ae0ed4674bae395405233c31c748f67173610ac
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Apr 30 16:47:06 2019 -0400
+
+    add large array growth test
+
+commit ae4142c2d108b8362a23f80b40bd6997066054a8
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Apr 23 02:01:44 2019 -0400
+
+    note that arenas are isolated from each other
+
+commit 18f36c3e8d3a24ad0ff349fef79cc24d842940e2
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Apr 23 01:59:31 2019 -0400
+
+    expand description of randomized delay free
+
+commit 7f0bbddfcaf7aa6560e52db166059f684ff03a67
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Apr 23 01:58:37 2019 -0400
+
+    merge points about out-of-line / protected state
+
+commit 409a6393128a48764e2fec0d1056ddc0a608d0c5
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Apr 19 16:54:43 2019 -0400
+
+    provide working malloc_info outside Android too
+
+commit 494436c904b86193634de24e73d3b456a14e4f2d
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Apr 19 16:23:14 2019 -0400
+
+    implement options handling for malloc_info
+
+commit 13ee04c8c32ac810d3430c8e26baa5b591be3f62
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Apr 15 07:11:39 2019 -0400
+
+    fill CSPRNG caches lazily to speed up early init
+
+commit a13db3fc686f093a781e137bd53f3b810fde4fce
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Apr 15 06:29:57 2019 -0400
+
+    initialize size class CSPRNGs from init CSPRNG
+    
+    This avoids making a huge number of getrandom system calls during
+    initialization. The init CSPRNG is unmapped before initialization
+    finishes and these are still reseeded from the OS. The purpose of the
+    independent CSPRNGs is simply to avoid the massive performance hit of
+    synchronization and there's no harm in doing it this way.
+    
+    Keeping around the init CSPRNG and reseeding from it would defeat the
+    purpose of reseeding, and it isn't a measurable performance issue since
+    it can just be tuned to reseed less often.
+
+commit c7e2cb82f4dea13492715341261e20c7fd06def2
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Apr 15 04:52:18 2019 -0400
+
+    add generic get_random_bytes function
+
+commit f115be839276e0fc11ae53b392a51a504fca8096
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Apr 15 00:04:00 2019 -0400
+
+    shrink initial region table size to fit in 1 page
+
+commit e7eeb3f35cc8a3aa4db326110e157bf9b789f5da
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Apr 14 19:57:22 2019 -0400
+
+    avoid reading thread_local more than once
+
+commit 7e465c621e92bbeabcc7b2cc8f894d1c7638160f
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Apr 14 19:46:22 2019 -0400
+
+    use allocate_large directly in large remap path
+
+commit 1c899657c10b2564bc8e324cb1be54f8e907474c
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Apr 14 19:12:38 2019 -0400
+
+    add is_init check to mallinfo functions
+
+commit 8774065b13d06b685547eced9ef76bfe9a29242d
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Apr 14 19:01:25 2019 -0400
+
+    fix non-init size for malloc_object_size extension
+
+commit 84a25ec83e75ac18c2ede0e89c2748c16604f364
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Apr 11 00:49:45 2019 -0400
+
+    fix build with CONFIG_STATS enabled
+
+commit 34b6754f7035f4bbc75a04a4bf8d294ef2b54998
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Apr 10 17:12:17 2019 -0400
+
+    enable CONFIG_STATS by default for Android
+    
+    The tiny performance cost might as well be accepted now because this
+    will be needed for Android Q. It's also quite possible that some apps
+    make use of the features based on this including malloc_info.
+
+commit d4b8fee1c4fe910efd0ccf7e897ce88b5178ac79
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Apr 10 16:54:11 2019 -0400
+
+    allow using the largest slab allocation size
+
+commit 086eb1fee401d2bd4f9d65df92ace8b41cba4329
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Apr 10 16:32:24 2019 -0400
+
+    at a final spacing class of 1 slot size classes
+
+commit 7a89a7b8c5294060097372964e4dcd23e06c0207
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Apr 10 16:26:39 2019 -0400
+
+    support for slabs with 1 slot for largest sizes
+
+commit b31e8dacb1e5ef28425f2bfa87c35eb82db79719
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Apr 10 08:42:32 2019 -0400
+
+    document extended size classes
+
+commit 6c31f6710a8f9f710e454507d84d8f8dcce25bbc
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Sep 16 13:26:59 2018 -0400
+
+    support extended range of small size classes
+
+commit 1b34fd4a69b706638d4582aa635f11e2b860aa32
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Apr 10 08:12:59 2019 -0400
+
+    enable 4 arenas by default
+
+commit d5f18c47b336d02c3bb0f8770078f3ee5700458e
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Apr 10 08:06:56 2019 -0400
+
+    micro-optimize initialization with arenas
+
+commit 62c73d8b41ee01afb7a68f08247e91e9c33822bc
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Apr 10 07:40:29 2019 -0400
+
+    harden thread_arena check
+
+commit d5c00b4d0d5007d645861f40861e7c1999aeaf18
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Apr 9 19:15:43 2019 -0400
+
+    disable current in-place growth code path for now
+
+commit d5c1bca9153d8f4a548eb3552ae20d9c8322e373
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Apr 9 16:36:01 2019 -0400
+
+    use round-robin assignment to arenas
+    
+    The initial implementation was a temporary hack rather than a serious
+    implementation of random arena selection. It may still make sense to
+    offer it but it should be implemented via the CSPRNG instead of this
+    silly hack. It would also make sense to offer dynamic load balancing,
+    particularly with sched_getcpu().
+    
+    This results in a much more predictable spread across arenas. This is
+    one place where randomization probably isn't a great idea because it
+    makes the benefits of arenas unpredictable in programs not creating a
+    massive number of threads. The security benefits of randomization for
+    this are also quite small. It's not certain that randomization is even a
+    net win for security since it's not random enough and can result in a
+    more interesting mix of threads in the same arena for an attacker if
+    they're able to attempt multiple attacks.
+
+commit 9a0de626fcb0bb32a7b08092b5b422efc738e078
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Apr 9 03:57:44 2019 -0400
+
+    move stats accounting to utility functions
+
+commit 02bfcc3b75ef17a2dbae08ca582988aa7d19eb9b
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Apr 9 01:29:25 2019 -0400
+
+    chacha: add constant for number of rounds
+
+commit cef7368b3cbb2ee2b438b0246c9655222c5798c4
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Apr 9 00:57:17 2019 -0400
+
+    disable unusable readability-magic-numbers lint
+    
+    This wouldn't be worth using even if it had a whole bunch of heuristics
+    like ignoring expressions in static_assert, ignoring repeated patterns
+    like assigning different things to sequential array indexes, etc.
+
+commit 295bfbde945330ccdfe9729bf5368b192a51261a
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Apr 9 00:43:00 2019 -0400
+
+    disable bugprone-too-small-loop-variable lint
+    
+    This has too many false positives since it doesn't permit comparisons
+    against constants where the compiler can verify it doesn't overflow.
+
+commit 8b2b9d940a9bb8dfabc389a74811ada4822dd632
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Apr 9 00:15:41 2019 -0400
+
+    chacha: use C99 variable declaration style
+    
+    This further aligns the code style with the rest of the project and
+    fixes the clang-tidy readability-isolate-declaration lint triggered by
+    declaring all of these variables together.
+
+commit 9453332e57a0f9583a1e4dce254e797b06362982
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Apr 9 00:06:17 2019 -0400
+
+    remove redundant else block
+
+commit 922c7419152aafdc362bc350b8c81becf382e491
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Apr 7 18:13:26 2019 -0400
+
+    it already supports Bionic, musl and glibc
+
+commit a4cff7a960c1d55a86d6a7302d8ada9219fadb9a
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Apr 7 18:02:56 2019 -0400
+
+    factor out slab memory_set_name into label_slab
+
+commit ef90f404a640320fc34065425c33564377ce95e3
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Apr 7 09:06:03 2019 -0400
+
+    add sanity check for stats option
+
+commit e0891c8cfc8d5afbb9e721650db18c615f4009b5
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Apr 7 08:04:06 2019 -0400
+
+    implement the option of large size classes
+    
+    This extends the size class scheme used for slab allocations to large
+    allocations. This drastically improves performance for many real world
+    programs using incremental realloc growth instead of using proper growth
+    factors. There are 4 size classes for every doubling in size, resulting
+    in a worst case of ~20% extra virtual memory being reserved and a huge
+    increase in performance for pathological cases. For example, growing
+    from 4MiB to 8MiB by calling realloc in increments of 32 bytes will only
+    need to do work beyond looking up the size 4 times instead of 1024 times
+    with 4096 byte granularity.
+
+commit 7a7126e7805a0c6c9c3e6606ef4c1c37a7844e07
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Apr 7 06:05:11 2019 -0400
+
+    add infrastructure for a larger guard size option
+
+commit c68de6141d7f91ba7968fa25f6092fc9685980b3
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Apr 7 05:48:10 2019 -0400
+
+    factor out duplicated code in malloc/realloc
+
+commit ce36d0c82601eedce03eca220ea65a1b3827ab9c
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Apr 7 05:30:07 2019 -0400
+
+    split out allocate_large function
+
+commit 3d18fb80742fd80a75481b580d102deb18c74af9
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Apr 7 03:35:26 2019 -0400
+
+    implement Android M_PURGE mallopt via malloc_trim
+
+commit 4f08e40fe5bca4e206fbb5eb01c379e74fe4e84c
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Apr 7 00:50:26 2019 -0400
+
+    move thread sealing implementation
+
+commit 55891357ff5d65d12bfd8b482e44dabe191fb915
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Apr 7 00:36:53 2019 -0400
+
+    clean up the exported API section of the code
+
+commit 0651c819e3799184854b78762a339f59fba900ce
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Apr 7 00:34:13 2019 -0400
+
+    clarify hardened_malloc extensions section
+
+commit 491ce6b0b1f4d02dbb410341947300970c47eaef
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Apr 7 00:30:47 2019 -0400
+
+    no need to provide valloc and pvalloc on Android
+
+commit 1eed432b9a736d8820360431361679cacf21271a
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Apr 7 00:24:23 2019 -0400
+
+    limit more glibc cruft to that environment
+
+commit ec8fb347ed4344483bd6105c47e07ea847e7e586
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Apr 7 00:10:22 2019 -0400
+
+    document CONFIG_STATS
+
+commit beaa39a5a3ae5a62e9adb1faf91b74e343388a62
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Apr 6 23:45:31 2019 -0400
+
+    move to only supporting current generation AOSP
+
+commit 27a4c883ced2dc1eb62f974e559a0f127fa58af6
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Apr 6 23:06:47 2019 -0400
+
+    extend stats with nmalloc and ndalloc
+
+commit e94fe50a0d02a4202ef5bb674f3690a4bdcd8de2
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Apr 6 22:43:56 2019 -0400
+
+    include zero byte size class in stats
+    
+    The allocations don't consume any actual memory, but it does still use
+    up the virtual memory assigned to the size class and requires metadata.
+
+commit 712748aaa88b2fa41f2ac06a74be201c6ea173f0
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Apr 6 22:21:11 2019 -0400
+
+    add implementation of Android mallinfo extensions
+    
+    These are used internally by Bionic to implement malloc_info.
+
+commit 0f107cd2a32518734aee7dce4964a1ac7b775933
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Apr 6 22:01:12 2019 -0400
+
+    only provide malloc_info stub for glibc
+    
+    This has a proper implementation in Bionic outside of the malloc
+    implementation via the extended mallinfo API.
+
+commit 350d0e5fd2e2a869e7dcf03b394f10c5670cac03
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Apr 6 20:49:52 2019 -0400
+
+    add real mallinfo implementation for Android
+    
+    Android Q uses the mallinfo implementation in the ART GC:
+    
+    https://android.googlesource.com/platform/art/+/c220f981809d655fb061c92a581fd6fc4df4da5c
+    https://android.googlesource.com/platform/art/+/15752673020e89df2a9353f332bd1409de4cd4b7
+
+commit 7acebaa837c8990057cac6150d53b9912ab8f5fe
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Mar 26 01:45:15 2019 -0400
+
+    overhaul glibc compatibility workarounds
+
+commit df9650fe64c3aec1fd523ff8a81247de0d8d69b4
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Mar 26 01:28:27 2019 -0400
+
+    conditionally include threads.h
+
+commit 98deb9de520cc8ed5439233a7c000a714c2f002e
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Mar 25 20:34:10 2019 -0400
+
+    relabel malloc read-only after init data
+
+commit fc8f2c3b608c9ee9b57a05e4a43923f72f67863f
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Mar 25 16:38:16 2019 -0400
+
+    move pthread_atfork wrapper to util header
+
+commit b5187a0aff55fa937048adb58da0f15c03ead837
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Mar 25 16:37:34 2019 -0400
+
+    only use __register_atfork hack for old glibc
+
+commit 494cc5ec507d5bbcce479f33c2f35f887f9b304f
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Mar 25 16:14:54 2019 -0400
+
+    update README now that arenas are implemented
+
+commit c5e911419dee99db51adce79647ea2ca38d750d7
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Mar 25 14:49:50 2019 -0400
+
+    add initial implementation of arenas
+
+commit 55769496dc345b28d6b6715d31c1435b204f5df9
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Mar 25 14:54:22 2019 -0400
+
+    move hash_page to pages.h
+
+commit 13de480bdeec2718a256612e38b2c8a050cc0155
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Mar 24 20:24:40 2019 -0400
+
+    rename quarantine bitmap field for clarity
+
+commit 3d142eb4c2122775026899fd68b1b18ba5e02235
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Mar 23 23:01:12 2019 -0400
+
+    relabel large allocation guards when shrinking
+
+commit 64dfd23f7bec9cb6591a39515cd9f85fa1a0cffa
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Mar 23 22:59:59 2019 -0400
+
+    relabel purged slabs
+
+commit 178ec6e3f9ddfe68a854b43a27413857804877d9
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Mar 23 22:57:19 2019 -0400
+
+    relabel quarantined large allocation regions
+
+commit 6e67106882039f677a22ab18e55952c7880e67bd
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Mar 23 22:54:21 2019 -0400
+
+    label malloc slab region gaps
+
+commit 1d6207529170c9f7c41e13a161370fb9e3c03ce3
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Mar 23 22:29:04 2019 -0400
+
+    label allocate_aligned_pages mappings
+
+commit c8b948e202267a86cca642d6736ad9be31f5c0f9
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Mar 23 19:46:54 2019 -0400
+
+    enable C++17 support when available
+
+commit a0ee5f445b1759ec5a17596ebeaea3d73ea5a516
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Mar 23 13:41:12 2019 -0400
+
+    remove redundant extern "C" block
+
+commit 45337ebe078cf7f8f7dbead31a5ff2445550590a
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Mar 22 23:17:26 2019 -0400
+
+    label allocate_pages mappings
+
+commit 65311a5df22ca607ae3ccd04ba8b9872b705ac8a
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Mar 20 15:18:34 2019 -0400
+
+    relabel region table mapping
+
+commit e4120913d6d5397cba53f866808463ee5b93f874
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Mar 20 14:11:06 2019 -0400
+
+    only enable LABEL_MEMORY in debug builds
+
+commit 87acbcdf23048029e5398cb44a447c6ff294ae16
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Mar 20 13:18:27 2019 -0400
+
+    replace C++17 aligned allocation functions
+
+commit ddd616aa0b60802046169c23b0a40ac9a76cc8c9
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Mar 20 11:56:32 2019 -0400
+
+    add documentation on system calls
+
+commit 4a000d96e29c05fa880ef99eeaec50a3f5a2ddcc
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Mar 20 10:55:29 2019 -0400
+
+    pkey state is now preserved on fork for Linux 5.0+
+    
+    This patch is going to be backported to stable kernels, so the check
+    could be expanded to allow recent enough stable kernel branches.
+
+commit c9df70d93462eeb3e802b5f6f0cdb3df1c3ee798
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Dec 11 12:37:37 2018 -0500
+
+    add support for labelling memory regions
+
+commit ae96835b94bce7aa889cae6231f900dc9e48a4b3
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Feb 4 15:59:14 2019 -0500
+
+    fix scalability header levels
+
+commit e4061899aa9f80cd500950aec91ce48c26c9eed6
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Feb 4 15:01:15 2019 -0500
+
+    add documentation on scalability design choices
+
+commit 41df5005e8ea053f3c8d10d5201bde69fe6a04ee
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Feb 4 13:59:19 2019 -0500
+
+    add a top-level header to the README
+
+commit 9cc0ac3efa64b0bf866699257a5f6af5cde686ed
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Feb 4 11:51:20 2019 -0500
+
+    add basic documentation on memory tagging approach
+
+commit 9398805fd85c0da6d8c1dae13be53308dfb7d953
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Jan 10 17:05:55 2019 -0500
+
+    reference paper rather than fastrand for Python
+
+commit 2d7882ec0ebdb35a12d5658896d4819b6bc52a86
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Jan 8 17:01:56 2019 -0500
+
+    remove redundant unseal / seal metadata
+
+commit fa17f70a731247eb2e27003988aae01e37be2823
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Jan 6 00:52:25 2019 -0500
+
+    add more configuration sanity checks
+
+commit 33b1a2740eed65dd6efc4ccd813eea8b98c4ad0e
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Jan 2 15:42:41 2019 -0500
+
+    update default slab quarantine sizes in README
+
+commit dea2788539e203f6e93bf15699548de441826216
+Author: Arlo Breault <arlolra@gmail.com>
+Date:   Wed Jan 2 15:27:51 2019 -0500
+
+    fix typo in README.md
+
+commit 8a474b647c469eddf2e3d568b1385dcf8215d6e7
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Jan 2 14:59:19 2019 -0500
+
+    enable both forms of slab quarantines by default
+
+commit 57f115b33c0a45637dd7eb8a6d2c64378fe0b25e
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Jan 2 14:22:28 2019 -0500
+
+    scale slab quarantine based on size
+
+commit ccc2a86501cda4095a8b96275942c37e82def2ed
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Jan 2 13:40:02 2019 -0500
+
+    rename quarantine size -> length for clarity
+
+commit bc2cb5c828ef3b00f0a669310e1d1277b371687f
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Jan 2 13:23:49 2019 -0500
+
+    fix builds with both random and queue quarantine
+
+commit 5d3b299209ee85958d8c2b46a2fc23d6d0f73544
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Jan 2 13:03:25 2019 -0500
+
+    support random quarantine sizes other than 0 or 16
+
+commit 418cb1609cbcc62e837b8d3e63c1186faa288c3a
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Dec 9 12:47:02 2018 -0500
+
+    add RLIMIT_AS alternative to wishlist
+
+commit 2d88b90282a6a100426c7bc3b33b9b10f2d15c7d
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Dec 9 11:02:53 2018 -0500
+
+    reorder Makefile CONFIG variables
+
+commit 4dc3385bc0b0f45e793aace371f9b348c62e388c
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Dec 9 10:58:34 2018 -0500
+
+    fix calloc for nmemb == 0 and !ZERO_ON_FREE
+
+commit 8a863ae847d4897b01019ac89716331ba7d93bde
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Dec 6 12:04:42 2018 -0500
+
+    use conlyflags in Android.bp when appropriate
+
+commit 830a7d338d0a9a0617673aae2ce902a173b3714b
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Dec 5 09:23:05 2018 -0500
+
+    make class_region_size configurable
+
+commit 8b0450555fbb28844a0b3b0f8b205f25df314e4c
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Dec 5 01:44:43 2018 -0500
+
+    add initial Android build system support
+
+commit a1e0d978645a4f6d53f3898651a1cdd2a7625ac0
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Dec 5 03:46:35 2018 -0500
+
+    add __BEGIN_DECLS / __END_DECLS
+
+commit ced3b0e070da1a8de9faf5bb38735d53cfe99079
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Dec 5 03:27:09 2018 -0500
+
+    support Android malloc_usable_size
+
+commit 7917966ecac59f280b2657f399e277476fcdd64f
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Dec 5 02:45:24 2018 -0500
+
+    avoid unnecessary GNU pointer arithmetic extension
+
+commit 7f781af9292eb699b672e129a0ca767ad3859f61
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Dec 5 02:22:10 2018 -0500
+
+    explicitly include system malloc.h
+
+commit 79cf5cbeb428b94016734adf51d4a0ac5a4d554b
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Dec 5 02:21:28 2018 -0500
+
+    disambiguate malloc.h
+
+commit f90fb3199d9343caebcabccc73fb2ac4e8635857
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Dec 5 02:07:05 2018 -0500
+
+    avoid redefining PAGE_SIZE/PAGE_MASK
+
+commit 9fd0670aac6a989bcd29d264e181aebf3f9c6d27
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Dec 5 02:05:37 2018 -0500
+
+    add lib prefix to the shared object name
+
+commit 11fe467b7c7ed2f5542918bc27ff9142f0a9a351
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Nov 19 08:04:37 2018 -0500
+
+    clarify wording
+
+commit c9dfe586b37210da30ebc48715cc265909db7ce1
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Nov 19 06:54:48 2018 -0500
+
+    add initial documentation on API extensions
+
+commit 4d85a61db26779cb7c73506ec9f47699835aa18b
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Nov 19 06:31:58 2018 -0500
+
+    remove obsolete duplicate information
+
+commit d88a8c98137a7adba9dd0df0545873b1986a6d33
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Nov 19 05:44:56 2018 -0500
+
+    mention that the same hash table code is reused
+
+commit 433b37b4a95f052329f08f830b6c49e0c71a1ea9
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Nov 19 01:44:46 2018 -0500
+
+    explain more of the size class reasoning
+
+commit a052be762dfad21cac0b466182d85d3b6d59036f
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Nov 19 01:02:40 2018 -0500
+
+    explain some differences from the previous project
+
+commit a5ed64d01acdda1355daf09c85ef9406394596fc
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Nov 19 00:17:43 2018 -0500
+
+    explain slot counts tied to slab size classes
+
+commit 5b048a28c23b3b9d6eeb79bbd52145c3e58e4b0f
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Nov 19 00:11:15 2018 -0500
+
+    improve explanation of jemalloc size classes
+
+commit ac992827737b67f5b1949d66d0985acd6aa3c478
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Nov 17 10:53:04 2018 -0500
+
+    remove duplicate word
+
+commit 54a0313d9bad43665d4f2a295296101602e077f4
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Nov 16 18:41:27 2018 -0500
+
+    split out dependencies section
+
+commit d208d093a222127cd525a9e3b0fe45e64ddfb829
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Nov 16 18:35:19 2018 -0500
+
+    add more of an introduction describing the project
+
+commit 2bb568b4731a860296c8add480d5908ea4e4bfaf
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Nov 16 18:04:46 2018 -0500
+
+    improve documentation about mapping count
+
+commit 8a38c4fb2a92a8007ce4c012a1505514aeb174ba
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Nov 16 15:36:34 2018 -0500
+
+    add initial documentation for integer options
+
+commit f3623e1f2bdc2be9ade21df967506d67e73911c1
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Nov 16 15:25:35 2018 -0500
+
+    finish migration away from config.h
+
+commit 06149aa156507b9a09a74b5f8bf7744522c4ceb2
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Nov 16 15:12:10 2018 -0500
+
+    enable readability-else-after-return tidy check
+
+commit 58c7079db9a2e9e23ab990dd466aa18a8711bc22
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Nov 16 14:58:55 2018 -0500
+
+    eliminate unnecessary code duplication in calloc
+
+commit 315415acf23dba73e109585567d08052d20eb3be
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Nov 16 03:26:07 2018 -0500
+
+    clarify write-after-free detection feature
+
+commit a617f7604d9b2f1272b97883fc46a4b96c8bf584
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Nov 12 05:37:20 2018 -0500
+
+    switch malloc_enable to enforce_init
+
+commit 3cd3d34b3e3a15bcae0e956aeb981a16662c1fc3
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Nov 6 04:23:53 2018 -0500
+
+    extend gitignore for tests
+
+commit 11c717a7b93f83092222bf779f3472bc224bce14
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Nov 5 18:06:54 2018 -0500
+
+    update progress on randomization
+
+commit 2d892e58ad8947219b16042c28219ccf034c5375
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Nov 5 18:05:56 2018 -0500
+
+    per-slab canary values are good enough for now
+
+commit 3a488c9a271eb14caf208ba123de4e5d47b72a59
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Nov 5 16:19:50 2018 -0500
+
+    add initial slab allocation quarantine
+
+commit fea335282a35d9b34ac61af5cd37b1b833a3bb03
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Nov 5 02:19:04 2018 -0500
+
+    use slab_region_start for init checks
+
+commit a8112fc5c3a7b28bedd86d34c068e329b34300e1
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Nov 4 19:45:04 2018 -0500
+
+    use -O3 instead of -O2 primarily for more inlining
+
+commit ca465f6b3ee8f1d184f4fc6af243f0b84deab3b9
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Nov 4 18:52:01 2018 -0500
+
+    clarify scope of sized dealloc mismatch detection
+
+commit 505b9d2e7644771303cb779e693b066779c51c36
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Nov 4 14:32:03 2018 -0500
+
+    add missing -Wl,--as-needed (removed by mistake)
+
+commit 943a81fbebb6c8644ae3cee7d151c1f71426d6e6
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Nov 4 14:23:12 2018 -0500
+
+    use smaller integers for random cache state
+
+commit 1fed72a9c3e041016d98990005d64d8509e82c69
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Nov 3 05:44:49 2018 -0400
+
+    slab internal fragmentation is always the same
+
+commit c12d6795de93a93287561fc627bf25cf55dfef38
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Nov 3 04:47:45 2018 -0400
+
+    expand a bit on future config for slab cache size
+
+commit d5b773b2bc5b1ed5b7a4be09e910d44fddeebed6
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Nov 3 04:40:13 2018 -0400
+
+    clarify documentation about the 0 byte size class
+
+commit f949698c7a1af8ace5b4d8339de0e742c6f4e45f
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Nov 3 03:11:59 2018 -0400
+
+    note that MPK-based hardening is off by default
+
+commit f2a7ccde75b218fb4a32bc8a90e0d9907731c78c
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Nov 3 03:09:03 2018 -0400
+
+    add basic overview of part of the approach to MTE
+
+commit 1da51ddde190de37690efacb0186ac99e4c19ef1
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Nov 2 21:35:09 2018 -0400
+
+    migrate bool configuration options out of config.h
+
+commit 4ac2688d76d417a7f325d3530c89d829e3675566
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Nov 1 01:00:59 2018 -0400
+
+    add support for slab metadata count field
+
+commit 834ce6788406e010aec06413793b06fa01cf0219
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Oct 30 19:22:56 2018 -0400
+
+    make canary generation consistent
+
+commit c29a1836874344840a6a90e90735b6e1641f26b8
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Oct 30 18:09:07 2018 -0400
+
+    reduce overhead of slot randomization
+
+commit ceffb1a0ecaef7407f273d9301f9906ab9f87cd1
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Oct 30 16:37:23 2018 -0400
+
+    simplify get_free_slot loops
+
+commit a02f4ebb1956990d233a60fa64b4c5d49a5c44d1
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 28 23:23:54 2018 -0400
+
+    add missing deallocate_small thread_seal_metadata
+
+commit 5bee717134fd80d6844a96bf6bbc40a033313adc
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 28 22:31:46 2018 -0400
+
+    use -march=native by default with a disable toggle
+
+commit 00915521a3eda96f82f393cecc41b5fc39501140
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 28 21:07:35 2018 -0400
+
+    check canary before zeroing as an optimization
+
+commit 6f30211da865233df0ba01d5d92eeaabeaecda85
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 28 20:28:10 2018 -0400
+
+    some clarifications for the README
+
+commit b99ab8a47a5e725c413587141ff826589b0388f6
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Oct 24 03:09:04 2018 -0400
+
+    no need to artificially limit sealing to x86_64
+
+commit e985afe0e16f4e1f0d178476342de10bce5d2c0c
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Oct 23 19:38:00 2018 -0400
+
+    document relatively high performance cost of MPK
+
+commit 4cd61e281dbdab118e1a1a4ec06dbaa12f5a9933
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Oct 23 19:07:41 2018 -0400
+
+    add workaround for bug in Linux MPK implementation
+
+commit 299bd6d414bc1d019c830f1642692252586a6711
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Oct 23 16:28:54 2018 -0400
+
+    add missing thread unseal / seal for atfork hooks
+
+commit 9d1567ce16e486777c3f8f5aa5e016dc99082a7e
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Oct 23 15:55:45 2018 -0400
+
+    make safe_flag check compatible with POSIX sh
+
+commit 59def67979d980dd91d5cc5b1287ab3856e2044c
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Oct 23 07:40:14 2018 -0400
+
+    add inlined check for -1 with pkey_set
+
+commit 05ac717cf284deeb511fd5126f65996246831d90
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Oct 23 07:23:07 2018 -0400
+
+    work around -Wcast-align=strict error with old GCC
+
+commit 0b963078d56d227fd75b9317f4be5a77c632cefe
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Oct 19 21:29:40 2018 -0400
+
+    guard metadata with Memory Protection Keys (MPK)
+
+commit ac8c68de536ec071913bb2f78f7cba6b57c8866f
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 21 15:50:26 2018 -0400
+
+    enable pointer cast warnings
+
+commit 9a43302868040f7ca90a809b53c6390d55c7f8d0
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Oct 20 02:27:06 2018 -0400
+
+    add enforce_init call to other realloc code path
+
+commit 6a408ad0174e0127e48e065e4855b532782faaba
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Oct 19 21:46:36 2018 -0400
+
+    add init calls to malloc_enable/malloc_disable
+
+commit 173ed535396c323e259659498cca13a3ee015209
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Oct 19 17:07:30 2018 -0400
+
+    use consistent code style in chacha.c
+
+commit 1d2c10f5bb433e2482ec7233d1ff7433e6006d0e
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Oct 19 16:17:38 2018 -0400
+
+    tweak canary awareness in offset test
+
+commit 64b655f0624037a9c74822b27e0ecc333a584f1b
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 18 20:33:48 2018 -0400
+
+    set scope of planned metadata protection
+
+commit e37b36c9dd722ff569d6067feed845da75146f38
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 18 20:18:55 2018 -0400
+
+    update configuration documentation again
+
+commit f0a6f551eb765df941ff32f8f3bd3a6659747c53
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 18 19:35:21 2018 -0400
+
+    tweak code style
+
+commit cf053e74d1182f7006b0784994ba6b67b761c9ee
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 18 16:10:49 2018 -0400
+
+    metadata region unification is completed
+
+commit 1e03b004f562f2dc213cd5326d72d3c21cbb622d
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 18 16:01:04 2018 -0400
+
+    move slab_info to main metadata region
+
+commit 3f1962dd2bb367a49d39c2e564172010865174b0
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 18 15:25:14 2018 -0400
+
+    use min macro for realloc copy size
+
+commit fe30f6c2ea784dd8f57f3ce9f5e220752ff963f9
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 18 15:19:54 2018 -0400
+
+    delay allocating slab metadata from reservation
+
+commit 74139112d0b5c6002a3bdefd1c73b77fd24b3737
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 18 14:57:05 2018 -0400
+
+    explain the purpose of CONFIG_CXX_ALLOCATOR
+
+commit 64e9f6797ad8c38c1c44c15a1e75135296a1e966
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Oct 16 15:52:41 2018 -0400
+
+    use offsetof for allocator_state memory protection
+
+commit 67ada4d3095c061cd2450ab6884234a04907e02e
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Oct 15 19:08:20 2018 -0400
+
+    document padding for allocator state
+
+commit da8e9aa1d81e845338a25a25e6196e547e372736
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Oct 15 15:43:46 2018 -0400
+
+    document allocator state region
+
+commit 1c9e0d88a567479fdad84be1587a9798c82b66d9
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Oct 15 15:09:41 2018 -0400
+
+    use the initial region table slots again
+
+commit da0df69d22d69810c787fd0a458da8a26a807995
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Oct 15 15:07:59 2018 -0400
+
+    move region hash tables into main state region
+
+commit 1e5dec97e0cde0a8086beaed4fbb2086af2a5661
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Oct 15 14:46:57 2018 -0400
+
+    move slab allocator state into main state region
+
+commit e8eca2d4305bb8a72caf6c10d6d91a5d078bfdbc
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Oct 15 04:04:51 2018 -0400
+
+    explain the production-oriented design rationale
+
+commit fde9fc2ece2a8e510cec335b420694066d51f08d
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 14 22:41:17 2018 -0400
+
+    protect region allocator state with random guards
+
+commit 124d958da17907c378de9bee02cef8b17dfe9eac
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 14 22:19:10 2018 -0400
+
+    document free slabs quarantine
+
+commit 3504465584765b2059f8095751ece78c665146de
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 14 22:12:03 2018 -0400
+
+    document progress on protected allocator state
+
+commit da6fd5b5ef9245b541870f72355e695d80f53c3a
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 14 22:06:16 2018 -0400
+
+    move slab allocator state to a dedicated mapping
+
+commit 11909668461f8cb03c7edc2e88a048d7ea281151
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 14 21:54:23 2018 -0400
+
+    rename region_info to region_metadata
+
+commit a083ff79e13a0f2f4630c863a4d5863a192b0285
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 14 21:12:37 2018 -0400
+
+    move region allocator state to a dedicated mapping
+
+commit d728afae8e2d162c63fced7293192e4e0f724810
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 14 18:58:54 2018 -0400
+
+    add configuration option for testing with UBSan
+
+commit 535466fdfd8f64bfb2a6488254b79da954867c92
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 14 18:57:59 2018 -0400
+
+    avoid undefined shifts with multi-word bitmaps
+
+commit 7798b2693e4e9b95da350fa5ce53d610dc5c8114
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 14 18:49:48 2018 -0400
+
+    fix loop exit condition boundary for get_free_slot
+
+commit 3c0a448c3e2f85773df3f8579bf1c7e49b31d8b4
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 14 18:33:40 2018 -0400
+
+    enable more tidy checks
+
+commit 9ea2fd6667834995c4d39b49a8454938f49fcb6c
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 14 18:30:20 2018 -0400
+
+    write_after_free_check only reads data
+
+commit d35674c67e40d86d85d19e5f56f92029bb52ae6c
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 14 18:28:01 2018 -0400
+
+    expected_size is not an output parameter
+
+commit 8b033c5e44be8509e38f668b9e245ac4a6c67a56
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 14 18:20:18 2018 -0400
+
+    make ALIGNMENT_CEILING into a function
+
+commit 118549451b238ab149bc70790e2832d0560878dd
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 14 18:01:40 2018 -0400
+
+    add tidy target to the Makefile for clang-tidy
+
+commit b66ca56ba14c9053c09cd6891c739d31a509fa65
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 14 17:59:43 2018 -0400
+
+    initialize ptr to nullptr in handle_out_of_memory
+    
+    It will break out of the loop in the first iteration if there's no
+    handler or the handler throws an out-of-memory error.
+
+commit 4fbfe4d3ecb5f4a7a9967af2587ede80ef0cbbe2
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 14 17:43:03 2018 -0400
+
+    fix canary space reservation for pvalloc
+
+commit f11c448a0d21c863c2d8cb630ada6763f931f1d2
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 14 15:09:55 2018 -0400
+
+    slightly reorganize slab metadata
+
+commit 3db3e167ede6a9bd035f9145b5cb817954e150dd
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Oct 13 16:49:06 2018 -0400
+
+    remove usage of ATOMIC_VAR_INIT
+    
+    This was never truly required in practice and has been officially
+    obsoleted in C17.
+
+commit 65a7014b48b3231753b64200bcf0fb6a0073da3d
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Oct 13 13:55:44 2018 -0400
+
+    randomize free slabs reuse
+
+commit 83df37436d3b10fc51d2ecc164f04527e4069b8b
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Oct 12 16:02:23 2018 -0400
+
+    fix usage of pthread_atfork for glibc < 2.28
+
+commit 0a64c7d6a186b7e87030e7c34378c51c1e2bf120
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Oct 12 15:10:35 2018 -0400
+
+    document the randomized array in the quarantine
+
+commit 6669166fe98a9fe918c7c5c47d3956b6f295dd7e
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Oct 12 15:06:51 2018 -0400
+
+    move memory_unmap outside of lock scope
+
+commit b2007ad3d9d3acd9628c012f3da567f3e13121fe
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Oct 12 15:03:59 2018 -0400
+
+    implement randomization for the region quarantine
+
+commit ac2b940f0f271533fec927e59d9fe237af4364b4
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 11 18:12:20 2018 -0400
+
+    fix compatibility with older GCC versions
+    
+    Avoid relying on compiler extensions supporting more flexible usage of
+    constants closer to how it works in C++.
+
+commit e47c78352401923504da822fe27a4fc50f86b4ae
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 11 01:44:41 2018 -0400
+
+    add test for delete size mismatch
+
+commit 7606bf4c1f3e7315cedecfa9d61c35fd442434d4
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 11 01:35:25 2018 -0400
+
+    clean up includes in new.cc
+
+commit 54c78fe1c25a2146b675f1942dcb77bfd0562a96
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Oct 10 19:05:35 2018 -0400
+
+    distinguish between mmap / mremap errors
+
+commit 2381d973b1c14ad8312275a88baab3317aefa959
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Oct 10 18:55:31 2018 -0400
+
+    expand on metadata address space security
+
+commit 29fd86ab37493c1af429d0d66987f9e7638301e7
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Oct 10 18:48:45 2018 -0400
+
+    document sized deallocation validation
+
+commit c74fe560918843521ce0db2b5d6ecf4366f723a3
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Oct 10 18:19:56 2018 -0400
+
+    minor include style fix
+
+commit ddcdd9423ca2220e41729cd38836003377db6451
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Oct 9 14:08:36 2018 -0400
+
+    make the memory mapping quarantine more efficient
+
+commit 57d5ab769be05b8d85e9a36d98b9fb2c451c9de5
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Oct 8 17:41:06 2018 -0400
+
+    add write-after-free tests with potential reuse
+
+commit 5fa6e01929e7307c729f40dbc4e25b4acfaee8f2
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Oct 8 17:09:57 2018 -0400
+
+    clearer name for MREMAP_MAYMOVE threshold
+
+commit 1a10c17e8b8073a3343aaa1ea1db3670d84842d7
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Oct 8 15:50:31 2018 -0400
+
+    add quarantine for large allocations
+
+commit cc9699f1b40d67bcf8042aa35fc59c187d9bb6df
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 7 13:34:52 2018 -0400
+
+    use multi-word bitmap to support up to 256 slots
+
+commit 5e2f03296e6bd5fc29e533de5b27a4506821e782
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 7 16:18:17 2018 -0400
+
+    remove old debugging code
+
+commit fa2796a941eeef1870092384a50e5201d3cb0d69
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Oct 7 11:28:50 2018 -0400
+
+    Makefile: add missing dependencies
+
+commit cf07ae600750d9a50ace16f8bdf486a2af2c1e5c
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Oct 6 15:37:50 2018 -0400
+
+    update configuration in README
+
+commit 348f9fa557ebcbf86fa8d0058e78bf2f12aa925a
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Oct 6 15:36:03 2018 -0400
+
+    add configuration for frequency of guard slabs
+
+commit 4ee12e64e0726e1245ce21f5449af5281e53bce2
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Oct 6 15:17:55 2018 -0400
+
+    configuration for guard region sizes
+
+commit d18b05eaf40606e7908dde97fd04aca9419dada1
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Oct 6 13:31:16 2018 -0400
+
+    avoid redundant checks for large realloc
+
+commit eb7ced7781dcd5c240cb6998a398d3ac1c3308be
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Oct 6 10:40:55 2018 -0400
+
+    implement in-place growth of large allocations
+
+commit 3a936295f8b647b23cf95cd7c490d777f33a4eb8
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Oct 5 02:45:40 2018 -0400
+
+    Makefile: split out shared compiler flags
+
+commit 4716ff5b92c9a2ce02fc422e36ca6274b0cf5701
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Oct 5 02:22:17 2018 -0400
+
+    explicitly export C++ allocator overrides
+    
+    This doesn't make any difference for GCC, but these aren't replaced
+    outside of the library with Clang without explicitly exporting them.
+
+commit e6e9ac1fc9ee9b31923eab4af6e08c6d74d41cfb
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Sep 19 13:57:35 2018 -0400
+
+    support replacing C++ new/delete implementation
+    
+    This adds support for sanity checks based on sized deallocation and will
+    reduce the overhead of calls through the C++ allocator.
+
+commit 3dc49f8f73da52046777c505f85ccffd5dd7f3a6
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Oct 5 01:05:40 2018 -0400
+
+    slightly improve sized deallocation error messages
+
+commit dcd969ae0471fec6f96ac9a772d5673d9dd1b6c1
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 4 14:25:16 2018 -0400
+
+    use a consistent style for fixed-size int types
+    
+    The stdint.h types don't cover 128-bit integers and the underscore makes
+    them ill suited to usage in function suffixes. Instead, use the common
+    naming style in the Linux kernel and elsewhere including the ChaCha8
+    implementation included here.
+
+commit 92a33182fbf4a3476d601b0f493bcd55e493da57
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 4 04:13:28 2018 -0400
+
+    port chacha.h to the code style used elsewhere
+
+commit 08a633b24473f56370d154929922de4f89e1dd24
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 4 04:12:21 2018 -0400
+
+    fix another typo in the README
+
+commit ef32a4b7ea79c517125629ed1d3ae78aec88afc3
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 4 04:03:48 2018 -0400
+
+    add -pipe to CFLAGS
+
+commit e99191d5d4c270b1eb3ed88094e93ae3e818b42a
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 4 03:44:19 2018 -0400
+
+    document tuning vm.max_map_count
+
+commit d12cf324dd01a731f17f71cf4a1187e0f2bdfc96
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 4 03:27:30 2018 -0400
+
+    add documentation on testing
+
+commit 2a31c7291b973771a7da7c8766966fed6aac9192
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 4 03:15:55 2018 -0400
+
+    add basic documentation on configuration
+
+commit 642eed81c0a664504e6a1a33bff569b4fc428f0c
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 4 02:57:15 2018 -0400
+
+    allow using larger guards on large allocations
+
+commit 9b7691a2a745f8d89e36d6103947bdeee1b31a3c
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 4 02:52:20 2018 -0400
+
+    take canaries into account for the offset test
+
+commit 71d52d981ea8e96961098e990ecd505ff3851b9e
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Oct 4 02:40:51 2018 -0400
+
+    fix output of size class offset test
+
+commit 15e5e2d0ac4495f97ae3fc11cfc02d3433ce9d53
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Oct 3 17:23:20 2018 -0400
+
+    fix typo in README
+
+commit 5811bd184c3a72ab9ab0cd0f955168627b77aed2
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Oct 3 17:17:20 2018 -0400
+
+    avoid unnecessary preprocessor use for canary mask
+
+commit 93fcc6a9780e45af260aedc0a2c96b7ca247260e
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Oct 3 17:15:38 2018 -0400
+
+    add simple string overflow test
+
+commit b24569b6ca8265d21e2266016fe9245b33b45343
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Oct 3 17:09:57 2018 -0400
+
+    zero leading byte of canaries
+
+commit 1fbf0e27f594105816cc374fc587575cbc1066c8
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Oct 3 16:55:25 2018 -0400
+
+    make error reporting more robust
+
+commit 6dfe33b4f1b7649cfe80aa8ea50de4964caf6658
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Oct 3 16:22:28 2018 -0400
+
+    add prefix to reported errors
+
+commit 6372fee41078159777ef055f9790df447c27d84a
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Oct 3 16:00:11 2018 -0400
+
+    use consistent macro naming convention
+
+commit 829ace403fa22dae1d4971f20ae1e2a354b05b1f
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Oct 3 14:37:05 2018 -0400
+
+    document free_sized API
+
+commit c3a580727a9a844da05ae4e2787a937253b09427
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Oct 3 13:18:51 2018 -0400
+
+    add MIT license
+
+commit cf449b3df4d1c611f168a6b47687091a14da2494
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Sep 18 17:28:52 2018 -0400
+
+    add sized deallocation support
+
+commit 82314f4471ea27bd09cbfa83a2380f0f98f600c5
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Sep 11 14:51:36 2018 -0400
+
+    make get_size_info straightforward for zero size
+
+commit 7a404ddbf2d2648187b34295b75de084d9ae56f4
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Sep 11 14:44:15 2018 -0400
+
+    optimize size calculation for 16 byte spaced sizes
+
+commit 2d6ad18aa4ce46a82b84972e11f216b5ba2a85ac
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Sep 11 14:18:13 2018 -0400
+
+    make function naming a bit more consistent
+
+commit 684291bf6abfea71c7f07d3ee8e5b5032e309419
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Sep 11 14:13:18 2018 -0400
+
+    avoid overhead of init check for slab deallocation
+
+commit ef098fea06286ea18d83cf0ea5833ee8f14f00fa
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Sep 11 14:12:27 2018 -0400
+
+    simplify init function
+
+commit 433af6d4bac8c3bff384abcb72399148346ad984
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Sep 11 10:22:28 2018 -0400
+
+    drop 128-bit keys from ChaCha implementation
+
+commit b52d9ca831f9d8b94f0e300f0eee29328edca4ca
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Sep 11 05:17:22 2018 -0400
+
+    aggressive write-after-free check is implemented
+
+commit 61684925e8bc737596d161857f3b1faac42090ee
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Sep 10 17:42:58 2018 -0400
+
+    fix overly naive slab allocation alignment support
+
+commit 9a1acce5eb2772fbaddd1fa75e4fa18490bd9f4b
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Sep 7 16:32:51 2018 -0400
+
+    optimize calloc when zero on free is disabled
+
+commit 8f921e30beb1d628825708f0ecf26c9241556109
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Sep 7 06:32:07 2018 -0400
+
+    add kernel feature wishlist
+
+commit 7ae7abedea8639d3e069a4d4a1e2cd6522836c3f
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Sep 7 02:53:15 2018 -0400
+
+    mark more unlikely code paths
+
+commit 191f9667df67adab8b0b6ff0456f6a6095e32ce4
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Sep 7 02:10:37 2018 -0400
+
+    add missing include
+
+commit 49af83a817907cd9f6d7f35b8ad9bfdf2feb602a
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Sep 7 01:08:51 2018 -0400
+
+    wrap mutex type to enable future optimization
+
+commit fc2473e7ee98b509129f760a0099387c6b173bfb
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Sep 7 00:35:08 2018 -0400
+
+    add configuration for canaries
+
+commit 96c538d90fb637834fb5b530a8d1094bde4d2ccc
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Sep 7 00:33:51 2018 -0400
+
+    add configuration for zero on free
+
+commit ba3a8b0058462765184a4e239cbe7b16ef12c56c
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Sep 7 00:25:02 2018 -0400
+
+    add slot randomization to configuration header
+
+commit bed303a76f86fdb13024d955345cfd77c9d61f35
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Sep 7 00:22:51 2018 -0400
+
+    remove unnecessary else branch
+
+commit d398384b90723ae17d06f5db29ce4e18ddbed292
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Sep 7 00:17:22 2018 -0400
+
+    add header for configuration
+
+commit 99d68238d2f0375162a96deda8a16848fdb0e158
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Sep 7 00:00:32 2018 -0400
+
+    implement slab allocation write-after-free check
+
+commit 918f0d33022a6a8f6f5df04b362202fff16d183f
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Sep 6 23:48:47 2018 -0400
+
+    improve write-after-free tests
+
+commit 3751b85e47831a4089c6f5a17a68eb7422f34ea8
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Sep 6 19:52:09 2018 -0400
+
+    document minimum musl version for external use
+
+commit 684e63a87801ebc34432c331c9c8b7730ecd9f54
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Sep 6 19:43:18 2018 -0400
+
+    handle pthread_atfork calling into malloc
+    
+    This results in compatibility with the malloc replacement support added
+    in musl 1.1.20.
+
+commit 1be74ec40d9ccdff4b1e2eb5e97604557e308cbb
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Sep 6 18:53:06 2018 -0400
+
+    add initial guard slabs implementation
+
+commit cc1e79fdbaeb6bf4b27dee52d479202a81a2fb76
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Sep 6 18:41:00 2018 -0400
+
+    abstract metadata allocation to allow guard slabs
+
+commit d8e18e0011587b6c8ad95b4dd12c8ea9c5065497
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Sep 6 16:30:22 2018 -0400
+
+    aligned_alloc is now the same as BSD memalign
+    
+    The resolution to DR 460 (which is explicitly included in C17) removed
+    the requirement for the size to be a multiple of the alignment.
+
+commit 0d3c2e1988ebc0821841127a585572e20d8e4ce6
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Sep 6 16:02:15 2018 -0400
+
+    no need for a dedicated init rng
+
+commit 8624201f061d469251f7b6ff22c7feb8c5a2e664
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Sep 6 15:07:01 2018 -0400
+
+    refresh canary value when allocating free slabs
+
+commit a875951e825a9b8c4bbcf4e058fa4cc8d92e2935
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Sep 6 14:35:08 2018 -0400
+
+    fix build with musl
+
+commit e891b40588c8d00aa2ef649c5d9b500123b33931
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Sep 6 14:17:06 2018 -0400
+
+    implement Android malloc_disable/malloc_enable API
+
+commit 3a532b17dc38408a431e2b70f038a91351ec421b
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Sep 5 05:17:40 2018 -0400
+
+    implement in-place shrinking for large allocations
+
+commit 645209dcbf664123c726db6f6a71a225bcebeb1b
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Sep 5 03:41:56 2018 -0400
+
+    remove unnecessary debugging code
+
+commit bf55fad6d04c3ffb031886eba155403ed7dcaa9b
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Sep 5 00:19:27 2018 -0400
+
+    document that slab canaries are implemented
+
+commit 9ddd53d56c0dc30532d2e915da7845a7da18092e
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Sep 2 08:36:48 2018 -0400
+
+    implement initial slab allocation canaries
+
+commit 5017500a4784942f50e9f6e6da13832bc19da11f
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Sep 4 09:06:23 2018 -0400
+
+    add simple overflow tests
+
+commit 1a7b8079d09c2965724882819dabf284d62b816b
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Sep 2 19:58:57 2018 -0400
+
+    reuse is_init when possible
+
+commit 7733047c7bbab01d755f649f7b29bd2356c74887
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Sep 2 19:41:26 2018 -0400
+
+    trigger early initialization in a conservative way
+
+commit 2ec65306dd8252c7c0d1ebdd9db4dfbe19d961f7
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Sep 2 06:05:37 2018 -0400
+
+    expand documentation on supported environments
+
+commit 8bb686e697d80171e839ab965e120d4665786a26
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Sep 2 05:24:25 2018 -0400
+
+    add missing prefix defines
+
+commit 9c74a67068002f6c90dd711542a3b4c2a763af25
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Sep 2 05:13:07 2018 -0400
+
+    malloc_get_state/malloc_set_state are obsolete too
+
+commit 7e088dc870807cf1d050273e843fa7bac6d53137
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Sep 2 05:08:45 2018 -0400
+
+    add stubs for Android extensions
+
+commit 2dd2471b4a8db4cff7a7e28988259b18f94e329d
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Sep 2 02:27:49 2018 -0400
+
+    enable more linker sanity checks
+
+commit 39e81bd486f30c60eee3f09bbf12c50beaa7d2e3
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Sep 2 02:12:45 2018 -0400
+
+    using -lpthread for linking isn't necessary
+
+commit 89c624b7550f8fed7b300b9ce22f7866b74d5ece
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Sep 2 02:08:44 2018 -0400
+
+    mark page management error code paths as unlikely
+
+commit e4648192c03912f17886ce5e97c7055875784b2b
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Sep 2 02:03:27 2018 -0400
+
+    split out code for managing page spans
+
+commit e93d0392140f1aac40a9888f83f8f3f5d7c09fe6
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Sep 1 10:20:23 2018 -0400
+
+    only use reserved memory for regions hash table
+
+commit c3a4829d77a68026e46059f10f17bd05493c1ef8
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Sep 1 02:38:00 2018 -0400
+
+    remove unnecessary special case from realloc
+
+commit f441dfe2e33650f8741a156cfb5bc0275a4e4b5e
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Aug 31 23:10:26 2018 -0400
+
+    align size class metadata to cacheline size
+
+commit fad10ce943dec81dde6c8c114183fc4d02be2038
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Aug 31 22:42:34 2018 -0400
+
+    use FIFO queue for free slabs
+
+commit dba330fde73be42ec36cabd2486a40182257d980
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 30 11:07:20 2018 -0400
+
+    expand documentation in the README
+
+commit 3f808958223084b246d656019bff9ca11c8a9612
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 30 09:29:15 2018 -0400
+
+    ignore pad argument to malloc_trim per glibc
+    
+    The pad argument is only used by the main arena for sbrk in glibc, with
+    every other page size gap purged with MADV_DONTNEED. It makes more sense
+    to simply treat it as an ignored legacy parameter rather than trying to
+    come up with a sensible way to use it for keeping cached free slabs.
+
+commit af393afc090259d44cdc1ae69effdd02efc1628d
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 30 09:08:33 2018 -0400
+
+    make preload script for testing a bit more robust
+
+commit 1ea997b887ab23b9374a34f30acd6b88bd617e32
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 30 08:48:09 2018 -0400
+
+    add missing headers to malloc.h
+
+commit 2b0f7aa985064efd7d9f8faababdf5c0b7e04d56
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 30 07:13:18 2018 -0400
+
+    use a consistent name for size class integer index
+
+commit 0f5f2bf6c953a4b4243d2cb3952ab0494a57e025
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 30 06:44:58 2018 -0400
+
+    add basic initial heuristic for freeing slabs
+
+commit 456dfe4154e2b51836f58c394ee29a2e01844138
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 30 05:18:38 2018 -0400
+
+    add support for purging and protecting empty slabs
+
+commit bb176e09bc874cad64ee558a93ffde39835a13b0
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 30 05:42:45 2018 -0400
+
+    remove useless code in the empty_slabs path
+
+commit 29df2429c2c23d3bd90d135c8a6b8760f18a02dc
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 30 05:27:16 2018 -0400
+
+    empty_slabs will remain a singly-linked list
+
+commit f94068ea63c6d6bbab646ea4aca1894a92e76fc2
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 30 04:55:39 2018 -0400
+
+    rename free_slabs to empty_slabs
+
+commit b6d4af872f9be4b0e0ddcc21da66f5d382c439bd
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 30 03:03:19 2018 -0400
+
+    move libdivide.h to third_party/libdivide.h
+
+commit 99fcddc22386fe4554b6c660229ada676c793843
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 30 01:16:58 2018 -0400
+
+    use much faster get_random_{type}_uniform approach
+
+commit 1c181557c71f4d68de4686d904ccaaa9f156fc79
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Aug 29 15:20:56 2018 -0400
+
+    add -fno-plt as an optimization
+
+commit 6f9de3e667ed0c5bc6eb152e95d750c7b7fb26f8
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Aug 29 15:13:53 2018 -0400
+
+    add inline hint to get_size_info
+
+commit e85c69a0a4b7a067da5c7930505929abffb5f041
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Aug 29 15:06:49 2018 -0400
+
+    fix builds with prefix
+
+commit becadc57a55cf2d4431ac1bec987ed125c8207b1
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Aug 29 13:58:58 2018 -0400
+
+    get rid of unused MIN_ALIGN definition
+
+commit 2684a98eabcf4a668a98b23b18babf9ed6d43c6c
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Aug 29 13:43:35 2018 -0400
+
+    add initial malloc_object_size extensions
+
+commit 00b2613e1606c4d46dc1510ad1a53b3a75ee50cf
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Aug 29 13:04:52 2018 -0400
+
+    add mmap MAP_FIXED wrapper for dropping slabs
+
+commit 0e2f3d101521453db8c9fdbfea881982037cce27
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Aug 29 10:59:37 2018 -0400
+
+    sanity check page size at runtime
+
+commit d779d41721b9469c41f3ff043cfedb074e701b8b
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Aug 29 10:52:10 2018 -0400
+
+    wrap more memory mapping implementation details
+
+commit 1cb28531a87ebe7c6ae862dc17bde7ce45db5449
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Aug 29 10:43:54 2018 -0400
+
+    add wrapper for mremap with sanity check
+
+commit 5bc6820c24d7fb63f969be4447e7fbebc0673797
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Aug 29 03:24:28 2018 -0400
+
+    rely on mmap rounding to page size when possible
+
+commit 58d929c0f06081d89ba93a6307b8f9fbf32752cc
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Wed Aug 29 00:53:12 2018 -0400
+
+    split out low-level memory mapping wrappers
+
+commit 8b42e8c3d68e3d1e08dc3709145960c6e536bf48
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Aug 28 22:46:20 2018 -0400
+
+    make sure errno is always set on failure
+
+commit 66aa98dbd91119a99ed5a71831302477568e3c2d
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Aug 28 22:41:18 2018 -0400
+
+    sanity-check mmap errno on failure too
+
+commit 705b6a4f8daa4008fc547edc0b258383e190da0d
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Aug 28 22:21:38 2018 -0400
+
+    make non-out-of-memory mprotect errors fatal
+
+commit 19c46d16f13e2ac1218d3f61a2d2e8382b462280
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Aug 28 21:31:20 2018 -0400
+
+    check pthread_atfork return value
+
+commit 0e2bc8a1cfff8c9dedef823f59316be2ecd86c2c
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Aug 28 11:44:23 2018 -0400
+
+    make sure RELRO is enabled on every toolchain
+
+commit e72674e358959524411a1613bb73b4d4110ea877
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Aug 28 11:13:17 2018 -0400
+
+    detect missing symbols when linking
+
+commit 803811a6ac703b2693499f5f03729dce16617548
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Aug 28 09:49:18 2018 -0400
+
+    add support for using mremap
+
+commit 718bf82f966e6963fc214792e36be38d4bb47bc2
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Aug 27 09:29:14 2018 -0400
+
+    add inline hints for slab_allocate and slab_free
+
+commit 33f862ec1949659a5b629f14f72d676cf4e4f02e
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Aug 27 09:23:35 2018 -0400
+
+    add inline hints for init and enforce_init
+
+commit 67b9608ccf87aa69cccd11a6960874ef60b48ced
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Aug 27 09:21:42 2018 -0400
+
+    avoid duplicated init code calculating slab size
+
+commit eec85b0c8cffc89c25704d0b87e71e7f07308d15
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Aug 27 07:49:50 2018 -0400
+
+    add chosen libdivide license (Boost) to CREDITS
+
+commit c7b24f63f16d2a00c7fbae496ab497f8d2bc0490
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Aug 27 06:57:44 2018 -0400
+
+    use libdivide for substantially faster division
+
+commit 63b0c39343487392f8a5a29baa0a78d869833554
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Aug 27 05:16:47 2018 -0400
+
+    reorder size_class struct for better performance
+
+commit b424c957372605fa2fc2c83097ae30bbb2ac3fca
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Mon Aug 27 01:14:15 2018 -0400
+
+    clarify memory is zero on init without more writes
+
+commit 02db36c4bb25cb48ada3f2290e95bfd642fb9937
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Aug 26 07:27:19 2018 -0400
+
+    update CREDITS with ChaCha8 implementation
+
+commit 1b3d485e87573867f5368552c268b19bc40b79b5
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Aug 26 07:19:58 2018 -0400
+
+    clarify that the slab design isn't like jemalloc
+
+commit c97bbc141cd225d7a9afade2ffa2ccdc11438e66
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Aug 26 07:11:22 2018 -0400
+
+    add missing word
+
+commit f793a2719f586a76f1b08642aa3e980ab0158a91
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Aug 26 06:23:24 2018 -0400
+
+    add some basic initial documentation to the README
+
+commit c60fbfb0295af0640fda0371af17a9466aaba323
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Aug 26 06:21:09 2018 -0400
+
+    output markdown table from calculate_waste
+
+commit 497f71ac652d8697b1fa0b28e92cefbd21b150ef
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Aug 26 04:51:38 2018 -0400
+
+    reorder offset test output
+
+commit 14ca7d7c3f9893b01ef7302a8360fb74306b0084
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Aug 26 04:42:01 2018 -0400
+
+    randomize large allocation guard size
+
+commit a13a45a17da2d540fe3f7d96c4e639f53ce4fc53
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Aug 26 04:37:43 2018 -0400
+
+    hold regions_lock in alloc_aligned
+
+commit bec20a39cf2e5cd85df668eb1a3b5f52496414cb
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Aug 26 03:15:13 2018 -0400
+
+    add offset test
+
+commit 700e06c2db0768adb6d26697836db86ebab762fe
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sun Aug 26 00:02:35 2018 -0400
+
+    manually specialize the CSPRNG cache
+
+commit c41e659383141da2adbadcf8d92f1dbee83ae269
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Aug 25 23:00:00 2018 -0400
+
+    use ChaCha8-based CSPRNG
+
+commit 2b7c9362bbf0370b4f819d244375844946391c6a
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Aug 25 18:32:44 2018 -0400
+
+    consume fewer random bytes for slab randomization
+
+commit c5d76179a5cccae5b75dd1b1f2c4037b362a9a35
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Aug 25 18:04:55 2018 -0400
+
+    improve interaction of slot rand with slot mask
+
+commit 173dd6e7a5636a098e0820ea2ce4a999781a6a61
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Aug 25 18:02:13 2018 -0400
+
+    randomize slot selection for empty slabs too
+
+commit c335c43dd78ce915f7639bad6bb0df77d5ebf6a5
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Aug 25 16:41:07 2018 -0400
+
+    simplify slab out-of-memory error handling
+
+commit 7bcfa3f08be436a4b7ff34cf96c2dd12e6d0680c
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Aug 25 15:43:50 2018 -0400
+
+    tune slab metadata allocation
+
+commit 4777ee0c8591986380f8e6c161f15536c3d0af21
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Aug 25 15:21:50 2018 -0400
+
+    special case division for page size slabs
+
+commit ec78add6ab1db373be9a8a9f7e22ef4bfd9bc716
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Aug 25 03:09:09 2018 -0400
+
+    define ffzl utility function
+
+commit f08d4d31dbe4404a0ab74cc405f2bd24a883cb57
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Aug 25 03:02:39 2018 -0400
+
+    randomize slab slot choice
+
+commit 965c3202b472743406f1943f031ba2bcdddfcb41
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Aug 25 02:48:47 2018 -0400
+
+    finish implementation of zero byte size class
+
+commit f97a0ef8b1dd2442d7dedab4c8a0ece649264084
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Aug 25 01:09:15 2018 -0400
+
+    use a more appropriate type for masked bitmaps
+
+commit f3c850250964823ede4efd88f891ee0dcb9043a9
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Sat Aug 25 00:21:02 2018 -0400
+
+    add CSPRNGs for regions and slabs
+
+commit 510291646bcca64451e70dd714cc59d7b022bacc
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Aug 24 18:58:55 2018 -0400
+
+    document minimum versions for dependencies
+
+commit 71dde7c4f832d34f44015285e01b1b1e3fea868e
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Aug 24 18:44:49 2018 -0400
+
+    provide getrandom wrapper to support glibc < 2.25
+    
+    Debian stretch (currently stable) only has glibc 2.24...
+
+commit 35c9e6f16d670f608c68db7304f6eed408eb6186
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Aug 24 05:53:17 2018 -0400
+
+    add delayed double free tests
+
+commit aaa4eeca4d57efe6b0a21a10df5ca7833cb8b6ca
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Aug 24 05:25:25 2018 -0400
+
+    add a clean target for the memory corruption tests
+
+commit 805bdc60879e0f5ca2054e74b6eeab255de76fbd
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Aug 24 05:18:20 2018 -0400
+
+    add an extra sanity check for unallocated metadata
+
+commit bde8c3c29b19a658980fc6e365a667ffd04d670d
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Aug 24 05:09:33 2018 -0400
+
+    add another test for invalid small region frees
+
+commit fe85116891b3317e1e99a8ee534467bae5eea77e
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Aug 24 05:02:00 2018 -0400
+
+    add uninitialized allocator tests
+
+commit 2d168b0516f7f1a70f8dba262d2ea8bbd4018b95
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Aug 24 04:51:52 2018 -0400
+
+    check for double free slightly earlier
+
+commit 0a79e82474c0ce7f2b0d2beeb76299369ffcf8a5
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Aug 24 04:45:48 2018 -0400
+
+    add basic invalid free tests
+
+commit 97b693d8620daa98d7f2262fc6291aeee051b9ef
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Aug 24 04:07:46 2018 -0400
+
+    stop treating guard size as a constant
+
+commit 83dabbd8faa477a7246a220c9a96ff0bf24404db
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Aug 24 03:52:01 2018 -0400
+
+    fix handling of random bases for class regions
+
+commit 0d51459dc928b90d63933380663a70c8c2b4b8ea
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Aug 24 03:22:52 2018 -0400
+
+    add a special memory protected 0 byte size class
+
+commit 27ac1e21bcf3a89e6ddf913d993125da193f00cd
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Aug 24 03:09:23 2018 -0400
+
+    add initial simple memory corruption tests
+
+commit 7a86b67778c4cbedbb4cbd0bd7da983ea82b10d0
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Aug 24 02:55:53 2018 -0400
+
+    add unaligned free check for small allocations
+
+commit 2aee424b7b32dd27059730e427164b8f63bf5df3
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Aug 24 02:09:20 2018 -0400
+
+    fix inconsistent whitespace
+
+commit a874a61099337dad11920a9ea60ebdf1dd8acee1
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 23 17:57:09 2018 -0400
+
+    adjust slot count for 12288 byte size class
+
+commit 127f110126824c286d90f93d2e1cec3f411e4388
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 23 17:56:17 2018 -0400
+
+    adjust slot count for 10240 byte size class
+
+commit b7b353a54e7d6d5c2ca292670fea392c32b6d18d
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 23 17:53:55 2018 -0400
+
+    print out the calculated slab sizes too
+
+commit c59c97c65b5ad7e152b722bdb984aa0adbc2ad99
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 23 17:53:10 2018 -0400
+
+    adjust slot count for 48 byte size class
+
+commit 56e4c7e042515d2f5d476a1d01cc5a3ee0341cc3
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 23 17:42:17 2018 -0400
+
+    adjust slot count for 224 byte size class
+
+commit 5a1a76f94e266820de6fbdab06883738ced12f14
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 23 17:39:32 2018 -0400
+
+    calculate internal slab fragmentation from slots
+
+commit 5bdf94da4a817c0b6a6e4e5548e4be7f88af7b2a
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 23 17:29:42 2018 -0400
+
+    calculate internal fragmentation for size classes
+
+commit 4aa0fab4f424fb5ccd7571c8968f45a2af5ea534
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 23 17:15:50 2018 -0400
+
+    avoid deadlocks after forking threaded processes
+
+commit daa44905eed56f240d7ec685a8bc229895b20ec2
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Thu Aug 23 16:30:44 2018 -0400
+
+    implement a cache for the CSPRNG
+
+commit 70d61b6662a896b420f674fd31c6c9825772b150
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Tue Aug 21 15:23:22 2018 -0400
+
+    initial commit
