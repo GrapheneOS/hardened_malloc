@@ -7,7 +7,7 @@ make_install_hook_post() {
    if [ ! -d "$DESTDIR/usr/lib" ]; then
       mkdir --parents "$DESTDIR/usr/lib"
    fi
-   cp libhardened_malloc.so "$DESTDIR/usr/lib/libhardened_malloc.so.1"
+   cp libhardened_malloc.so "$DESTDIR/usr/lib/libhardened_malloc.so"
 }
 
 make_all_hook_post() {
