@@ -1,3 +1,49 @@
+commit f7d78bba9c706b339ac8c9b46288d1703cd86482
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sun Jul 21 01:25:40 2019 +0000
+
+    /usr/lib/libhardened_malloc.so.1 instead of /usr/lib/libhardened_malloc.so
+
+commit e2bba96033bf52ac4f770ab21758e6811378a830
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sun Jul 21 00:24:30 2019 +0000
+
+    fix changelog
+
+commit 8cd51ca1387d499f3e37657d0429206c578a5a7e
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Jul 19 11:23:44 2019 -0400
+
+    override local default to -fstack-protector-strong
+    
+    This is a no-op on a toolchain compiled with the basic mitigations
+    enabled by default, so this is generally a no-op anywhere this project
+    is likely to be deployed. SSP has a very low performance cost so there's
+    little reason to avoid it, even though it also has zero value for this
+    code in practice. It would be great if one of the more modern approaches
+    was widely adopted, but unfortunately SSP is as good as it gets for
+    portable options. It doesn't provide any protection against external
+    writes to the stack data which is all that's really needed here.
+    
+    ShadowCallStack is a great option for arm64, but it's substantially more
+    difficult to protect return addresses well on x86_64 due to the design of
+    the ISA and ABI.
+
+commit e6ff9c7468734af72cf25109fc2dc834521c51c9
+Author: Daniel Micay <danielmicay@gmail.com>
+Date:   Fri Jul 19 11:15:49 2019 -0400
+
+    use -fstack-clash-protection for completeness
+    
+    This is a no-op for the current code and will likely remain that way so
+    there's no benefit but also no performance cost.
+
+commit f3e201bac99a04ec920c68988807995077976ff3
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sun Jul 21 00:20:45 2019 +0000
+
+    initial debian packaging
+
 commit d80919fa1e8042a070a3f9b2560ff2ecac8a75da
 Author: Daniel Micay <danielmicay@gmail.com>
 Date:   Fri Jul 12 03:43:19 2019 -0400
