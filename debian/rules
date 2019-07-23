@@ -3,7 +3,7 @@
 ## Copyright (C) 2016 - 2016 Patrick Schleizer <adrelanos@riseup.net>
 ## See the file COPYING for copying conditions.
 
-export DH_VERBOSE=1
+#export DH_VERBOSE=1
 
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 DPKG_EXPORT_BUILDFLAGS = 1
