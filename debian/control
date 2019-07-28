@@ -2,7 +2,7 @@
 ## See the file COPYING for copying conditions.
 
 Source: hardened-malloc
-Section: misc
+Section: libs
 Priority: optional
 Maintainer: Patrick Schleizer <adrelanos@riseup.net>
 Build-Depends: debhelper (>= 12), genmkfile

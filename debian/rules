@@ -15,9 +15,5 @@ include /usr/share/dpkg/buildflags.mk
 override_dh_installchangelogs:
 	dh_installchangelogs changelog.upstream upstream
 
-## https://github.com/GrapheneOS/hardened_malloc/issues/85
-override_dh_dwz:
-	/bin/true
-
 override_dh_auto_build:
 	dh_auto_build -- CONFIG_NATIVE=false
