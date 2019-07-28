@@ -24,16 +24,16 @@ define safe_flag
 $(shell $(CC) -E $1 - </dev/null >/dev/null 2>&1 && echo $1 || echo $2)
 endef
 
-CPPFLAGS := -D_GNU_SOURCE
+CPPFLAGS := $(CPPFLAGS) -D_GNU_SOURCE
 SHARED_FLAGS := -O3 -flto -fPIC -fvisibility=hidden $(call safe_flag,-fno-plt) $(call safe_flag,-fstack-clash-protection) -fstack-protector-strong -pipe -Wall -Wextra $(call safe_flag,-Wcast-align=strict) -Wcast-qual -Wwrite-strings
 
 ifeq ($(CONFIG_NATIVE),true)
     SHARED_FLAGS += -march=native
 endif
 
-CFLAGS := -std=c11 $(SHARED_FLAGS) -Wmissing-prototypes
+CFLAGS := $(CFLAGS) -std=c11 $(SHARED_FLAGS) -Wmissing-prototypes
 CXXFLAGS := $(call safe_flag,-std=c++17,-std=c++14) $(SHARED_FLAGS)
-LDFLAGS := -Wl,--as-needed,-z,defs,-z,relro,-z,now,-z,nodlopen,-z,text
+LDFLAGS := $(LDFLAGS) -Wl,--as-needed,-z,defs,-z,relro,-z,now,-z,nodlopen,-z,text
 TIDY_CHECKS := -checks=bugprone-*,-bugprone-macro-parentheses,cert-*,clang-analyzer-*,readability-*,-readability-inconsistent-declaration-parameter-name,-readability-magic-numbers,-readability-named-parameter,-bugprone-too-small-loop-variable
 
 SOURCES := chacha.c h_malloc.c memory.c pages.c random.c util.c
