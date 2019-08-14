@@ -643,38 +643,38 @@ reuse after a certain number of allocation cycles. Similarly to the initial tag
 generation, tag values for adjacent allocations will be skipped by incrementing
 past them.
 
-For example, consider this slab of allocations that are not yet used with 16
+For example, consider this slab of allocations that are not yet used with 15
 representing the tag for free memory. For the sake of simplicity, there will be
 no quarantine or other slabs for this example:
 
-    | 16 | 16 | 16 | 16 | 16 | 16 |
+    | 15 | 15 | 15 | 15 | 15 | 15 |
 
 Three slots are randomly chosen for allocations, with random tags assigned (2,
-15, 7) since these slots haven't ever been used and don't have saved values:
+7, 14) since these slots haven't ever been used and don't have saved values:
 
-    | 16 | 2  | 16 | 15 |  7 | 16 |
+    | 15 | 2  | 15 | 7  | 14 | 15 |
 
 The 2nd allocation slot is freed, and is set back to the tag for free memory
-(16), but with the previous tag value stored in the freed space:
+(15), but with the previous tag value stored in the freed space:
 
-    | 16 | 16 | 16 | 7  | 15 | 16 |
+    | 15 | 15 | 15 | 7  | 14 | 15 |
 
 The first slot is allocated for the first time, receiving the random value 3:
 
-    | 3  | 16 | 16 | 7  | 15 | 16 |
+    | 3  | 15 | 15 | 7  | 14 | 15 |
 
 The 2nd slot is randomly chosen again, so the previous tag (2) is retrieved and
 incremented to 3 as part of the use-after-free mitigation. An adjacent
 allocation already uses the tag 3, so the tag is further incremented to 4 (it
 would be incremented to 5 if one of the adjacent tags was 4):
 
-    | 3  | 4  | 16 | 7  | 15 | 16 |
+    | 3  | 4  | 15 | 7  | 14 | 15 |
 
 The last slot is randomly chosen for the next alocation, and is assigned the
-random value 15. However, it's placed next to an allocation with the tag 15 so
+random value 14. However, it's placed next to an allocation with the tag 14 so
 the tag is incremented and wraps around to 0:
 
-    | 3  | 4  | 16 | 7  | 15 | 0 |
+    | 3  | 4  | 15 | 7  | 14 | 0 |
 
 ## API extensions
 
