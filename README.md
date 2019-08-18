@@ -233,7 +233,14 @@ The following integer configuration options are available:
   becomes 1024 for 16 byte allocations with 16kiB as the largest size class, or
   8192 with 128kiB as the largest).
 * `CONFIG_GUARD_SLABS_INTERVAL`: `1` (default) to control the number of slabs
-  before a slab is skipped and left as an unused memory protected guard slab
+  before a slab is skipped and left as an unused memory protected guard slab.
+  The default of `1` leaves a guard slab between every slab. This feature does
+  not have a *direct* performance cost, but it makes the address space usage
+  sparser which can indirectly hurt performance. The kernel also needs to track
+  a lot more memory mappings, which uses a bit of extra memory and slows down
+  memory mapping and memory protection changes in the process. The kernel uses
+  O(log n) algorithms for this and system calls are already fairly slow anyway,
+  so having many extra mappings doesn't usually add up to a significant cost.
 * `CONFIG_GUARD_SIZE_DIVISOR`: `2` (default) to control the maximum size of the
   guard regions placed on both sides of large memory allocations, relative to
   the usable size of the memory allocation
