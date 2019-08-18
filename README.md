@@ -381,9 +381,9 @@ was a bit less important and if a core goal was finding latent bugs.
   size class regions interspersed with guard pages
 * Zero size allocations are a dedicated size class with the entire region
   remaining non-readable and non-writable
-* Extension for retrieving the size of allocations with fallback [in-progress,
+* Extension for retrieving the size of allocations with fallback to a sentinel
+  for pointers not managed by the allocator [in-progress, full implementation
   needs to be ported from the previous OpenBSD malloc-based allocator]
-  to a sentinel for pointers not managed by the allocator
     * Can also return accurate values for pointers *within* small allocations
     * The same applies to pointers within the first page of large allocations,
       otherwise it currently has to return a sentinel
