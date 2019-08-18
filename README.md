@@ -77,7 +77,7 @@ there will be custom integration offering better performance in the future
 along with other hardening for the C standard library implementation.
 
 For Android, only current generation Android Open Source Project branches will
-be supported, which currently means pie-qpr2-release.
+be supported, which currently means pie-qpr3-release and pie-qpr3-b-release.
 
 ## Testing
 
