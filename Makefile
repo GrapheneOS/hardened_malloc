@@ -49,8 +49,8 @@ ifeq ($(CONFIG_CXX_ALLOCATOR),true)
 endif
 
 ifeq ($(CONFIG_UBSAN),true)
-    CFLAGS += -fsanitize=undefined
-    CXXFLAGS += -fsanitize=undefined
+    CFLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined
+    CXXFLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined
 endif
 
 ifeq (,$(filter $(CONFIG_SEAL_METADATA),true false))
