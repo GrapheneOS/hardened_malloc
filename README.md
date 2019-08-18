@@ -263,10 +263,12 @@ The following integer configuration options are available:
 * `CONFIG_EXTENDED_SIZE_CLASSES`: `true` (default) to control whether small
   size class go up to 128kiB instead of the minimum requirement for avoiding
   memory waste of 16kiB. The option to extend it even further will be offered
-  in the future when better support for larger slab allocations is added.
+  in the future when better support for larger slab allocations is added. See
+  the [section on size classes](#size-classes) below for details.
 * `CONFIG_LARGE_SIZE_CLASSES`: `true` (default) to control whether large
   allocations use the slab allocation size class scheme instead of page size
-  granularity (see the section on size classes below).
+  granularity. See the [section on size classes](#size-classes) below for
+  details.
 
 There will be more control over enabled features in the future along with
 control over fairly arbitrarily chosen values like the size of empty slab
