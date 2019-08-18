@@ -106,12 +106,13 @@ libraries.
 
 On GrapheneOS, hardened\_malloc is integrated into the standard C library as
 the standard malloc implementation. Other Android-based operating systems can
-reuse the integration code to provide it. If desired, jemalloc can be left as
-a runtime configuration option by only conditionally using hardened\_malloc to
-give users the choice between performance and security. However, this reduces
-security for threat models where persistent state is untrusted, i.e. verified
-boot and attestation (see the [attestation sister
-project](https://attestation.app/about)).
+reuse [the integration
+code](https://github.com/GrapheneOS/platform_bionic/commit/20160b81611d6f2acd9ab59241bebeac7cf1d71c)
+to provide it. If desired, jemalloc can be left as a runtime configuration
+option by only conditionally using hardened\_malloc to give users the choice
+between performance and security. However, this reduces security for threat
+models where persistent state is untrusted, i.e. verified boot and attestation
+(see the [attestation sister project](https://attestation.app/about)).
 
 Make sure to raise `vm.max_map_count` substantially too to accomodate the very
 large number of guard pages created by hardened\_malloc. This can be done in
