@@ -21,7 +21,7 @@ CONFIG_N_ARENA := 4
 CONFIG_STATS := false
 
 define safe_flag
-$(shell $(CC) -E $1 - </dev/null >/dev/null 2>&1 && echo $1 || echo $2)
+$(shell $(CC) $(if $(filter clang,$(CC)),-Werror=unknown-warning-option) -E $1 - </dev/null >/dev/null 2>&1 && echo $1 || echo $2)
 endef
 
 CPPFLAGS := $(CPPFLAGS) -D_GNU_SOURCE
