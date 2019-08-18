@@ -1,5 +1,26 @@
 # Hardened malloc
 
+* [Introduction](#introduction)
+* [Dependencies](#dependencies)
+* [Testing](#testing)
+* [OS integration](#os-integration)
+    * [Android-based operating systems](#android-based-operating-systems)
+    * [Traditional Linux-based operating systems](#traditional-linux-based-operating-systems)
+* [Configuration](#configuration)
+* [Basic design](#basic-design)
+* [Security properties](#security-properties)
+* [Randomness](#randomness)
+* [Size classes](#size-classes)
+* [Scalability](#scalability)
+    * [Small (slab) allocations](#small-slab-allocations)
+        * [Thread caching (or lack thereof)](#thread-caching-or-lack-thereof)
+    * [Large allocations](#large-allocations)
+* [Memory tagging](#memory-tagging)
+* [API extensions](#api-extensions)
+* [System calls](#system-calls)
+
+## Introduction
+
 This is a security-focused general purpose memory allocator providing the
 malloc API along with various extensions. It provides substantial hardening
 against heap corruption vulnerabilities. The security-focused design also leads
