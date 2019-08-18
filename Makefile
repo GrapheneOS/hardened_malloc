@@ -26,7 +26,9 @@ $(shell $(CC) $(if $(filter clang,$(CC)),-Werror=unknown-warning-option) -E $1 -
 endef
 
 CPPFLAGS := $(CPPFLAGS) -D_GNU_SOURCE
-SHARED_FLAGS := -O3 -flto -fPIC -fvisibility=hidden $(call safe_flag,-fno-plt) $(call safe_flag,-fstack-clash-protection) -fstack-protector-strong -pipe -Wall -Wextra $(call safe_flag,-Wcast-align=strict,-Wcast-align) -Wcast-qual -Wwrite-strings
+SHARED_FLAGS := -O3 -flto -fPIC -fvisibility=hidden $(call safe_flag,-fno-plt) \
+    $(call safe_flag,-fstack-clash-protection) -fstack-protector-strong -pipe -Wall -Wextra \
+    $(call safe_flag,-Wcast-align=strict,-Wcast-align) -Wcast-qual -Wwrite-strings
 
 ifeq ($(CONFIG_WERROR),true)
     SHARED_FLAGS += -Werror
