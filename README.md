@@ -278,11 +278,10 @@ larger caches can substantially improves performance).
 
 ## Basic design
 
-The current design is very simple and will become a bit more sophisticated as
-the basic features are completed and the implementation is hardened and
-optimized. The allocator is exclusive to 64-bit platforms in order to take full
-advantage of the abundant address space without being constrained by needing to
-keep the design compatible with 32-bit.
+The core design of the allocator is very simple / minimalist. The allocator is
+exclusive to 64-bit platforms in order to take full advantage of the abundant
+address space without being constrained by needing to keep the design
+compatible with 32-bit.
 
 Small allocations are always located in a large memory region reserved for slab
 allocations. It can be determined that an allocation is one of the small size
