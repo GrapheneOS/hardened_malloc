@@ -210,9 +210,9 @@ The following boolean configuration options are available:
 * `CONFIG_SEAL_METADATA`: `true` or `false` (default) to control whether Memory
   Protection Keys are used to disable access to all writable allocator state
   outside of the memory allocator code. It's currently disabled by default due
-  to being extremely experimental and a significant performance cost for this
-  use case on current generation hardware, which may become drastically lower
-  in the future. Whether or not this feature is enabled, the metadata is all
+  to lack of regular testing and a significant performance cost for this use
+  case on current generation hardware, which may become drastically lower in
+  the future. Whether or not this feature is enabled, the metadata is all
   contained within an isolated memory region with high entropy random guard
   regions around it.
 
