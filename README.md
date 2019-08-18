@@ -362,6 +362,7 @@ was a bit less important and if a core goal was finding latent bugs.
 * Slab allocations are zeroed on free
 * Detection of write-after-free for slab allocations by verifying zero filling
   is intact at allocation time
+* Delayed free via a combination of FIFO and randomization for slab allocations
 * Large allocations are purged and memory protected on free with the memory
   mapping kept reserved in a quarantine to detect use-after-free
     * The quarantine is primarily based on a FIFO ring buffer, with the oldest
@@ -372,7 +373,6 @@ was a bit less important and if a core goal was finding latent bugs.
       of the quarantine
 * Memory in fresh allocations is consistently zeroed due to it either being
   fresh pages or zeroed on free after previous usage
-* Delayed free via a combination of FIFO and randomization for slab allocations
 * Random canaries placed after each slab allocation to *absorb*
   and then later detect overflows/underflows
     * High entropy per-slab random values
