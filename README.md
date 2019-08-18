@@ -168,6 +168,11 @@ even with all the optional features disabled.
 
 The following boolean configuration options are available:
 
+* `CONFIG_WERROR`: `true` (default) or `false` to control whether compiler
+  warnings are treated as errors. This is highly recommended, but it can be
+  disabled to avoid patching the Makefile if a compiler version not tested by
+  the project is being used and has warnings. Investigating these warnings is
+  still recommended and the intention is to always be free of any warnings.
 * `CONFIG_NATIVE`: `true` (default) or `false` to control whether the code is
   optimized for the detected CPU on the host. If this is disabled, setting up a
   custom `-march` higher than the baseline architecture is highly recommended

@@ -1,3 +1,4 @@
+CONFIG_WERROR := true
 CONFIG_NATIVE := true
 CONFIG_CXX_ALLOCATOR := true
 CONFIG_UBSAN := false
@@ -26,6 +27,10 @@ endef
 
 CPPFLAGS := $(CPPFLAGS) -D_GNU_SOURCE
 SHARED_FLAGS := -O3 -flto -fPIC -fvisibility=hidden $(call safe_flag,-fno-plt) $(call safe_flag,-fstack-clash-protection) -fstack-protector-strong -pipe -Wall -Wextra $(call safe_flag,-Wcast-align=strict,-Wcast-align) -Wcast-qual -Wwrite-strings
+
+ifeq ($(CONFIG_WERROR),true)
+    SHARED_FLAGS += -Werror
+endif
 
 ifeq ($(CONFIG_NATIVE),true)
     SHARED_FLAGS += -march=native
