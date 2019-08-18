@@ -370,7 +370,7 @@ was a bit less important and if a core goal was finding latent bugs.
 * Zero size allocations are a dedicated size class with the entire region
   remaining non-readable and non-writable
 * Extension for retrieving the size of allocations with fallback [in-progress,
-  needs to be porting from the previous OpenBSD-based allocator]
+  needs to be ported from the previous OpenBSD malloc-based allocator]
   to a sentinel for pointers not managed by the allocator
     * Can also return accurate values for pointers *within* small allocations
     * The same applies to pointers within the first page of large allocations,
