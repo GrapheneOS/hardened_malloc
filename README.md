@@ -46,7 +46,7 @@ differences in the design are that it is solely focused on hardening rather
 than finding bugs, uses finer-grained size classes along with slab sizes going
 beyond 4k to reduce internal fragmentation, doesn't rely on the kernel having
 fine-grained mmap randomization and only targets 64-bit to make aggressive use
-of the large address space.  There are lots of smaller differences in the
+of the large address space. There are lots of smaller differences in the
 implementation approach. It incorporates the previous extensions made to
 OpenBSD malloc including adding padding to allocations for canaries (distinct
 from the current OpenBSD malloc canaries), write-after-free detection tied to
@@ -539,7 +539,7 @@ to finding the per-size-class metadata. The part that's still open to different
 design choices is how arenas are assigned to threads. One approach is
 statically assigning arenas via round-robin like the standard jemalloc
 implementation, or statically assigning to a random arena which is essentially
-the current implementation.  Another option is dynamic load balancing via a
+the current implementation. Another option is dynamic load balancing via a
 heuristic like `sched_getcpu` for per-CPU arenas, which would offer better
 performance than randomly choosing an arena each time while being more
 predictable for an attacker. There are actually some security benefits from
@@ -550,7 +550,7 @@ varying usage of size classes.
 When there's substantial allocation or deallocation pressure, the allocator
 does end up calling into the kernel to purge / protect unused slabs by
 replacing them with fresh `PROT_NONE` regions along with unprotecting slabs
-when partially filled and cached empty slabs are depleted.  There will be
+when partially filled and cached empty slabs are depleted. There will be
 configuration over the amount of cached empty slabs, but it's not entirely a
 performance vs. memory trade-off since memory protecting unused slabs is a nice
 opportunistic boost to security. However, it's not really part of the core
