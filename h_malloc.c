@@ -3,9 +3,9 @@
 #include <inttypes.h>
 #include <stdatomic.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #if __has_include(<threads.h>)
 #include <threads.h>
@@ -23,8 +23,8 @@
 #include "third_party/libdivide.h"
 
 #include "h_malloc.h"
-#include "mutex.h"
 #include "memory.h"
+#include "mutex.h"
 #include "pages.h"
 #include "random.h"
 #include "util.h"
