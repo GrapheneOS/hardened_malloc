@@ -53,8 +53,8 @@ ifeq ($(CONFIG_UBSAN),true)
     CXXFLAGS += -fsanitize=undefined
 endif
 
-ifeq ($(CONFIG_SEAL_METADATA),true)
-    CPPFLAGS += -DCONFIG_SEAL_METADATA
+ifeq (,$(filter $(CONFIG_SEAL_METADATA),true false))
+    $(error CONFIG_SEAL_METADATA must be true or false)
 endif
 
 ifeq (,$(filter $(CONFIG_ZERO_ON_FREE),true false))
@@ -86,6 +86,7 @@ ifeq (,$(filter $(CONFIG_STATS),true false))
 endif
 
 CPPFLAGS += \
+    -DCONFIG_SEAL_METADATA=$(CONFIG_SEAL_METADATA) \
     -DZERO_ON_FREE=$(CONFIG_ZERO_ON_FREE) \
     -DWRITE_AFTER_FREE_CHECK=$(CONFIG_WRITE_AFTER_FREE_CHECK) \
     -DSLOT_RANDOMIZE=$(CONFIG_SLOT_RANDOMIZE) \

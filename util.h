@@ -51,7 +51,7 @@ extern int __register_atfork(void (*)(void), void (*)(void), void (*)(void), voi
 #define atfork pthread_atfork
 #endif
 
-#ifdef CONFIG_SEAL_METADATA
+#if CONFIG_SEAL_METADATA
 
 #ifdef __GLIBC__
 #if __GLIBC_PREREQ(2, 27)
