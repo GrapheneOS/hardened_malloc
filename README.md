@@ -17,6 +17,7 @@
     * [Large allocations](#large-allocations)
 * [Memory tagging](#memory-tagging)
 * [API extensions](#api-extensions)
+* [Stats](#stats)
 * [System calls](#system-calls)
 
 ## Introduction
@@ -258,8 +259,8 @@ The following integer configuration options are available:
   the size class regions.
 * `CONFIG_N_ARENA`: `1` (default) to control the number of arenas
 * `CONFIG_STATS`: `false` (default) to control whether stats on allocation /
-  deallocation count and active allocations are tracked. This is currently only
-  exposed via the mallinfo APIs on Android.
+  deallocation count and active allocations are tracked. See the [section on
+  stats](#stats) for more details.
 * `CONFIG_EXTENDED_SIZE_CLASSES`: `true` (default) to control whether small
   size class go up to 128kiB instead of the minimum requirement for avoiding
   memory waste of 16kiB. The option to extend it even further will be offered
@@ -742,6 +743,179 @@ less useful results falling back to higher upper bounds, but is very fast. In
 this implementation, it retrieves an upper bound on the size for small memory
 allocations based on calculating the size class region. This function is safe
 to use from signal handlers already.
+
+## Stats
+
+If stats are enabled, hardened\_malloc keeps tracks allocator statistics in
+order to provide implementations of `mallinfo` and `malloc_info`.
+
+On Android, `mallinfo` is used for [mallinfo-based garbage collection
+triggering](https://developer.android.com/preview/features#mallinfo) so
+hardened\_malloc enables `CONFIG_STATS` by default. The `malloc_info`
+implementation on Android is the standard one in Bionic, with the information
+is provided to Bionic via Android's internal extended `mallinfo` API with
+support for arenas and size class bins. This means the `malloc_info` output is
+fully compatible, including still having `jemalloc-1` as the version of the
+data format to retain compatibility with existing tooling.
+
+On non-Android Linux, `mallinfo` has zeroed fields even with `CONFIG_STATS`
+enabled because glibc `mallinfo` is inherently broken. It defines the fields as
+`int` instead of `size_t`, resulting in undefined signed overflows. It also
+misuses the fields and provides a strange, idiosyncratic set of values rather
+than following the SVID/XPG `mallinfo` definition. The `malloc_info` function
+is still provided, with the same format as Android but with the version set to
+`hardened_malloc-1`. The data format may be changed in the future.
+
+As an example, consider the follow program from the hardened\_malloc tests:
+
+```c
+#include <pthread.h>
+
+#include <malloc.h>
+
+__attribute__((optimize(0)))
+void leak_memory(void) {
+    (void)malloc(1024 * 1024 * 1024);
+    (void)malloc(16);
+    (void)malloc(32);
+    (void)malloc(4096);
+}
+
+void *do_work(void *p) {
+    leak_memory();
+    return NULL;
+}
+
+int main(void) {
+    pthread_t thread[4];
+    for (int i = 0; i < 4; i++) {
+        pthread_create(&thread[i], NULL, do_work, NULL);
+    }
+    for (int i = 0; i < 4; i++) {
+        pthread_join(thread[i], NULL);
+    }
+
+    malloc_info(0, stdout);
+}
+```
+
+This produces the following output when piped through `xmllint --format -`:
+
+```xml
+<?xml version="1.0"?>
+<malloc version="hardened_malloc-1">
+  <heap nr="0">
+    <bin nr="2" size="32">
+      <nmalloc>1</nmalloc>
+      <ndalloc>0</ndalloc>
+      <slab_allocated>4096</slab_allocated>
+      <allocated>32</allocated>
+    </bin>
+    <bin nr="3" size="48">
+      <nmalloc>1</nmalloc>
+      <ndalloc>0</ndalloc>
+      <slab_allocated>4096</slab_allocated>
+      <allocated>48</allocated>
+    </bin>
+    <bin nr="13" size="320">
+      <nmalloc>4</nmalloc>
+      <ndalloc>0</ndalloc>
+      <slab_allocated>20480</slab_allocated>
+      <allocated>1280</allocated>
+    </bin>
+    <bin nr="29" size="5120">
+      <nmalloc>2</nmalloc>
+      <ndalloc>0</ndalloc>
+      <slab_allocated>40960</slab_allocated>
+      <allocated>10240</allocated>
+    </bin>
+    <bin nr="45" size="81920">
+      <nmalloc>1</nmalloc>
+      <ndalloc>0</ndalloc>
+      <slab_allocated>81920</slab_allocated>
+      <allocated>81920</allocated>
+    </bin>
+  </heap>
+  <heap nr="1">
+    <bin nr="2" size="32">
+      <nmalloc>1</nmalloc>
+      <ndalloc>0</ndalloc>
+      <slab_allocated>4096</slab_allocated>
+      <allocated>32</allocated>
+    </bin>
+    <bin nr="3" size="48">
+      <nmalloc>1</nmalloc>
+      <ndalloc>0</ndalloc>
+      <slab_allocated>4096</slab_allocated>
+      <allocated>48</allocated>
+    </bin>
+    <bin nr="29" size="5120">
+      <nmalloc>1</nmalloc>
+      <ndalloc>0</ndalloc>
+      <slab_allocated>40960</slab_allocated>
+      <allocated>5120</allocated>
+    </bin>
+  </heap>
+  <heap nr="2">
+    <bin nr="2" size="32">
+      <nmalloc>1</nmalloc>
+      <ndalloc>0</ndalloc>
+      <slab_allocated>4096</slab_allocated>
+      <allocated>32</allocated>
+    </bin>
+    <bin nr="3" size="48">
+      <nmalloc>1</nmalloc>
+      <ndalloc>0</ndalloc>
+      <slab_allocated>4096</slab_allocated>
+      <allocated>48</allocated>
+    </bin>
+    <bin nr="29" size="5120">
+      <nmalloc>1</nmalloc>
+      <ndalloc>0</ndalloc>
+      <slab_allocated>40960</slab_allocated>
+      <allocated>5120</allocated>
+    </bin>
+  </heap>
+  <heap nr="3">
+    <bin nr="2" size="32">
+      <nmalloc>1</nmalloc>
+      <ndalloc>0</ndalloc>
+      <slab_allocated>4096</slab_allocated>
+      <allocated>32</allocated>
+    </bin>
+    <bin nr="3" size="48">
+      <nmalloc>1</nmalloc>
+      <ndalloc>0</ndalloc>
+      <slab_allocated>4096</slab_allocated>
+      <allocated>48</allocated>
+    </bin>
+    <bin nr="29" size="5120">
+      <nmalloc>1</nmalloc>
+      <ndalloc>0</ndalloc>
+      <slab_allocated>40960</slab_allocated>
+      <allocated>5120</allocated>
+    </bin>
+  </heap>
+  <heap nr="4">
+    <allocated_large>4294967296</allocated_large>
+  </heap>
+</malloc>
+```
+
+The heap entries correspond to the arenas. Unlike jemalloc, hardened\_malloc
+doesn't handle large allocations within the arenas, so it presents those in the
+`malloc_info` statistics as a separate arena dedicated to large allocations.
+For example, with 4 arenas enabled, there will be a 5th arena in the statistics
+for the large allocations.
+
+The `nmalloc` / `ndalloc` fields are 64-bit integers tracking allocation and
+deallocation count. These are defined as wrapping on overflow, per the jemalloc
+implementation.
+
+See the [section on size classes](#size-classes) to map the size class bin
+number to the corresponding size class. The bin index begins at 0, mapping to
+the 0 byte size class, followed by 1 for the 16 bytes, 2 for 32 bytes, etc. and
+large allocations are treated as one group.
 
 ## System calls
 
