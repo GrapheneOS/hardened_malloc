@@ -40,7 +40,10 @@ SOURCES := chacha.c h_malloc.c memory.c pages.c random.c util.c
 OBJECTS := $(SOURCES:.c=.o)
 
 ifeq ($(CONFIG_CXX_ALLOCATOR),true)
-    LDLIBS += -lstdc++
+    # make sure LTO is compatible in case CC and CXX don't match (such as clang and g++)
+    CXX := $(CC)
+    LDLIBS += -lstdc++ -shared-libgcc
+
     SOURCES += new.cc
     OBJECTS += new.o
 endif
