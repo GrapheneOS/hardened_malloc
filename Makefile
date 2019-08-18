@@ -115,10 +115,12 @@ pages.o: pages.c pages.h memory.h util.h
 random.o: random.c random.h chacha.h util.h
 util.o: util.c util.h
 
+check: tidy
+
 tidy:
 	clang-tidy $(SOURCES) -- $(CPPFLAGS)
 
 clean:
 	rm -f libhardened_malloc.so $(OBJECTS)
 
-.PHONY: clean tidy
+.PHONY: check clean tidy
