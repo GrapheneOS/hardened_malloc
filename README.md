@@ -714,7 +714,7 @@ The last slot is randomly chosen for the next alocation, and is assigned the
 random value 14. However, it's placed next to an allocation with the tag 14 so
 the tag is incremented and wraps around to 0:
 
-    | 3  | 4  | 15 | 7  | 14 | 0 |
+    | 3  | 4  | 15 | 7  | 14 | 0  |
 
 ## API extensions
 
