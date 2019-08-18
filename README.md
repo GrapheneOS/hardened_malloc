@@ -243,19 +243,19 @@ The following integer configuration options are available:
   so having many extra mappings doesn't usually add up to a significant cost.
 * `CONFIG_GUARD_SIZE_DIVISOR`: `2` (default) to control the maximum size of the
   guard regions placed on both sides of large memory allocations, relative to
-  the usable size of the memory allocation
+  the usable size of the memory allocation.
 * `CONFIG_REGION_QUARANTINE_RANDOM_LENGTH`: `128` (default) to control the
   number of slots in the random array used to randomize region reuse for large
-  memory allocations
+  memory allocations.
 * `CONFIG_REGION_QUARANTINE_QUEUE_LENGTH`: `1024` (default) to control the
   number of slots in the queue used to delay region reuse for large memory
-  allocations
+  allocations.
 * `CONFIG_REGION_QUARANTINE_SKIP_THRESHOLD`: `33554432` (default) to control
-  the size threshold where large allocations will not be quarantined
+  the size threshold where large allocations will not be quarantined.
 * `CONFIG_FREE_SLABS_QUARANTINE_RANDOM_LENGTH`: `32` (default) to control the
-  number of slots in the random array used to randomize free slab reuse
+  number of slots in the random array used to randomize free slab reuse.
 * `CONFIG_CLASS_REGION_SIZE`: `34359738368` (default) to control the size of
-  the size class regions
+  the size class regions.
 * `CONFIG_N_ARENA`: `1` (default) to control the number of arenas
 * `CONFIG_STATS`: `false` (default) to control whether stats on allocation /
   deallocation count and active allocations are tracked. This is currently only
@@ -266,7 +266,7 @@ The following integer configuration options are available:
   in the future when better support for larger slab allocations is added.
 * `CONFIG_LARGE_SIZE_CLASSES`: `true` (default) to control whether large
   allocations use the slab allocation size class scheme instead of page size
-  granularity (see the section on size classes below)
+  granularity (see the section on size classes below).
 
 There will be more control over enabled features in the future along with
 control over fairly arbitrarily chosen values like the size of empty slab
