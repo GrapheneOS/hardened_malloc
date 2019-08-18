@@ -34,7 +34,6 @@ endif
 CFLAGS := $(CFLAGS) -std=c11 $(SHARED_FLAGS) -Wmissing-prototypes
 CXXFLAGS := $(call safe_flag,-std=c++17,-std=c++14) $(SHARED_FLAGS)
 LDFLAGS := $(LDFLAGS) -Wl,--as-needed,-z,defs,-z,relro,-z,now,-z,nodlopen,-z,text
-TIDY_CHECKS := -checks=bugprone-*,-bugprone-macro-parentheses,cert-*,clang-analyzer-*,readability-*,-readability-inconsistent-declaration-parameter-name,-readability-magic-numbers,-readability-named-parameter,-bugprone-too-small-loop-variable
 
 SOURCES := chacha.c h_malloc.c memory.c pages.c random.c util.c
 OBJECTS := $(SOURCES:.c=.o)
@@ -117,7 +116,7 @@ random.o: random.c random.h chacha.h util.h
 util.o: util.c util.h
 
 tidy:
-	clang-tidy $(TIDY_CHECKS) $(SOURCES) -- $(CPPFLAGS)
+	clang-tidy $(SOURCES) -- $(CPPFLAGS)
 
 clean:
 	rm -f libhardened_malloc.so $(OBJECTS)
