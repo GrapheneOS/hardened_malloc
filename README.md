@@ -185,12 +185,15 @@ The following boolean configuration options are available:
   allocations are zeroed on free, to mitigate use-after-free and uninitialized
   use vulnerabilities along with purging lots of potentially sensitive data
   from the process as soon as possible. This has a performance cost scaling to
-  the size of the allocation, which is usually acceptable.
+  the size of the allocation, which is usually acceptable. This is not relevant
+  to large allocations because the pages are given back to the kernel.
 * `CONFIG_WRITE_AFTER_FREE_CHECK`: `true` (default) or `false` to control
-  sanity checking that new allocations contain zeroed memory. This can detect
-  writes caused by a write-after-free vulnerability and mixes well with the
-  features for making memory reuse randomized / delayed. This has a performance
-  cost scaling to the size of the allocation, which is usually acceptable.
+  sanity checking that new small allocations contain zeroed memory. This can
+  detect writes caused by a write-after-free vulnerability and mixes well with
+  the features for making memory reuse randomized / delayed. This has a
+  performance cost scaling to the size of the allocation, which is usually
+  acceptable. This is not relevant to large allocations because they're always
+  a fresh memory mapping from the kernel.
 * `CONFIG_SLOT_RANDOMIZE`: `true` (default) or `false` to randomize selection
   of free slots within slabs. This has a measurable performance cost and isn't
   one of the important security features, but the cost has been deemed more
