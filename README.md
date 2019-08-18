@@ -101,9 +101,9 @@ this allocator offers across different size classes. The intention is that this
 will be offered as part of hardened variants of the Bionic and musl C standard
 libraries.
 
-# OS integration
+## OS integration
 
-## Android-based operating systems
+### Android-based operating systems
 
 On GrapheneOS, hardened\_malloc is integrated into the standard C library as
 the standard malloc implementation. Other Android-based operating systems can
@@ -125,7 +125,7 @@ configuration:
 This is unnecessary if you set `CONFIG_GUARD_SLABS_INTERVAL` to a very large
 value in the build configuration.
 
-## Traditional Linux-based operating systems
+### Traditional Linux-based operating systems
 
 On traditional Linux-based operating systems, hardened\_malloc can either be
 integrated into the libc implementation as a replacement for the standard
