@@ -7,7 +7,7 @@
     * [Android-based operating systems](#android-based-operating-systems)
     * [Traditional Linux-based operating systems](#traditional-linux-based-operating-systems)
 * [Configuration](#configuration)
-* [Basic design](#basic-design)
+* [Core design](#core-design)
 * [Security properties](#security-properties)
 * [Randomness](#randomness)
 * [Size classes](#size-classes)
@@ -276,7 +276,7 @@ control over fairly arbitrarily chosen values like the size of empty slab
 caches (making them smaller improves security and reduces memory usage while
 larger caches can substantially improves performance).
 
-## Basic design
+## Core design
 
 The core design of the allocator is very simple / minimalist. The allocator is
 exclusive to 64-bit platforms in order to take full advantage of the abundant
