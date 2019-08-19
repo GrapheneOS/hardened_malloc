@@ -283,21 +283,41 @@ exclusive to 64-bit platforms in order to take full advantage of the abundant
 address space without being constrained by needing to keep the design
 compatible with 32-bit.
 
+The mutable allocator state is entirely located within a dedicated metadata
+region, and the allocator is designed around this approach for both small
+(slab) allocations and large allocations. This provides reliable, deterministic
+protections against invalid free including double frees, and protects metadata
+from attackers. Traditional allocator exploitation techniques do not work with
+the hardened\_malloc implementation.
+
 Small allocations are always located in a large memory region reserved for slab
-allocations. It can be determined that an allocation is one of the small size
-classes from the address range. Each small size class has a separate reserved
-region within the larger region, and the size of a small allocation can simply
-be determined from the range. Each small size class has a separate out-of-line
-metadata array outside of the overall allocation region, with the index of the
-metadata struct within the array mapping to the index of the slab within the
-dedicated size class region. Slabs are a multiple of the page size and are
-page aligned. The entire small size class region starts out memory protected
-and becomes readable / writable as it gets allocated, with idle slabs beyond
-the cache limit having their pages dropped and the memory protected again.
+allocations. On free, it can be determined that an allocation is one of the
+small size classes from the address range. If arenas are enabled, the arena is
+also determined from the address range as each arena has a dedicated sub-region
+in the slab allocation region. Arenas provide totally independent slab
+allocators with their own allocator state and no coordination between them.
+Once the base region is determined (simply the slab allocation region as a
+whole without any arenas enabled), the size class is determined from the
+address range too, since it's divided up into a sub-region for each size class.
+There's a top level slab allocation region, divided up into arenas, with each
+of those divided up into size class regions. The size class regions each have a
+random base within a large guard region. Once the size class is determined, the
+slab size is known, and the index of the slab is calculated and used to obtain
+the slab metadata for the slab from the slab metadata array. Finally, the index
+of the slot within the slab provides the index of the bit tracking the slot in
+the bitmap. Every slab allocation slot has a dedicated bit in a bitmap tracking
+whether it's free, along with a separate bitmap for tracking allocations in the
+quarantine. The slab metadata entries in the array have intrusive lists
+threaded through them to track partial slabs (partially filled, and these are
+the first choice for allocation), empty slabs (limited amount of cached free
+memory) and free slabs (purged / memory protected).
 
 Large allocations are tracked via a global hash table mapping their address to
-their size and guard size. They're simply memory mappings and get mapped on
-allocation and then unmapped on free.
+their size and random guard size. They're simply memory mappings and get mapped
+on allocation and then unmapped on free. Large allocations are the only dynamic
+memory mappings made by the allocator, since the address space for allocator
+state (including both small / large allocation metadata) and slab allocations
+is statically reserved.
 
 This allocator is aimed at production usage, not aiding with finding and fixing
 memory corruption bugs for software development. It does find many latent bugs
