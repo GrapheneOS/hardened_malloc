@@ -782,8 +782,9 @@ enabled because glibc `mallinfo` is inherently broken. It defines the fields as
 `int` instead of `size_t`, resulting in undefined signed overflows. It also
 misuses the fields and provides a strange, idiosyncratic set of values rather
 than following the SVID/XPG `mallinfo` definition. The `malloc_info` function
-is still provided, with the same format as Android but with the version set to
-`hardened_malloc-1`. The data format may be changed in the future.
+is still provided, with a similar format as what Android uses, with tweaks for
+hardened\_malloc and the the version set to `hardened_malloc-1`. The data
+format may be changed in the future.
 
 As an example, consider the follow program from the hardened\_malloc tests:
 
