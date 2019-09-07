@@ -48,11 +48,22 @@ lib_src_files = [
     "util.c",
 ]
 
-cc_library_static {
+cc_library {
     name: "libhardened_malloc",
     recovery_available: true,
     defaults: ["hardened_malloc_defaults"],
     srcs: lib_src_files,
+    target: {
+        android: {
+            shared: {
+                enabled: false,
+            },
+            system_shared_libs: [],
+        },
+        linux_bionic: {
+            system_shared_libs: [],
+        },
+    },
     product_variables: {
         debuggable: {
             cflags: ["-DLABEL_MEMORY"],
