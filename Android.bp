@@ -50,6 +50,7 @@ lib_src_files = [
 
 cc_library_static {
     name: "libhardened_malloc",
+    recovery_available: true,
     defaults: ["hardened_malloc_defaults"],
     srcs: lib_src_files,
     product_variables: {
