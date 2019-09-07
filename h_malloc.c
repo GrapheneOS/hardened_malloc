@@ -1808,12 +1808,12 @@ COLD EXPORT int h_malloc_set_state(UNUSED void *state) {
 #endif
 
 #ifdef __ANDROID__
-EXPORT size_t __mallinfo_narenas(void) {
+EXPORT size_t h_mallinfo_narenas(void) {
     // Consider region allocator to be an arena with index N_ARENA.
     return N_ARENA + 1;
 }
 
-EXPORT size_t __mallinfo_nbins(void) {
+EXPORT size_t h_mallinfo_nbins(void) {
     return N_SIZE_CLASSES;
 }
 
@@ -1824,7 +1824,7 @@ EXPORT size_t __mallinfo_nbins(void) {
 // uordblks: huge allocations
 // fsmblks: small allocations
 // (other fields are unused)
-EXPORT struct mallinfo __mallinfo_arena_info(UNUSED size_t arena) {
+EXPORT struct mallinfo h_mallinfo_arena_info(UNUSED size_t arena) {
     struct mallinfo info = {0};
 
 #if CONFIG_STATS
@@ -1856,7 +1856,7 @@ EXPORT struct mallinfo __mallinfo_arena_info(UNUSED size_t arena) {
 // uordblks: nmalloc
 // fordblks: ndalloc
 // (other fields are unused)
-EXPORT struct mallinfo __mallinfo_bin_info(UNUSED size_t arena, UNUSED size_t bin) {
+EXPORT struct mallinfo h_mallinfo_bin_info(UNUSED size_t arena, UNUSED size_t bin) {
     struct mallinfo info = {0};
 
 #if CONFIG_STATS
