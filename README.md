@@ -101,6 +101,10 @@ this allocator offers across different size classes. The intention is that this
 will be offered as part of hardened variants of the Bionic and musl C standard
 libraries.
 
+## Compatibility
+
+OpenSSH 8.1 or higher is required to allow the mprotect PROT_READ|PROT_WRITE system calls in the seccomp-bpf filter rather than killing the process.
+
 ## OS integration
 
 ### Android-based operating systems
