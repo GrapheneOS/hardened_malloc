@@ -3,6 +3,7 @@
 * [Introduction](#introduction)
 * [Dependencies](#dependencies)
 * [Testing](#testing)
+* [Compatibility](#compatibility)
 * [OS integration](#os-integration)
     * [Android-based operating systems](#android-based-operating-systems)
     * [Traditional Linux-based operating systems](#traditional-linux-based-operating-systems)
