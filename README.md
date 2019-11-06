@@ -777,10 +777,10 @@ On Android, `mallinfo` is used for [mallinfo-based garbage collection
 triggering](https://developer.android.com/preview/features#mallinfo) so
 hardened\_malloc enables `CONFIG_STATS` by default. The `malloc_info`
 implementation on Android is the standard one in Bionic, with the information
-is provided to Bionic via Android's internal extended `mallinfo` API with
-support for arenas and size class bins. This means the `malloc_info` output is
-fully compatible, including still having `jemalloc-1` as the version of the
-data format to retain compatibility with existing tooling.
+provided to Bionic via Android's internal extended `mallinfo` API with support
+for arenas and size class bins. This means the `malloc_info` output is fully
+compatible, including still having `jemalloc-1` as the version of the data
+format to retain compatibility with existing tooling.
 
 On non-Android Linux, `mallinfo` has zeroed fields even with `CONFIG_STATS`
 enabled because glibc `mallinfo` is inherently broken. It defines the fields as
