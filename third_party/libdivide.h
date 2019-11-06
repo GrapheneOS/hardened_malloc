@@ -11,8 +11,8 @@
 #ifndef LIBDIVIDE_H
 #define LIBDIVIDE_H
 
-#define LIBDIVIDE_VERSION "2.0"
-#define LIBDIVIDE_VERSION_MAJOR 2
+#define LIBDIVIDE_VERSION "3.0"
+#define LIBDIVIDE_VERSION_MAJOR 3
 #define LIBDIVIDE_VERSION_MINOR 0
 
 #include <stdint.h>
@@ -20,6 +20,7 @@
 #if defined(__cplusplus)
     #include <cstdlib>
     #include <cstdio>
+    #include <type_traits>
 #else
     #include <stdlib.h>
     #include <stdio.h>
@@ -1973,16 +1974,16 @@ enum {
 
 // The dispatcher selects a specific division algorithm for a given
 // type and ALGO using partial template specialization.
-template<typename T, int ALGO> struct dispatcher { };
+template<bool IS_INTEGRAL, bool IS_SIGNED, int SIZEOF, int ALGO> struct dispatcher { };
 
-template<> struct dispatcher<int32_t, BRANCHFULL> { DISPATCHER_GEN(int32_t, s32) };
-template<> struct dispatcher<int32_t, BRANCHFREE> { DISPATCHER_GEN(int32_t, s32_branchfree) };
-template<> struct dispatcher<uint32_t, BRANCHFULL> { DISPATCHER_GEN(uint32_t, u32) };
-template<> struct dispatcher<uint32_t, BRANCHFREE> { DISPATCHER_GEN(uint32_t, u32_branchfree) };
-template<> struct dispatcher<int64_t, BRANCHFULL> { DISPATCHER_GEN(int64_t, s64) };
-template<> struct dispatcher<int64_t, BRANCHFREE> { DISPATCHER_GEN(int64_t, s64_branchfree) };
-template<> struct dispatcher<uint64_t, BRANCHFULL> { DISPATCHER_GEN(uint64_t, u64) };
-template<> struct dispatcher<uint64_t, BRANCHFREE> { DISPATCHER_GEN(uint64_t, u64_branchfree) };
+template<> struct dispatcher<true, true, sizeof(int32_t), BRANCHFULL> { DISPATCHER_GEN(int32_t, s32) };
+template<> struct dispatcher<true, true, sizeof(int32_t), BRANCHFREE> { DISPATCHER_GEN(int32_t, s32_branchfree) };
+template<> struct dispatcher<true, false, sizeof(uint32_t), BRANCHFULL> { DISPATCHER_GEN(uint32_t, u32) };
+template<> struct dispatcher<true, false, sizeof(uint32_t), BRANCHFREE> { DISPATCHER_GEN(uint32_t, u32_branchfree) };
+template<> struct dispatcher<true, true, sizeof(int64_t), BRANCHFULL> { DISPATCHER_GEN(int64_t, s64) };
+template<> struct dispatcher<true, true, sizeof(int64_t), BRANCHFREE> { DISPATCHER_GEN(int64_t, s64_branchfree) };
+template<> struct dispatcher<true, false, sizeof(uint64_t), BRANCHFULL> { DISPATCHER_GEN(uint64_t, u64) };
+template<> struct dispatcher<true, false, sizeof(uint64_t), BRANCHFREE> { DISPATCHER_GEN(uint64_t, u64_branchfree) };
 
 // This is the main divider class for use by the user (C++ API).
 // The actual division algorithm is selected using the dispatcher struct
@@ -2026,9 +2027,11 @@ public:
         return div.divide(n);
     }
 #endif
+
 private:
     // Storage for the actual divisor
-    dispatcher<T, ALGO> div;
+    dispatcher<std::is_integral<T>::value, 
+               std::is_signed<T>::value, sizeof(T), ALGO> div;
 };
 
 // Overload of operator / for scalar division
@@ -2058,12 +2061,9 @@ T& operator/=(T& n, const divider<T, ALGO>& div) {
     }
 #endif
 
-#if __cplusplus >= 201103L || \
-    (defined(_MSC_VER) && _MSC_VER >= 1800)
-    // libdivdie::branchfree_divider<T>
-    template <typename T>
-    using branchfree_divider = divider<T, BRANCHFREE>;
-#endif
+// libdivdie::branchfree_divider<T>
+template <typename T>
+using branchfree_divider = divider<T, BRANCHFREE>;
 
 } // namespace libdivide
 
