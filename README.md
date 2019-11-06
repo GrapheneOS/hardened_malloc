@@ -134,11 +134,11 @@ value in the build configuration.
 
 On traditional Linux-based operating systems, hardened\_malloc can either be
 integrated into the libc implementation as a replacement for the standard
-malloc implementation or loaded as a dynamic library. Rather rebuilding each
-executable to be linked against it, it can be added as a preloaded library to
-`/etc/ld.so.preload`. For example, with `libhardened_malloc.so` installed to
-`/usr/local/lib/libhardened_malloc.so`, add that full path as a line to the
-`/etc/ld.so.preload` configuration file:
+malloc implementation or loaded as a dynamic library. Rather than rebuilding
+each executable to be linked against it, it can be added as a preloaded
+library to `/etc/ld.so.preload`. For example, with `libhardened_malloc.so`
+installed to `/usr/local/lib/libhardened_malloc.so`, add that full path as a
+line to the `/etc/ld.so.preload` configuration file:
 
     /usr/local/lib/libhardened_malloc.so
 
