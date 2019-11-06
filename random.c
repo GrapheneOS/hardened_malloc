@@ -102,7 +102,7 @@ u16 get_random_u16_uniform(struct random_state *state, u16 bound) {
     if (leftover < bound) {
         u16 threshold = -bound % bound;
         while (leftover < threshold) {
-            random =  get_random_u16(state);
+            random = get_random_u16(state);
             multiresult = random * bound;
             leftover = (u16)multiresult;
         }
@@ -129,7 +129,7 @@ u64 get_random_u64_uniform(struct random_state *state, u64 bound) {
     if (leftover < bound) {
         u64 threshold = -bound % bound;
         while (leftover < threshold) {
-            random =  get_random_u64(state);
+            random = get_random_u64(state);
             multiresult = random * bound;
             leftover = multiresult;
         }
