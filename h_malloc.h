@@ -5,7 +5,9 @@
 
 #include <malloc.h>
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifndef H_MALLOC_PREFIX
 #define h_malloc malloc
@@ -116,6 +118,8 @@ size_t h_malloc_object_size_fast(void *ptr);
 // passed size matches the allocated size.
 void h_free_sized(void *ptr, size_t expected_size);
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif
