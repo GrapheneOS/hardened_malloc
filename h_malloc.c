@@ -1797,7 +1797,9 @@ EXPORT int h_malloc_info(int options, UNUSED FILE *fp) {
     return -1;
 #endif
 }
+#endif
 
+#ifdef __GLIBC__
 COLD EXPORT void *h_malloc_get_state(void) {
     return NULL;
 }
