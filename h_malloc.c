@@ -1156,7 +1156,7 @@ COLD static void init_slow_path(void) {
     mutex_unlock(&lock);
 
     // may allocate, so wait until the allocator is initialized to avoid deadlocking
-    if (atfork(full_lock, full_unlock, post_fork_child)) {
+    if (pthread_atfork(full_lock, full_unlock, post_fork_child)) {
         fatal_error("pthread_atfork failed");
     }
 }

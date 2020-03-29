@@ -38,19 +38,6 @@ typedef uint32_t u32;
 typedef uint64_t u64;
 typedef unsigned __int128 u128;
 
-// use __register_atfork directly to avoid linking with libpthread for glibc < 2.28
-#ifdef __GLIBC__
-#if !__GLIBC_PREREQ(2, 28)
-extern void *__dso_handle;
-extern int __register_atfork(void (*)(void), void (*)(void), void (*)(void), void *);
-#define atfork(prepare, parent, child) __register_atfork(prepare, parent, child, __dso_handle)
-#endif
-#endif
-
-#ifndef atfork
-#define atfork pthread_atfork
-#endif
-
 #if CONFIG_SEAL_METADATA
 
 #ifdef __GLIBC__
