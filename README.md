@@ -83,6 +83,8 @@ be supported, which currently means `android10-release`.
 
 ## Testing
 
+### Individual Applications
+
 The `preload.sh` script can be used for testing with dynamically linked
 executables using glibc or musl:
 
@@ -101,6 +103,13 @@ region can be implemented to offer similar isolation for dynamic libraries as
 this allocator offers across different size classes. The intention is that this
 will be offered as part of hardened variants of the Bionic and musl C standard
 libraries.
+
+### Automated Test Framework
+
+A collection of simple, automated tests are provided and can be run with the
+make command as follows:
+
+    make test
 
 ## Compatibility
 
