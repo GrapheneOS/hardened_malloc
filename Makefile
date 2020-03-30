@@ -130,4 +130,8 @@ tidy:
 clean:
 	rm -f libhardened_malloc.so $(OBJECTS)
 
-.PHONY: check clean tidy
+test: libhardened_malloc.so
+	make -C test/
+	-python -m unittest discover --start-directory test/
+
+.PHONY: check clean tidy test
