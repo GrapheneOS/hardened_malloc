@@ -3,6 +3,8 @@
 * [Introduction](#introduction)
 * [Dependencies](#dependencies)
 * [Testing](#testing)
+    * [Individual Applications](#individual-applications)
+    * [Automated Test Framework](#automated-test-framework)
 * [Compatibility](#compatibility)
 * [OS integration](#os-integration)
     * [Android-based operating systems](#android-based-operating-systems)
