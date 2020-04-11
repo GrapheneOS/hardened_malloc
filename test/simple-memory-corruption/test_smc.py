@@ -51,7 +51,7 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
     def test_eight_byte_overflow_large(self):
         _stdout, _stderr, returncode = self.run_test(
             "eight_byte_overflow_large")
-        self.assertEqual(returncode, 0)
+        self.assertEqual(returncode, -11)
 
     def test_eight_byte_overflow_small(self):
         _stdout, stderr, returncode = self.run_test(
