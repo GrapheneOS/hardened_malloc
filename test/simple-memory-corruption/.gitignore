@@ -23,4 +23,7 @@ write_after_free_large_reuse
 write_after_free_small
 write_after_free_small_reuse
 write_zero_size
+unaligned_malloc_usable_size_small
+invalid_malloc_usable_size_small
+invalid_malloc_usable_size_small_quarantine
 __pycache__/
