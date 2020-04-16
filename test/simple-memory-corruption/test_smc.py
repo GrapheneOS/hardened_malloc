@@ -86,6 +86,20 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
         self.assertEqual(stderr.decode("utf-8"),
                          "fatal allocator error: invalid free\n")
 
+    def test_invalid_malloc_usable_size_small_quarantene(self):
+        _stdout, stderr, returncode = self.run_test(
+            "invalid_malloc_usable_size_small_quarantine")
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode(
+            "utf-8"), "fatal allocator error: invalid malloc_usable_size (quarantine)\n")
+
+    def test_invalid_malloc_usable_size_small(self):
+        _stdout, stderr, returncode = self.run_test(
+            "invalid_malloc_usable_size_small")
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode(
+            "utf-8"), "fatal allocator error: invalid malloc_usable_size\n")
+
     def test_read_after_free_large(self):
         _stdout, _stderr, returncode = self.run_test("read_after_free_large")
         self.assertEqual(returncode, -11)
@@ -116,6 +130,13 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
         self.assertEqual(returncode, -6)
         self.assertEqual(stderr.decode("utf-8"),
                          "fatal allocator error: invalid unaligned free\n")
+
+    def test_unaligned_malloc_usable_size_small(self):
+        _stdout, stderr, returncode = self.run_test(
+            "unaligned_malloc_usable_size_small")
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode("utf-8"),
+                         "fatal allocator error: invalid unaligned malloc_usable_size\n")
 
     def test_uninitialized_free(self):
         _stdout, stderr, returncode = self.run_test("uninitialized_free")
