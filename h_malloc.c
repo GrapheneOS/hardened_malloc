@@ -1558,18 +1558,63 @@ EXPORT void h_free_sized(void *p, size_t expected_size) {
     thread_seal_metadata();
 }
 
+static inline void memory_corruption_check_small(void *p) {
+    struct slab_size_class_info size_class_info = slab_size_class(p);
+    size_t class = size_class_info.class;
+    struct size_class *c = &ro.size_class_metadata[size_class_info.arena][class];
+    size_t size = size_classes[class];
+    bool is_zero_size = size == 0;
+    if (is_zero_size) {
+        size = 16;
+    }
+    size_t slab_size = get_slab_size(size_class_slots[class], size);
+    
+    mutex_lock(&c->lock);
+
+    struct slab_metadata *metadata = get_metadata(c, p);
+    void *slab = get_slab(c, slab_size, metadata);
+    size_t slot = libdivide_u32_do((char *)p - (char *)slab, &c->size_divisor);
+
+    if (slot_pointer(size, slab, slot) != p) {
+        fatal_error("invalid unaligned malloc_usable_size");
+    }
+
+    if (!get_slot(metadata, slot)) {
+        fatal_error("invalid malloc_usable_size");
+    }
+
+    if (!is_zero_size && canary_size) {
+        u64 canary_value;
+        memcpy(&canary_value, (char *)p + size - canary_size, canary_size);
+        if (unlikely(canary_value != metadata->canary_value)) {
+            fatal_error("canary corrupted");
+        }
+    }
+
+#if SLAB_QUARANTINE
+    if (get_quarantine(metadata, slot)) {
+        fatal_error("invalid malloc_usable_size (quarantine)");
+    }
+#endif
+
+    mutex_unlock(&c->lock);
+}
+
 EXPORT size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *p) {
     if (p == NULL) {
         return 0;
     }
 
+    enforce_init();
+    thread_unseal_metadata();
+
     if (p >= get_slab_region_start() && p < ro.slab_region_end) {
+        memory_corruption_check_small(p);
+        thread_seal_metadata();
+        
         size_t size = slab_usable_size(p);
         return size ? size - canary_size : 0;
     }
-
-    enforce_init();
-    thread_unseal_metadata();
 
     struct region_allocator *ra = ro.region_allocator;
     mutex_lock(&ra->lock);
