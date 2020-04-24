@@ -83,6 +83,13 @@ along with other hardening for the C standard library implementation.
 For Android, only current generation Android Open Source Project branches will
 be supported, which currently means `android10-release`.
 
+The Linux kernel's implementation of Memory Protection Keys was severely broken
+before Linux 5.0. The `CONFIG_SEAL_METADATA` feature should only be enabled for
+use on kernels newer than 5.0 or longterm branches with a backport of the [fix
+for the
+issue](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=a31e184e4f69965c99c04cc5eb8a4920e0c63737).
+This issue was discovered and reported by the hardened\_malloc project.
+
 ## Testing
 
 ### Individual Applications
@@ -983,7 +990,6 @@ Additional system calls when `CONFIG_SEAL_METADATA=true` is set:
 * `pkey_alloc`
 * `pkey_mprotect` instead of `mprotect` with an additional `pkey` parameter,
   but otherwise the same (regular `mprotect` is never called)
-* `uname` (to detect old buggy kernel versions)
 
 Additional system calls for Android builds with `LABEL_MEMORY`:
 

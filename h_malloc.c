@@ -80,7 +80,6 @@ static union {
         struct region_metadata *regions[2];
 #ifdef USE_PKEY
         int metadata_pkey;
-        bool pkey_state_preserved_on_fork;
 #endif
     };
     char padding[PAGE_SIZE];
@@ -1023,15 +1022,6 @@ static void full_unlock(void) {
 static void post_fork_child(void) {
     thread_unseal_metadata();
 
-#ifdef USE_PKEY
-    if (!ro.pkey_state_preserved_on_fork) {
-        // disable sealing to work around kernel bug causing fork to lose the pkey setup
-        memory_protect_rw(&ro, sizeof(ro));
-        ro.metadata_pkey = -1;
-        memory_protect_ro(&ro, sizeof(ro));
-    }
-#endif
-
     mutex_init(&ro.region_allocator->lock);
     random_state_init(&ro.region_allocator->rng);
     for (unsigned arena = 0; arena < N_ARENA; arena++) {
@@ -1066,15 +1056,6 @@ COLD static void init_slow_path(void) {
 
 #ifdef USE_PKEY
     ro.metadata_pkey = pkey_alloc(0, 0);
-
-    // pkey state is not preserved on fork before Linux 5.0 unless the patch was backported
-    struct utsname uts;
-    if (uname(&uts) == 0) {
-        unsigned long version = strtoul(uts.release, NULL, 10);
-        if (version >= 5) {
-            ro.pkey_state_preserved_on_fork = true;
-        }
-    }
 #endif
 
     if (sysconf(_SC_PAGESIZE) != PAGE_SIZE) {
