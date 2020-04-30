@@ -1568,7 +1568,7 @@ static inline void memory_corruption_check_small(void *p) {
         size = 16;
     }
     size_t slab_size = get_slab_size(size_class_slots[class], size);
-    
+
     mutex_lock(&c->lock);
 
     struct slab_metadata *metadata = get_metadata(c, p);
@@ -1611,7 +1611,7 @@ EXPORT size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *p) {
     if (p >= get_slab_region_start() && p < ro.slab_region_end) {
         memory_corruption_check_small(p);
         thread_seal_metadata();
-        
+
         size_t size = slab_usable_size(p);
         return size ? size - canary_size : 0;
     }
