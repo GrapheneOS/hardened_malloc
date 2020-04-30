@@ -418,8 +418,8 @@ static bool is_free_slab(struct slab_metadata *metadata) {
 #endif
 }
 
-static struct slab_metadata *get_metadata(struct size_class *c, void *p) {
-    size_t offset = (char *)p - (char *)c->class_region_start;
+static struct slab_metadata *get_metadata(struct size_class *c, const void *p) {
+    size_t offset = (const char *)p - (const char *)c->class_region_start;
     size_t index = libdivide_u64_do(offset, &c->slab_size_divisor);
     // still caught without this check either as a read access violation or "double free"
     if (index >= c->metadata_allocated) {
@@ -1558,7 +1558,7 @@ EXPORT void h_free_sized(void *p, size_t expected_size) {
     thread_seal_metadata();
 }
 
-static inline void memory_corruption_check_small(void *p) {
+static inline void memory_corruption_check_small(const void *p) {
     struct slab_size_class_info size_class_info = slab_size_class(p);
     size_t class = size_class_info.class;
     struct size_class *c = &ro.size_class_metadata[size_class_info.arena][class];
@@ -1573,7 +1573,7 @@ static inline void memory_corruption_check_small(void *p) {
 
     struct slab_metadata *metadata = get_metadata(c, p);
     void *slab = get_slab(c, slab_size, metadata);
-    size_t slot = libdivide_u32_do((char *)p - (char *)slab, &c->size_divisor);
+    size_t slot = libdivide_u32_do((const char *)p - (const char *)slab, &c->size_divisor);
 
     if (slot_pointer(size, slab, slot) != p) {
         fatal_error("invalid unaligned malloc_usable_size");
@@ -1585,7 +1585,7 @@ static inline void memory_corruption_check_small(void *p) {
 
     if (!is_zero_size && canary_size) {
         u64 canary_value;
-        memcpy(&canary_value, (char *)p + size - canary_size, canary_size);
+        memcpy(&canary_value, (const char *)p + size - canary_size, canary_size);
         if (unlikely(canary_value != metadata->canary_value)) {
             fatal_error("canary corrupted");
         }
