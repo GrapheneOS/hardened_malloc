@@ -30,6 +30,10 @@ SHARED_FLAGS := -O3 -flto -fPIC -fvisibility=hidden $(call safe_flag,-fno-plt) \
     $(call safe_flag,-fstack-clash-protection) -fstack-protector-strong -pipe -Wall -Wextra \
     $(call safe_flag,-Wcast-align=strict,-Wcast-align) -Wcast-qual -Wwrite-strings
 
+ifeq ($(CC),clang)
+    SHARED_FLAGS += -Wno-constant-logical-operand
+endif
+
 ifeq ($(CONFIG_WERROR),true)
     SHARED_FLAGS += -Werror
 endif
