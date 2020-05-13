@@ -306,7 +306,7 @@ The following integer configuration options are available:
   number of slots in the random array used to randomize free slab reuse.
 * `CONFIG_CLASS_REGION_SIZE`: `34359738368` (default) to control the size of
   the size class regions.
-* `CONFIG_N_ARENA`: `1` (default) to control the number of arenas
+* `CONFIG_N_ARENA`: `4` (default) to control the number of arenas
 * `CONFIG_STATS`: `false` (default) to control whether stats on allocation /
   deallocation count and active allocations are tracked. See the [section on
   stats](#stats) for more details.
