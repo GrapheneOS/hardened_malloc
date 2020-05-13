@@ -190,6 +190,32 @@ between portability, performance, memory usage or security. The core design
 choices are not configurable and the allocator remains very security-focused
 even with all the optional features disabled.
 
+For reduced memory usage at the expense of performance (this will also reduce
+the size of quarantines, saving a lot of memory, since that's currently based
+on the size of the largest size class):
+
+    make \
+    N_ARENA=1 \
+    CONFIG_EXTENDED_SIZE_CLASSES=false
+
+The default configuration has all normal security features enabled (just not
+the niche `CONFIG_SEAL_METADATA`) and is quite aggressive in terms of
+sacrificing performance and memory usage for security. An example of a leaner
+configuration disabling expensive security features other than zero-on-free /
+slab canaries along with using far fewer guard slabs:
+
+    make \
+    CONFIG_WRITE_AFTER_FREE_CHECK=false \
+    CONFIG_SLOT_RANDOMIZE=false \
+    CONFIG_SLAB_QUARANTINE_RANDOM_LENGTH=0 \
+    CONFIG_SLAB_QUARANTINE_QUEUE_LENGTH=0 \
+    CONFIG_GUARD_SLABS_INTERVAL=8
+
+This is a more appropriate configuration for a more mainstream OS choosing to
+use hardened\_malloc while making a smaller memory and performance sacrifice.
+The slot randomization isn't particularly expensive but it's low value and is
+one of the first things to disable when aiming for higher performance.
+
 The following boolean configuration options are available:
 
 * `CONFIG_WERROR`: `true` (default) or `false` to control whether compiler
