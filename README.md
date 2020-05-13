@@ -191,8 +191,8 @@ choices are not configurable and the allocator remains very security-focused
 even with all the optional features disabled.
 
 For reduced memory usage at the expense of performance (this will also reduce
-the size of quarantines, saving a lot of memory, since that's currently based
-on the size of the largest size class):
+the size of the empty slab caches and quarantines, saving a lot of memory,
+since those are currently based on the size of the largest size class):
 
     make \
     N_ARENA=1 \
