@@ -107,6 +107,7 @@ struct slab_metadata {
 static const size_t min_align = 16;
 #define MIN_SLAB_SIZE_CLASS_SHIFT 4
 
+// set slab cache size based on the size of the largest slab
 #if !CONFIG_EXTENDED_SIZE_CLASSES
 static const size_t MAX_SLAB_SIZE_CLASS = 65536;
 #define MAX_SLAB_SIZE_CLASS_SHIFT 14
