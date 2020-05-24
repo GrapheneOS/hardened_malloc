@@ -108,7 +108,7 @@ static const size_t min_align = 16;
 #define MIN_SLAB_SIZE_CLASS_SHIFT 4
 
 #if !CONFIG_EXTENDED_SIZE_CLASSES
-static const size_t MAX_SLAB_SIZE_CLASS = 16384;
+static const size_t MAX_SLAB_SIZE_CLASS = 65536;
 #define MAX_SLAB_SIZE_CLASS_SHIFT 14
 #else
 static const size_t MAX_SLAB_SIZE_CLASS = 131072;
