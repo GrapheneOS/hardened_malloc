@@ -79,6 +79,7 @@ static union {
         bool zero_on_free;
         bool purge_slabs;
         bool region_quarantine_protect;
+        bool slot_randomize;
     };
     char padding[PAGE_SIZE];
 } ro __attribute__((aligned(PAGE_SIZE)));
@@ -350,7 +351,7 @@ static u64 get_mask(size_t slots) {
 }
 
 static size_t get_free_slot(struct random_state *rng, size_t slots, struct slab_metadata *metadata) {
-    if (SLOT_RANDOMIZE) {
+    if (ro.slot_randomize) {
         // randomize start location for linear search (uniform random choice is too slow)
         unsigned random_index = get_random_u16_uniform(rng, slots);
         unsigned first_bitmap = random_index / 64;
@@ -1055,16 +1056,23 @@ static inline void enforce_init(void) {
     }
 }
 
-COLD static void handle_hal_bugs(void) {
+COLD static void handle_bugs(void) {
     char path[256];
     if (readlink("/proc/self/exe", path, sizeof(path)) == -1) {
         return;
     }
+
     const char camera_provider[] = "/vendor/bin/hw/android.hardware.camera.provider@2.4-service_64";
     if (strcmp(camera_provider, path) == 0) {
         ro.zero_on_free = false;
         ro.purge_slabs = false;
         ro.region_quarantine_protect = false;
+    }
+
+    // DeviceDescriptor sorting wrongly relies on malloc addresses
+    const char audio_service[] = "/system/bin/audioserver";
+    if (strcmp(audio_service, path) == 0) {
+        ro.slot_randomize = false;
     }
 }
 
@@ -1085,7 +1093,8 @@ COLD static void init_slow_path(void) {
     ro.purge_slabs = true;
     ro.zero_on_free = ZERO_ON_FREE;
     ro.region_quarantine_protect = true;
-    handle_hal_bugs();
+    ro.slot_randomize = SLOT_RANDOMIZE;
+    handle_bugs();
 
     if (sysconf(_SC_PAGESIZE) != PAGE_SIZE) {
         fatal_error("runtime page size does not match compile-time page size which is not supported");
