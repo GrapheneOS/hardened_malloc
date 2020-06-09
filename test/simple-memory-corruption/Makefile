@@ -1,3 +1,17 @@
+dir=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
+
+CONFIG_SLAB_CANARY := true
+
+ifeq (,$(filter $(CONFIG_SLAB_CANARY),true false))
+    $(error CONFIG_SLAB_CANARY must be true or false)
+endif
+
+CFLAGS += -DSLAB_CANARY=$(CONFIG_SLAB_CANARY)
+
+LDLIBS := -lhardened_malloc
+
+LDFLAGS := -Wl,-L$(dir)../../,-R,$(dir)../../
+
 EXECUTABLES := \
     double_free_large \
     double_free_large_delayed \
@@ -26,7 +40,9 @@ EXECUTABLES := \
     delete_type_size_mismatch \
 	unaligned_malloc_usable_size_small \
 	invalid_malloc_usable_size_small \
-	invalid_malloc_usable_size_small_quarantine
+	invalid_malloc_usable_size_small_quarantine \
+	malloc_object_size \
+	malloc_object_size_offset
 
 all: $(EXECUTABLES)
 

@@ -181,6 +181,13 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
         _stdout, _stderr, returncode = self.run_test("write_zero_size")
         self.assertEqual(returncode, -11)
 
+    def test_malloc_object_size(self):
+        _stdout, _stderr, returncode = self.run_test("malloc_object_size")
+        self.assertEqual(returncode, 0)
+
+    def test_malloc_object_size_offset(self):
+        _stdout, _stderr, returncode = self.run_test("malloc_object_size_offset")
+        self.assertEqual(returncode, 0)
 
 if __name__ == '__main__':
     unittest.main()
