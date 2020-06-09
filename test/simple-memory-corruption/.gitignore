@@ -26,4 +26,6 @@ write_zero_size
 unaligned_malloc_usable_size_small
 invalid_malloc_usable_size_small
 invalid_malloc_usable_size_small_quarantine
+malloc_object_size
+malloc_object_size_offset
 __pycache__/
