@@ -1635,17 +1635,34 @@ EXPORT size_t h_malloc_object_size(void *p) {
         return 0;
     }
 
+    thread_unseal_metadata();
+
     void *slab_region_start = get_slab_region_start();
     if (p >= slab_region_start && p < ro.slab_region_end) {
+        struct slab_size_class_info size_class_info = slab_size_class(p);
+        size_t class = size_class_info.class;
+        size_t size_class = size_classes[class];
+        struct size_class *c = &ro.size_class_metadata[size_class_info.arena][class];
+
+        mutex_lock(&c->lock);
+
+        struct slab_metadata *metadata = get_metadata(c, p);
+        size_t slab_size = get_slab_size(size_class_slots[class], size_class);
+        void *slab = get_slab(c, slab_size, metadata);
+        size_t slot = libdivide_u32_do((const char *)p - (const char *)slab, &c->size_divisor);
+        void *start = slot_pointer(size_class, slab, slot);
+        size_t offset = (const char *)p - (const char *)start;
+
+        mutex_unlock(&c->lock);
+        thread_seal_metadata();
+        
         size_t size = slab_usable_size(p);
-        return size ? size - canary_size : 0;
+        return size ? size - canary_size - offset : 0;
     }
 
     if (unlikely(slab_region_start == NULL)) {
         return SIZE_MAX;
     }
-
-    thread_unseal_metadata();
 
     struct region_allocator *ra = ro.region_allocator;
     mutex_lock(&ra->lock);
