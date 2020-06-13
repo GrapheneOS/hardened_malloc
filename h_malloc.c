@@ -1655,7 +1655,7 @@ EXPORT size_t h_malloc_object_size(void *p) {
 
         mutex_unlock(&c->lock);
         thread_seal_metadata();
-        
+
         size_t size = slab_usable_size(p);
         return size ? size - canary_size - offset : 0;
     }
