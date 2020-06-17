@@ -34,7 +34,7 @@ int main(void) {
     for (unsigned i = 0; i < N_SIZE_CLASSES; i++) {
         size_t size = size_classes[i];
         p[i] = malloc(size);
-        if (!p) {
+        if (!p[i]) {
             return 1;
         }
         void *q = malloc(size);
