@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-__attribute__((optimize(0)))
-int main(void) {
+#include "../test_util.h"
+
+OPTNONE int main(void) {
     char *p = malloc(128 * 1024);
     if (!p) {
         return 1;

@@ -1,16 +1,18 @@
 #include <pthread.h>
+#include <stdio.h>
 
 #include <malloc.h>
 
-__attribute__((optimize(0)))
-void leak_memory(void) {
+#include "test_util.h"
+
+OPTNONE static void leak_memory(void) {
     (void)malloc(1024 * 1024 * 1024);
     (void)malloc(16);
     (void)malloc(32);
     (void)malloc(4096);
 }
 
-void *do_work(void *p) {
+static void *do_work(void *p) {
     leak_memory();
     return NULL;
 }

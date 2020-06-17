@@ -1,7 +1,10 @@
+#include <stdio.h>
+
 #include <malloc.h>
 
-__attribute__((optimize(0)))
-int main(void) {
+#include "test_util.h"
+
+OPTNONE int main(void) {
     malloc(1024 * 1024 * 1024);
     malloc(16);
     malloc(32);

@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-__attribute__((optimize(0)))
-int main(void) {
+#include "test_util.h"
+
+OPTNONE int main(void) {
     void *p = NULL;
     size_t size = 256 * 1024;
 

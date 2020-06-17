@@ -1,7 +1,8 @@
 #include <stdlib.h>
 
-__attribute__((optimize(0)))
-int main(void) {
+#include "../test_util.h"
+
+OPTNONE int main(void) {
     void *p = malloc(128 * 1024);
     if (!p) {
         return 1;
