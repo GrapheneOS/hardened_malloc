@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static unsigned size_classes[] = {
+static size_t size_classes[] = {
     /* large */ 4 * 1024 * 1024,
     /* 0 */ 0,
     /* 16 */ 16, 32, 48, 64, 80, 96, 112, 128,
@@ -32,7 +32,7 @@ int main(void) {
 
     void *p[N_SIZE_CLASSES];
     for (unsigned i = 0; i < N_SIZE_CLASSES; i++) {
-        unsigned size = size_classes[i];
+        size_t size = size_classes[i];
         p[i] = malloc(size);
         if (!p) {
             return 1;
