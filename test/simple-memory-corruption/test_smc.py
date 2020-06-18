@@ -186,8 +186,24 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
         self.assertEqual(returncode, 0)
 
     def test_malloc_object_size_offset(self):
-        _stdout, _stderr, returncode = self.run_test("malloc_object_size_offset")
+        _stdout, _stderr, returncode = self.run_test(
+            "malloc_object_size_offset")
         self.assertEqual(returncode, 0)
+
+    def test_invalid_malloc_object_size_small(self):
+        _stdout, stderr, returncode = self.run_test(
+            "invalid_malloc_object_size_small")
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode(
+            "utf-8"), "fatal allocator error: invalid malloc_object_size\n")
+
+    def test_invalid_malloc_object_size_small_quarantine(self):
+        _stdout, stderr, returncode = self.run_test(
+            "invalid_malloc_object_size_small_quarantine")
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode(
+            "utf-8"), "fatal allocator error: invalid malloc_object_size (quarantine)\n")
+
 
 if __name__ == '__main__':
     unittest.main()
