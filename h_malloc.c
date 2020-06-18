@@ -1650,6 +1650,17 @@ EXPORT size_t h_malloc_object_size(void *p) {
         size_t slab_size = get_slab_size(size_class_slots[class], size_class);
         void *slab = get_slab(c, slab_size, metadata);
         size_t slot = libdivide_u32_do((const char *)p - (const char *)slab, &c->size_divisor);
+
+        if (!get_slot(metadata, slot)) {
+            fatal_error("invalid malloc_object_size");
+        }
+
+#if SLAB_QUARANTINE
+        if (get_quarantine(metadata, slot)) {
+            fatal_error("invalid malloc_object_size (quarantine)");
+        }
+#endif
+
         void *start = slot_pointer(size_class, slab, slot);
         size_t offset = (const char *)p - (const char *)start;
 
