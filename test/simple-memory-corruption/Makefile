@@ -42,7 +42,9 @@ EXECUTABLES := \
 	invalid_malloc_usable_size_small \
 	invalid_malloc_usable_size_small_quarantine \
 	malloc_object_size \
-	malloc_object_size_offset
+	malloc_object_size_offset \
+	invalid_malloc_object_size_small \
+	invalid_malloc_object_size_small_quarantine
 
 all: $(EXECUTABLES)
 
