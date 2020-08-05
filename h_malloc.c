@@ -1058,7 +1058,7 @@ COLD static void init_slow_path(void) {
 #endif
 
     if (sysconf(_SC_PAGESIZE) != PAGE_SIZE) {
-        fatal_error("page size mismatch");
+        fatal_error("runtime page size does not match compile-time page size which is not supported");
     }
 
     struct random_state *rng = allocate_pages(sizeof(struct random_state), PAGE_SIZE, true, "malloc init rng");
