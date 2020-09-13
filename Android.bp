@@ -51,6 +51,7 @@ lib_src_files = [
 
 cc_library {
     name: "libhardened_malloc",
+    ramdisk_available: true,
     recovery_available: true,
     defaults: ["hardened_malloc_defaults"],
     srcs: lib_src_files,
