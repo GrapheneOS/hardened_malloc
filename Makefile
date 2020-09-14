@@ -25,7 +25,7 @@ define safe_flag
 $(shell $(CC) $(if $(filter clang,$(CC)),-Werror=unknown-warning-option) -E $1 - </dev/null >/dev/null 2>&1 && echo $1 || echo $2)
 endef
 
-CPPFLAGS := $(CPPFLAGS) -D_GNU_SOURCE
+CPPFLAGS := $(CPPFLAGS) -D_GNU_SOURCE -I include
 SHARED_FLAGS := -O3 -flto -fPIC -fvisibility=hidden $(call safe_flag,-fno-plt) \
     $(call safe_flag,-fstack-clash-protection) -fstack-protector-strong -pipe -Wall -Wextra \
     $(call safe_flag,-Wcast-align=strict,-Wcast-align) -Wcast-qual -Wwrite-strings
@@ -119,9 +119,9 @@ libhardened_malloc.so: $(OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared $^ $(LDLIBS) -o $@
 
 chacha.o: chacha.c chacha.h util.h
-h_malloc.o: h_malloc.c h_malloc.h mutex.h memory.h pages.h random.h util.h
+h_malloc.o: h_malloc.c include/h_malloc.h mutex.h memory.h pages.h random.h util.h
 memory.o: memory.c memory.h util.h
-new.o: new.cc h_malloc.h util.h
+new.o: new.cc include/h_malloc.h util.h
 pages.o: pages.c pages.h memory.h util.h
 random.o: random.c random.h chacha.h util.h
 util.o: util.c util.h
