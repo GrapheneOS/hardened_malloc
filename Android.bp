@@ -55,6 +55,7 @@ cc_library {
     recovery_available: true,
     defaults: ["hardened_malloc_defaults"],
     srcs: lib_src_files,
+    export_include_dirs: ["include"],
     target: {
         android: {
             shared: {
