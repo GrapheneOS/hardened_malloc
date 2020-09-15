@@ -1933,7 +1933,7 @@ EXPORT struct mallinfo h_mallinfo_bin_info(UNUSED size_t arena, UNUSED size_t bi
     return info;
 }
 
-COLD EXPORT int h_iterate(UNUSED uintptr_t base, UNUSED size_t size,
+COLD EXPORT int h_malloc_iterate(UNUSED uintptr_t base, UNUSED size_t size,
                           UNUSED void (*callback)(uintptr_t ptr, size_t size, void *arg),
                           UNUSED void *arg) {
     fatal_error("not implemented");
