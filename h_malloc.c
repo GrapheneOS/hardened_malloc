@@ -1883,6 +1883,10 @@ EXPORT struct mallinfo h_mallinfo_arena_info(UNUSED size_t arena) {
     struct mallinfo info = {0};
 
 #if CONFIG_STATS
+    if (!is_init()) {
+        return info;
+    }
+
     if (arena < N_ARENA) {
         for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
             struct size_class *c = &ro.size_class_metadata[arena][class];
