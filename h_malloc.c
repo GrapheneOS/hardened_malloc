@@ -30,6 +30,7 @@
 #include "util.h"
 
 #define SLAB_QUARANTINE (SLAB_QUARANTINE_RANDOM_LENGTH > 0 || SLAB_QUARANTINE_QUEUE_LENGTH > 0)
+#define REGION_QUARANTINE (REGION_QUARANTINE_RANDOM_LENGTH > 0 || REGION_QUARANTINE_QUEUE_LENGTH > 0)
 #define MREMAP_MOVE_THRESHOLD (32 * 1024 * 1024)
 
 static_assert(sizeof(void *) == 8, "64-bit only");
@@ -793,9 +794,13 @@ struct region_allocator {
 #if CONFIG_STATS
     size_t allocated;
 #endif
+#if REGION_QUARANTINE_RANDOM_LENGTH
     struct quarantine_info quarantine_random[REGION_QUARANTINE_RANDOM_LENGTH];
+#endif
+#if REGION_QUARANTINE_QUEUE_LENGTH
     struct quarantine_info quarantine_queue[REGION_QUARANTINE_QUEUE_LENGTH];
     size_t quarantine_queue_index;
+#endif
     struct random_state rng;
 };
 
@@ -828,7 +833,7 @@ struct __attribute__((aligned(PAGE_SIZE))) allocator_state {
 };
 
 static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t guard_size) {
-    if (size >= REGION_QUARANTINE_SKIP_THRESHOLD) {
+    if (!REGION_QUARANTINE || size >= REGION_QUARANTINE_SKIP_THRESHOLD) {
         deallocate_pages(p, size, guard_size);
         return;
     }
@@ -839,29 +844,35 @@ static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t gua
     }
     memory_set_name(p, size, "malloc large");
 
-    struct quarantine_info a =
+    struct quarantine_info target =
         (struct quarantine_info){(char *)p - guard_size, size + guard_size * 2};
 
     struct region_allocator *ra = ro.region_allocator;
 
     mutex_lock(&ra->lock);
 
+#if REGION_QUARANTINE_RANDOM_LENGTH
     size_t index = get_random_u64_uniform(&ra->rng, REGION_QUARANTINE_RANDOM_LENGTH);
-    struct quarantine_info b = ra->quarantine_random[index];
-    ra->quarantine_random[index] = a;
-    if (b.p == NULL) {
+    struct quarantine_info random_substitute = ra->quarantine_random[index];
+    ra->quarantine_random[index] = target;
+    if (random_substitute.p == NULL) {
         mutex_unlock(&ra->lock);
         return;
     }
+    target = random_substitute;
+#endif
 
-    a = ra->quarantine_queue[ra->quarantine_queue_index];
-    ra->quarantine_queue[ra->quarantine_queue_index] = b;
+#if REGION_QUARANTINE_QUEUE_LENGTH
+    struct quarantine_info queue_substitute = ra->quarantine_queue[ra->quarantine_queue_index];
+    ra->quarantine_queue[ra->quarantine_queue_index] = target;
     ra->quarantine_queue_index = (ra->quarantine_queue_index + 1) % REGION_QUARANTINE_QUEUE_LENGTH;
+    target = queue_substitute;
+#endif
 
     mutex_unlock(&ra->lock);
 
-    if (a.p != NULL) {
-        memory_unmap(a.p, a.size);
+    if (target.p != NULL) {
+        memory_unmap(target.p, target.size);
     }
 }
 
