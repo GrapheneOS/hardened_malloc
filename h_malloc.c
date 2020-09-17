@@ -1394,6 +1394,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
                     fatal_error("invalid realloc");
                 }
                 region->size = size;
+                stats_large_deallocate(ra, old_size - size);
                 mutex_unlock(&ra->lock);
 
                 thread_seal_metadata();
@@ -1416,6 +1417,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
                             fatal_error("invalid realloc");
                         }
                         region->size = size;
+                        stats_large_allocate(ra, extra);
                         mutex_unlock(&ra->lock);
 
                         thread_seal_metadata();
@@ -1438,6 +1440,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
                     fatal_error("invalid realloc");
                 }
                 regions_delete(region);
+                stats_large_deallocate(ra, old_size);
                 mutex_unlock(&ra->lock);
 
                 if (memory_remap_fixed(old, old_size, new, size)) {
