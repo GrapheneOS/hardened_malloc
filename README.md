@@ -836,7 +836,7 @@ is still provided, with a similar format as what Android uses, with tweaks for
 hardened\_malloc and the version set to `hardened_malloc-1`. The data format
 may be changed in the future.
 
-As an example, consider the follow program from the hardened\_malloc tests:
+As an example, consider the following program from the hardened\_malloc tests:
 
 ```c
 #include <pthread.h>
@@ -986,6 +986,9 @@ See the [section on size classes](#size-classes) to map the size class bin
 number to the corresponding size class. The bin index begins at 0, mapping to
 the 0 byte size class, followed by 1 for the 16 bytes, 2 for 32 bytes, etc. and
 large allocations are treated as one group.
+
+When stats aren't enabled, the `malloc_info` output will be an empty `malloc`
+element.
 
 ## System calls
 
