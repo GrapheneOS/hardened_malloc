@@ -38,13 +38,13 @@ EXECUTABLES := \
     eight_byte_overflow_large \
     string_overflow \
     delete_type_size_mismatch \
-	unaligned_malloc_usable_size_small \
-	invalid_malloc_usable_size_small \
-	invalid_malloc_usable_size_small_quarantine \
-	malloc_object_size \
-	malloc_object_size_offset \
-	invalid_malloc_object_size_small \
-	invalid_malloc_object_size_small_quarantine
+    unaligned_malloc_usable_size_small \
+    invalid_malloc_usable_size_small \
+    invalid_malloc_usable_size_small_quarantine \
+    malloc_object_size \
+    malloc_object_size_offset \
+    invalid_malloc_object_size_small \
+    invalid_malloc_object_size_small_quarantine
 
 all: $(EXECUTABLES)
 
