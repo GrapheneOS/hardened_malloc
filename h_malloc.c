@@ -1808,16 +1808,11 @@ EXPORT int h_malloc_info(int options, UNUSED FILE *fp) {
             for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
                 struct size_class *c = &ro.size_class_metadata[arena][class];
 
-                u64 nmalloc;
-                u64 ndalloc;
-                size_t slab_allocated;
-                size_t allocated;
-
                 mutex_lock(&c->lock);
-                nmalloc = c->nmalloc;
-                ndalloc = c->ndalloc;
-                slab_allocated = c->slab_allocated;
-                allocated = c->allocated;
+                u64 nmalloc = c->nmalloc;
+                u64 ndalloc = c->ndalloc;
+                size_t slab_allocated = c->slab_allocated;
+                size_t allocated = c->allocated;
                 mutex_unlock(&c->lock);
 
                 if (nmalloc || ndalloc || slab_allocated || allocated) {
@@ -1833,11 +1828,9 @@ EXPORT int h_malloc_info(int options, UNUSED FILE *fp) {
             fputs("</heap>", fp);
         }
 
-        size_t region_allocated;
-
         struct region_allocator *ra = ro.region_allocator;
         mutex_lock(&ra->lock);
-        region_allocated = ra->allocated;
+        size_t region_allocated = ra->allocated;
         mutex_unlock(&ra->lock);
 
         fprintf(fp, "<heap nr=\"%u\">", N_ARENA);
