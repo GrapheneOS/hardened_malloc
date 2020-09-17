@@ -1806,9 +1806,9 @@ EXPORT int h_malloc_info(int options, UNUSED FILE *fp) {
         return -1;
     }
 
-#if CONFIG_STATS
     fputs("<malloc version=\"hardened_malloc-1\">", fp);
 
+#if CONFIG_STATS
     if (is_init()) {
         for (unsigned arena = 0; arena < N_ARENA; arena++) {
             fprintf(fp, "<heap nr=\"%u\">", arena);
@@ -1845,14 +1845,11 @@ EXPORT int h_malloc_info(int options, UNUSED FILE *fp) {
         fprintf(fp, "<allocated_large>%zu</allocated_large>", region_allocated);
         fputs("</heap>", fp);
     }
+#endif
 
     fputs("</malloc>", fp);
 
     return 0;
-#else
-    errno = ENOSYS;
-    return -1;
-#endif
 }
 #endif
 
