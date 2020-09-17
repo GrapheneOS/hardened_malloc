@@ -6,13 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#if __has_include(<threads.h>)
 #include <threads.h>
-#else
-// glibc < 2.28
-#define thread_local _Thread_local
-#endif
 
 #include <malloc.h>
 #include <pthread.h>
