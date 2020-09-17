@@ -1848,16 +1848,6 @@ EXPORT int h_malloc_info(int options, UNUSED FILE *fp) {
 }
 #endif
 
-#ifdef __GLIBC__
-COLD EXPORT void *h_malloc_get_state(void) {
-    return NULL;
-}
-
-COLD EXPORT int h_malloc_set_state(UNUSED void *state) {
-    return -2;
-}
-#endif
-
 #ifdef __ANDROID__
 EXPORT size_t h_mallinfo_narenas(void) {
     // Consider region allocator to be an arena with index N_ARENA.
@@ -1947,5 +1937,15 @@ COLD EXPORT void h_malloc_disable(void) {
 COLD EXPORT void h_malloc_enable(void) {
     enforce_init();
     full_unlock();
+}
+#endif
+
+#ifdef __GLIBC__
+COLD EXPORT void *h_malloc_get_state(void) {
+    return NULL;
+}
+
+COLD EXPORT int h_malloc_set_state(UNUSED void *state) {
+    return -2;
 }
 #endif
