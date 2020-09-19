@@ -133,6 +133,8 @@ tidy:
 
 clean:
 	rm -f libhardened_malloc.so $(OBJECTS)
+	rm -f test/simple-memory-corruption/__init__.pyc
+	rm -f test/simple-memory-corruption/test_smc.pyc
 
 test: libhardened_malloc.so
 	make -C test/
