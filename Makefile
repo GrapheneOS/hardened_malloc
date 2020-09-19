@@ -136,6 +136,6 @@ clean:
 
 test: libhardened_malloc.so
 	make -C test/
-	-python -m unittest discover --start-directory test/
+	-python3 -m unittest discover --start-directory test/
 
 .PHONY: check clean tidy test
