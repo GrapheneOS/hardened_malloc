@@ -68,8 +68,8 @@ static const unsigned thread_arena = 0;
 
 static union {
     struct {
-        void *_Atomic slab_region_start;
-        void *slab_region_end;
+        void *slab_region_start;
+        void *_Atomic slab_region_end;
         struct size_class *size_class_metadata[N_ARENA];
         struct region_allocator *region_allocator;
         struct region_metadata *regions[2];
@@ -80,8 +80,8 @@ static union {
     char padding[PAGE_SIZE];
 } ro __attribute__((aligned(PAGE_SIZE)));
 
-static inline void *get_slab_region_start() {
-    return atomic_load_explicit(&ro.slab_region_start, memory_order_acquire);
+static inline void *get_slab_region_end() {
+    return atomic_load_explicit(&ro.slab_region_end, memory_order_acquire);
 }
 
 #define SLAB_METADATA_COUNT
@@ -1039,7 +1039,7 @@ static void post_fork_child(void) {
 }
 
 static inline bool is_init(void) {
-    return get_slab_region_start() != NULL;
+    return get_slab_region_end() != NULL;
 }
 
 static inline void enforce_init(void) {
@@ -1098,12 +1098,12 @@ COLD static void init_slow_path(void) {
         fatal_error("failed to unprotect memory for regions table");
     }
 
-    void *slab_region_start = memory_map(slab_region_size);
-    if (slab_region_start == NULL) {
+    ro.slab_region_start = memory_map(slab_region_size);
+    if (ro.slab_region_start == NULL) {
         fatal_error("failed to allocate slab region");
     }
-    ro.slab_region_end = (char *)slab_region_start + slab_region_size;
-    memory_set_name(slab_region_start, slab_region_size, "malloc slab region gap");
+    void *slab_region_end = (char *)ro.slab_region_start + slab_region_size;
+    memory_set_name(ro.slab_region_start, slab_region_size, "malloc slab region gap");
 
     for (unsigned arena = 0; arena < N_ARENA; arena++) {
         ro.size_class_metadata[arena] = allocator_state->size_class_metadata[arena];
@@ -1115,7 +1115,7 @@ COLD static void init_slow_path(void) {
 
             size_t bound = (REAL_CLASS_REGION_SIZE - CLASS_REGION_SIZE) / PAGE_SIZE - 1;
             size_t gap = (get_random_u64_uniform(rng, bound) + 1) * PAGE_SIZE;
-            c->class_region_start = (char *)slab_region_start + ARENA_SIZE * arena + REAL_CLASS_REGION_SIZE * class + gap;
+            c->class_region_start = (char *)ro.slab_region_start + ARENA_SIZE * arena + REAL_CLASS_REGION_SIZE * class + gap;
             label_slab(c->class_region_start, CLASS_REGION_SIZE, class);
 
             size_t size = size_classes[class];
@@ -1131,7 +1131,7 @@ COLD static void init_slow_path(void) {
 
     deallocate_pages(rng, sizeof(struct random_state), PAGE_SIZE);
 
-    atomic_store_explicit(&ro.slab_region_start, slab_region_start, memory_order_release);
+    atomic_store_explicit(&ro.slab_region_end, slab_region_end, memory_order_release);
 
     if (memory_protect_ro(&ro, sizeof(ro))) {
         fatal_error("failed to protect allocator data");
@@ -1355,7 +1355,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
     }
 
     size_t old_size;
-    if (old >= get_slab_region_start() && old < ro.slab_region_end) {
+    if (old < get_slab_region_end() && old >= ro.slab_region_start) {
         old_size = slab_usable_size(old);
         if (size <= MAX_SLAB_SIZE_CLASS && get_size_info(size).size == old_size) {
             return old;
@@ -1531,7 +1531,7 @@ EXPORT void h_free(void *p) {
         return;
     }
 
-    if (p >= get_slab_region_start() && p < ro.slab_region_end) {
+    if (p < get_slab_region_end() && p >= ro.slab_region_start) {
         thread_unseal_metadata();
         deallocate_small(p, NULL);
         thread_seal_metadata();
@@ -1552,7 +1552,7 @@ EXPORT void h_free_sized(void *p, size_t expected_size) {
         return;
     }
 
-    if (p >= get_slab_region_start() && p < ro.slab_region_end) {
+    if (p < get_slab_region_end() && p >= ro.slab_region_start) {
         thread_unseal_metadata();
         expected_size = get_size_info(adjust_size_for_canaries(expected_size)).size;
         deallocate_small(p, &expected_size);
@@ -1615,7 +1615,7 @@ EXPORT size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *p) {
     enforce_init();
     thread_unseal_metadata();
 
-    if (p >= get_slab_region_start() && p < ro.slab_region_end) {
+    if (p < get_slab_region_end() && p >= ro.slab_region_start) {
         memory_corruption_check_small(p);
         thread_seal_metadata();
 
@@ -1643,8 +1643,8 @@ EXPORT size_t h_malloc_object_size(void *p) {
 
     thread_unseal_metadata();
 
-    void *slab_region_start = get_slab_region_start();
-    if (p >= slab_region_start && p < ro.slab_region_end) {
+    void *slab_region_end = get_slab_region_end();
+    if (p < slab_region_end && p >= ro.slab_region_start) {
         struct slab_size_class_info size_class_info = slab_size_class(p);
         size_t class = size_class_info.class;
         size_t size_class = size_classes[class];
@@ -1677,7 +1677,7 @@ EXPORT size_t h_malloc_object_size(void *p) {
         return size ? size - canary_size - offset : 0;
     }
 
-    if (unlikely(slab_region_start == NULL)) {
+    if (unlikely(slab_region_end == NULL)) {
         return SIZE_MAX;
     }
 
@@ -1696,13 +1696,13 @@ EXPORT size_t h_malloc_object_size_fast(void *p) {
         return 0;
     }
 
-    void *slab_region_start = get_slab_region_start();
-    if (p >= slab_region_start && p < ro.slab_region_end) {
+    void *slab_region_end = get_slab_region_end();
+    if (p < slab_region_end && p >= ro.slab_region_start) {
         size_t size = slab_usable_size(p);
         return size ? size - canary_size : 0;
     }
 
-    if (unlikely(slab_region_start == NULL)) {
+    if (unlikely(slab_region_end == NULL)) {
         return 0;
     }
 
