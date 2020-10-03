@@ -266,6 +266,11 @@ The following boolean configuration options are available:
   the future. Whether or not this feature is enabled, the metadata is all
   contained within an isolated memory region with high entropy random guard
   regions around it.
+* `CONFIG_ENFORCE_INIT`: `true` (default) or `false` to control whether the
+  allocator initialization should be enforced. The primary purpose of this
+  check is to detect any attempts to free memory before there have been any
+  allocations. This check should rarely fail as this implementation will
+  attempt to initialize the allocator very early on.
 
 The following integer configuration options are available:
 
