@@ -1043,9 +1043,11 @@ static inline bool is_init(void) {
 }
 
 static inline void enforce_init(void) {
+#if CONFIG_ENFORCE_INIT
     if (!is_init()) {
         fatal_error("invalid uninitialized allocator usage");
     }
+#endif
 }
 
 COLD static void init_slow_path(void) {
