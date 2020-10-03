@@ -3,6 +3,7 @@ CONFIG_NATIVE := true
 CONFIG_CXX_ALLOCATOR := true
 CONFIG_UBSAN := false
 CONFIG_SEAL_METADATA := false
+CONFIG_ENFORCE_INIT := true
 CONFIG_ZERO_ON_FREE := true
 CONFIG_WRITE_AFTER_FREE_CHECK := true
 CONFIG_SLOT_RANDOMIZE := true
@@ -67,6 +68,10 @@ ifeq (,$(filter $(CONFIG_SEAL_METADATA),true false))
     $(error CONFIG_SEAL_METADATA must be true or false)
 endif
 
+ifeq (,$(filter $(CONFIG_ENFORCE_INIT),true false))
+    $(error CONFIG_ENFORCE_INIT must be true or false)
+endif
+
 ifeq (,$(filter $(CONFIG_ZERO_ON_FREE),true false))
     $(error CONFIG_ZERO_ON_FREE must be true or false)
 endif
@@ -97,6 +102,7 @@ endif
 
 CPPFLAGS += \
     -DCONFIG_SEAL_METADATA=$(CONFIG_SEAL_METADATA) \
+    -DCONFIG_ENFORCE_INIT=$(CONFIG_ENFORCE_INIT) \
     -DZERO_ON_FREE=$(CONFIG_ZERO_ON_FREE) \
     -DWRITE_AFTER_FREE_CHECK=$(CONFIG_WRITE_AFTER_FREE_CHECK) \
     -DSLOT_RANDOMIZE=$(CONFIG_SLOT_RANDOMIZE) \
