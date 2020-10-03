@@ -1612,7 +1612,6 @@ EXPORT size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *p) {
         return 0;
     }
 
-    enforce_init();
     thread_unseal_metadata();
 
     if (p < get_slab_region_end() && p >= ro.slab_region_start) {
@@ -1623,6 +1622,7 @@ EXPORT size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *p) {
         return size ? size - canary_size : 0;
     }
 
+    enforce_init();
     struct region_allocator *ra = ro.region_allocator;
     mutex_lock(&ra->lock);
     struct region_metadata *region = regions_find(p);
