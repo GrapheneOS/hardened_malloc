@@ -1774,6 +1774,8 @@ EXPORT struct mallinfo h_mallinfo(void) {
         return info;
     }
 
+    thread_unseal_metadata();
+
     struct region_allocator *ra = ro.region_allocator;
     mutex_lock(&ra->lock);
     info.hblkhd += ra->allocated;
@@ -1793,6 +1795,8 @@ EXPORT struct mallinfo h_mallinfo(void) {
 
     info.fordblks = info.hblkhd - info.uordblks;
     info.usmblks = info.hblkhd;
+
+    thread_seal_metadata();
 #endif
 
     return info;
@@ -1810,6 +1814,8 @@ EXPORT int h_malloc_info(int options, UNUSED FILE *fp) {
 
 #if CONFIG_STATS
     if (is_init()) {
+        thread_unseal_metadata();
+
         for (unsigned arena = 0; arena < N_ARENA; arena++) {
             fprintf(fp, "<heap nr=\"%u\">", arena);
 
@@ -1844,6 +1850,8 @@ EXPORT int h_malloc_info(int options, UNUSED FILE *fp) {
         fprintf(fp, "<heap nr=\"%u\">", N_ARENA);
         fprintf(fp, "<allocated_large>%zu</allocated_large>", region_allocated);
         fputs("</heap>", fp);
+
+        thread_seal_metadata();
     }
 #endif
 
@@ -1878,6 +1886,8 @@ EXPORT struct mallinfo h_mallinfo_arena_info(UNUSED size_t arena) {
         return info;
     }
 
+    thread_unseal_metadata();
+
     if (arena < N_ARENA) {
         for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
             struct size_class *c = &ro.size_class_metadata[arena][class];
@@ -1895,6 +1905,8 @@ EXPORT struct mallinfo h_mallinfo_arena_info(UNUSED size_t arena) {
         info.uordblks = ra->allocated;
         mutex_unlock(&ra->lock);
     }
+
+    thread_seal_metadata();
 #endif
 
     return info;
@@ -1915,6 +1927,8 @@ EXPORT struct mallinfo h_mallinfo_bin_info(UNUSED size_t arena, UNUSED size_t bi
     }
 
     if (arena < N_ARENA && bin < N_SIZE_CLASSES) {
+        thread_seal_metadata();
+
         struct size_class *c = &ro.size_class_metadata[arena][bin];
 
         mutex_lock(&c->lock);
@@ -1922,6 +1936,8 @@ EXPORT struct mallinfo h_mallinfo_bin_info(UNUSED size_t arena, UNUSED size_t bi
         info.uordblks = c->nmalloc;
         info.fordblks = c->ndalloc;
         mutex_unlock(&c->lock);
+
+        thread_unseal_metadata();
     }
 #endif
 
