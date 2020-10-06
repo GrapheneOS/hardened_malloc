@@ -1612,9 +1612,9 @@ EXPORT size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *p) {
         return 0;
     }
 
-    thread_unseal_metadata();
-
     if (p < get_slab_region_end() && p >= ro.slab_region_start) {
+        thread_unseal_metadata();
+
         memory_corruption_check_small(p);
         thread_seal_metadata();
 
@@ -1623,6 +1623,8 @@ EXPORT size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *p) {
     }
 
     enforce_init();
+    thread_unseal_metadata();
+
     struct region_allocator *ra = ro.region_allocator;
     mutex_lock(&ra->lock);
     struct region_metadata *region = regions_find(p);
@@ -1641,10 +1643,10 @@ EXPORT size_t h_malloc_object_size(void *p) {
         return 0;
     }
 
-    thread_unseal_metadata();
-
     void *slab_region_end = get_slab_region_end();
     if (p < slab_region_end && p >= ro.slab_region_start) {
+        thread_unseal_metadata();
+
         struct slab_size_class_info size_class_info = slab_size_class(p);
         size_t class = size_class_info.class;
         size_t size_class = size_classes[class];
@@ -1680,6 +1682,8 @@ EXPORT size_t h_malloc_object_size(void *p) {
     if (unlikely(slab_region_end == NULL)) {
         return SIZE_MAX;
     }
+
+    thread_unseal_metadata();
 
     struct region_allocator *ra = ro.region_allocator;
     mutex_lock(&ra->lock);
