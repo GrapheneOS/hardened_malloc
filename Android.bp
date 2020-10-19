@@ -56,6 +56,7 @@ cc_library {
     defaults: ["hardened_malloc_defaults"],
     srcs: lib_src_files,
     export_include_dirs: ["include"],
+    static_libs: ["libasync_safe"],
     target: {
         android: {
             shared: {
