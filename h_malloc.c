@@ -1235,7 +1235,7 @@ static void deallocate_large(void *p, const size_t *expected_size) {
         fatal_error("invalid free");
     }
     size_t size = region->size;
-    if (expected_size && size != *expected_size) {
+    if (expected_size && size != get_large_size_class(*expected_size)) {
         fatal_error("sized deallocation mismatch (large)");
     }
     size_t guard_size = region->guard_size;
