@@ -7,16 +7,16 @@
 static void print_mallinfo(void) {
     struct mallinfo info = mallinfo();
     printf("mallinfo:\n");
-    printf("arena: %zu\n", info.arena);
-    printf("ordblks: %zu\n", info.ordblks);
-    printf("smblks: %zu\n", info.smblks);
-    printf("hblks: %zu\n", info.hblks);
-    printf("hblkhd: %zu\n", info.hblkhd);
-    printf("usmblks: %zu\n", info.usmblks);
-    printf("fsmblks: %zu\n", info.fsmblks);
-    printf("uordblks: %zu\n", info.uordblks);
-    printf("fordblks: %zu\n", info.fordblks);
-    printf("keepcost: %zu\n", info.keepcost);
+    printf("arena: %zu\n", (size_t)info.arena);
+    printf("ordblks: %zu\n", (size_t)info.ordblks);
+    printf("smblks: %zu\n", (size_t)info.smblks);
+    printf("hblks: %zu\n", (size_t)info.hblks);
+    printf("hblkhd: %zu\n", (size_t)info.hblkhd);
+    printf("usmblks: %zu\n", (size_t)info.usmblks);
+    printf("fsmblks: %zu\n", (size_t)info.fsmblks);
+    printf("uordblks: %zu\n", (size_t)info.uordblks);
+    printf("fordblks: %zu\n", (size_t)info.fordblks);
+    printf("keepcost: %zu\n", (size_t)info.keepcost);
 }
 
 OPTNONE int main(void) {
