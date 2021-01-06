@@ -1552,9 +1552,11 @@ EXPORT void h_free_sized(void *p, size_t expected_size) {
         return;
     }
 
+    expected_size = adjust_size_for_canaries(expected_size);
+
     if (p < get_slab_region_end() && p >= ro.slab_region_start) {
         thread_unseal_metadata();
-        expected_size = get_size_info(adjust_size_for_canaries(expected_size)).size;
+        expected_size = get_size_info(expected_size).size;
         deallocate_small(p, &expected_size);
         thread_seal_metadata();
         return;
