@@ -145,9 +145,11 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
                          "fatal allocator error: invalid free\n")
 
     def test_uninitialized_malloc_usable_size(self):
-        _stdout, _stderr, returncode = self.run_test(
+        _stdout, stderr, returncode = self.run_test(
             "uninitialized_malloc_usable_size")
-        self.assertEqual(returncode, -11)
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode("utf-8"),
+                         "fatal allocator error: invalid malloc_usable_size\n")
 
     def test_uninitialized_realloc(self):
         _stdout, stderr, returncode = self.run_test("uninitialized_realloc")
