@@ -1630,7 +1630,7 @@ EXPORT size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *p) {
     struct region_allocator *ra = ro.region_allocator;
     mutex_lock(&ra->lock);
     struct region_metadata *region = regions_find(p);
-    if (p == NULL) {
+    if (region == NULL) {
         fatal_error("invalid malloc_usable_size");
     }
     size_t size = region->size;
