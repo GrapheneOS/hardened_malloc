@@ -903,7 +903,10 @@ static int regions_grow(void) {
         }
     }
 
-    memory_map_fixed(ra->regions, ra->total * sizeof(struct region_metadata));
+    if (memory_map_fixed(ra->regions, ra->total * sizeof(struct region_metadata))) {
+	    return 1;
+    }
+
     memory_set_name(ra->regions, ra->total * sizeof(struct region_metadata), "malloc allocator_state");
     ra->free = ra->free + ra->total;
     ra->total = newtotal;
