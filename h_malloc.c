@@ -1693,7 +1693,7 @@ EXPORT size_t h_malloc_object_size(void *p) {
     struct region_allocator *ra = ro.region_allocator;
     mutex_lock(&ra->lock);
     struct region_metadata *region = regions_find(p);
-    size_t size = p == NULL ? SIZE_MAX : region->size;
+    size_t size = region == NULL ? SIZE_MAX : region->size;
     mutex_unlock(&ra->lock);
 
     thread_seal_metadata();
