@@ -1178,7 +1178,7 @@ static size_t get_large_size_class(size_t size) {
         // 512 KiB [2560 KiB, 3 MiB, 3584 KiB, 4 MiB]
         // 1 MiB [5 MiB, 6 MiB, 7 MiB, 8 MiB]
         // etc.
-        size = max(size, PAGE_SIZE);
+        size = max(size, (size_t)PAGE_SIZE);
         size_t spacing_shift = 64 - __builtin_clzl(size - 1) - 3;
         size_t spacing_class = 1ULL << spacing_shift;
         return (size + (spacing_class - 1)) & ~(spacing_class - 1);
