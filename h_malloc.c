@@ -79,7 +79,6 @@ static union {
         bool zero_on_free;
         bool purge_slabs;
         bool region_quarantine_protect;
-        bool slot_randomize;
     };
     char padding[PAGE_SIZE];
 } ro __attribute__((aligned(PAGE_SIZE)));
@@ -351,7 +350,7 @@ static u64 get_mask(size_t slots) {
 }
 
 static size_t get_free_slot(struct random_state *rng, size_t slots, struct slab_metadata *metadata) {
-    if (ro.slot_randomize) {
+    if (SLOT_RANDOMIZE) {
         // randomize start location for linear search (uniform random choice is too slow)
         unsigned random_index = get_random_u16_uniform(rng, slots);
         unsigned first_bitmap = random_index / 64;
@@ -1069,12 +1068,6 @@ COLD static void handle_bugs(void) {
         ro.purge_slabs = false;
         ro.region_quarantine_protect = false;
     }
-
-    // DeviceDescriptor sorting wrongly relies on malloc addresses
-    const char audio_service[] = "/system/bin/audioserver";
-    if (strcmp(audio_service, path) == 0) {
-        ro.slot_randomize = false;
-    }
 }
 
 COLD static void init_slow_path(void) {
@@ -1094,7 +1087,6 @@ COLD static void init_slow_path(void) {
     ro.purge_slabs = true;
     ro.zero_on_free = ZERO_ON_FREE;
     ro.region_quarantine_protect = true;
-    ro.slot_randomize = SLOT_RANDOMIZE;
     handle_bugs();
 
     if (sysconf(_SC_PAGESIZE) != PAGE_SIZE) {
