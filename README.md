@@ -82,7 +82,7 @@ along with other hardening for the C standard library implementation.
 
 For Android, only the current generation, actively developed maintenance
 branch of the Android Open Source Project will be supported, which currently
-means `android11-qpr1-release`.
+means `android11-qpr2-release`.
 
 The Linux kernel's implementation of Memory Protection Keys was severely broken
 before Linux 5.0. The `CONFIG_SEAL_METADATA` feature should only be enabled for
