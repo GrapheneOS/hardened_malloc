@@ -295,7 +295,7 @@ The following integer configuration options are available:
 * `CONFIG_GUARD_SIZE_DIVISOR`: `2` (default) to control the maximum size of the
   guard regions placed on both sides of large memory allocations, relative to
   the usable size of the memory allocation.
-* `CONFIG_REGION_QUARANTINE_RANDOM_LENGTH`: `128` (default) to control the
+* `CONFIG_REGION_QUARANTINE_RANDOM_LENGTH`: `256` (default) to control the
   number of slots in the random array used to randomize region reuse for large
   memory allocations.
 * `CONFIG_REGION_QUARANTINE_QUEUE_LENGTH`: `1024` (default) to control the
