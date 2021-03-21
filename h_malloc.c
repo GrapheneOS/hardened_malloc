@@ -113,6 +113,8 @@ static const size_t MAX_SLAB_SIZE_CLASS = 131072;
 static const size_t max_empty_slabs_total = MAX_SLAB_SIZE_CLASS;
 #endif
 
+static const size_t min_extended_size_class = 20480;
+
 static const u32 size_classes[] = {
     /* 0 */ 0,
     /* 16 */ 16, 32, 48, 64, 80, 96, 112, 128,
@@ -1738,9 +1740,11 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
         // skip zero byte size class since there's nothing to change
         for (unsigned class = 1; class < N_SIZE_CLASSES; class++) {
             struct size_class *c = &ro.size_class_metadata[arena][class];
-            size_t slab_size = get_slab_size(size_class_slots[class], size_classes[class]);
+            size_t size = size_classes[class];
+            size_t slab_size = get_slab_size(size_class_slots[class], size);
 
             mutex_lock(&c->lock);
+
             struct slab_metadata *iterator = c->empty_slabs;
             while (iterator) {
                 void *slab = get_slab(c, slab_size, iterator);
@@ -1759,6 +1763,33 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
                 is_trimmed = true;
             }
             c->empty_slabs = iterator;
+
+#if SLAB_QUARANTINE && CONFIG_EXTENDED_SIZE_CLASSES
+            if (size >= min_extended_size_class) {
+                size_t quarantine_shift = __builtin_clzl(size) - (63 - MAX_SLAB_SIZE_CLASS_SHIFT);
+
+#if SLAB_QUARANTINE_RANDOM_LENGTH > 0
+                size_t slab_quarantine_random_length = SLAB_QUARANTINE_RANDOM_LENGTH << quarantine_shift;
+                for (size_t i = 0; i < slab_quarantine_random_length; i++) {
+                    void *p = c->quarantine_random[i];
+                    if (p != NULL) {
+                        madvise(p, size, MADV_DONTNEED);
+                    }
+                }
+#endif
+
+#if SLAB_QUARANTINE_QUEUE_LENGTH > 0
+                size_t slab_quarantine_queue_length = SLAB_QUARANTINE_QUEUE_LENGTH << quarantine_shift;
+                for (size_t i = 0; i < slab_quarantine_queue_length; i++) {
+                    void *p = c->quarantine_queue[i];
+                    if (p != NULL) {
+                        madvise(p, size, MADV_DONTNEED);
+                    }
+                }
+#endif
+            }
+#endif
+
             mutex_unlock(&c->lock);
         }
     }
