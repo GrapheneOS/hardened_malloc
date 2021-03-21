@@ -101,13 +101,16 @@ struct slab_metadata {
 static const size_t min_align = 16;
 #define MIN_SLAB_SIZE_CLASS_SHIFT 4
 
-// set slab cache size based on the size of the largest slab
 #if !CONFIG_EXTENDED_SIZE_CLASSES
-static const size_t MAX_SLAB_SIZE_CLASS = 65536;
+static const size_t MAX_SLAB_SIZE_CLASS = 16384;
 #define MAX_SLAB_SIZE_CLASS_SHIFT 14
+// limit on the number of cached empty slabs before attempting purging instead
+static const size_t max_empty_slabs_total = MAX_SLAB_SIZE_CLASS * 4;
 #else
 static const size_t MAX_SLAB_SIZE_CLASS = 131072;
 #define MAX_SLAB_SIZE_CLASS_SHIFT 17
+// limit on the number of cached empty slabs before attempting purging instead
+static const size_t max_empty_slabs_total = MAX_SLAB_SIZE_CLASS;
 #endif
 
 static const u32 size_classes[] = {
@@ -203,9 +206,6 @@ static inline struct size_info get_size_info_align(size_t size, size_t alignment
 static size_t get_slab_size(size_t slots, size_t size) {
     return PAGE_CEILING(slots * size);
 }
-
-// limit on the number of cached empty slabs before attempting purging instead
-static const size_t max_empty_slabs_total = MAX_SLAB_SIZE_CLASS;
 
 struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
     struct mutex lock;
