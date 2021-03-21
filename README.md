@@ -1008,6 +1008,7 @@ System calls used by all build configurations:
 * `mremap(old, old_size, new_size, MREMAP_MAYMOVE|MREMAP_FIXED, new)`
 * `munmap`
 * `write(STDERR_FILENO, buf, len)` (before aborting due to memory corruption)
+* `madvise(ptr, size, MADV_DONTNEED)` for `malloc_trim` with slab quarantines
 
 The main distinction from a typical malloc implementation is the use of
 getrandom. A common compatibility issue is that existing system call whitelists
