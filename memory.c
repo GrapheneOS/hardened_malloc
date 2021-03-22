@@ -92,6 +92,14 @@ int memory_remap_fixed(void *old, size_t old_size, void *new, size_t new_size) {
 }
 #endif
 
+int memory_purge(void *ptr, size_t size) {
+    int ret = madvise(ptr, size, MADV_DONTNEED);
+    if (unlikely(ret) && errno != ENOMEM) {
+        fatal_error("non-ENOMEM MADV_DONTNEED madvise failure");
+    }
+    return ret;
+}
+
 void memory_set_name(UNUSED void *ptr, UNUSED size_t size, UNUSED const char *name) {
 #ifdef LABEL_MEMORY
     prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, ptr, size, name);

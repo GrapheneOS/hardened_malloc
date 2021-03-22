@@ -1773,7 +1773,7 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
                 for (size_t i = 0; i < slab_quarantine_random_length; i++) {
                     void *p = c->quarantine_random[i];
                     if (p != NULL) {
-                        madvise(p, size, MADV_DONTNEED);
+                        memory_purge(p, size);
                     }
                 }
 #endif
@@ -1783,7 +1783,7 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
                 for (size_t i = 0; i < slab_quarantine_queue_length; i++) {
                     void *p = c->quarantine_queue[i];
                     if (p != NULL) {
-                        madvise(p, size, MADV_DONTNEED);
+                        memory_purge(p, size);
                     }
                 }
 #endif
