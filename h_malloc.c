@@ -10,7 +10,6 @@
 
 #include <malloc.h>
 #include <pthread.h>
-#include <sys/mman.h>
 #include <unistd.h>
 
 #include "third_party/libdivide.h"
