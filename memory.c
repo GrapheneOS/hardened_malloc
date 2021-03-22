@@ -94,8 +94,10 @@ bool memory_purge(void *ptr, size_t size) {
     return ret;
 }
 
-void memory_set_name(UNUSED void *ptr, UNUSED size_t size, UNUSED const char *name) {
+bool memory_set_name(UNUSED void *ptr, UNUSED size_t size, UNUSED const char *name) {
 #ifdef LABEL_MEMORY
-    prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, ptr, size, name);
+    return prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, ptr, size, name);
+#else
+    return false;
 #endif
 }
