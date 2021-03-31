@@ -112,7 +112,9 @@ static const size_t MAX_SLAB_SIZE_CLASS = 131072;
 static const size_t max_empty_slabs_total = MAX_SLAB_SIZE_CLASS;
 #endif
 
+#if SLAB_QUARANTINE && CONFIG_EXTENDED_SIZE_CLASSES
 static const size_t min_extended_size_class = 20480;
+#endif
 
 static const u32 size_classes[] = {
     /* 0 */ 0,
