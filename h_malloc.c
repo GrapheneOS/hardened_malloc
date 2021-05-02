@@ -144,7 +144,7 @@ static const u16 size_class_slots[] = {
     /* 1024 */ 8, 8, 8, 8,
     /* 2048 */ 6, 5, 4, 4,
 #if CONFIG_EXTENDED_SIZE_CLASSES
-    /* 4096 */ 2, 2, 2, 2,
+    /* 4096 */ 1, 1, 1, 1,
     /* 8192 */ 1, 1, 1, 1,
     /* 16384 */ 1, 1, 1, 1,
 #endif
