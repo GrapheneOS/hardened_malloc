@@ -1305,7 +1305,7 @@ static void *alloc_aligned_simple(unsigned arena, size_t alignment, size_t size)
     return ptr;
 }
 
-static size_t adjust_size_for_canaries(size_t size) {
+static size_t adjust_size_for_canary(size_t size) {
     if (size > 0 && size <= MAX_SLAB_SIZE_CLASS) {
         return size + canary_size;
     }
@@ -1315,7 +1315,7 @@ static size_t adjust_size_for_canaries(size_t size) {
 static inline void *alloc(size_t size) {
     unsigned arena = init();
     thread_unseal_metadata();
-    size = adjust_size_for_canaries(size);
+    size = adjust_size_for_canary(size);
     void *p = allocate(arena, size);
     thread_seal_metadata();
     return p;
@@ -1333,7 +1333,7 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
     }
     unsigned arena = init();
     thread_unseal_metadata();
-    total_size = adjust_size_for_canaries(total_size);
+    total_size = adjust_size_for_canary(total_size);
     void *p = allocate(arena, total_size);
     thread_seal_metadata();
     if (!ZERO_ON_FREE && likely(p != NULL) && total_size && total_size <= MAX_SLAB_SIZE_CLASS) {
@@ -1347,7 +1347,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
         return alloc(size);
     }
 
-    size = adjust_size_for_canaries(size);
+    size = adjust_size_for_canary(size);
 
     if (size > MAX_SLAB_SIZE_CLASS) {
         size = get_large_size_class(size);
@@ -1487,7 +1487,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
 EXPORT int h_posix_memalign(void **memptr, size_t alignment, size_t size) {
     unsigned arena = init();
     thread_unseal_metadata();
-    size = adjust_size_for_canaries(size);
+    size = adjust_size_for_canary(size);
     int ret = alloc_aligned(arena, memptr, alignment, size, sizeof(void *));
     thread_seal_metadata();
     return ret;
@@ -1496,7 +1496,7 @@ EXPORT int h_posix_memalign(void **memptr, size_t alignment, size_t size) {
 EXPORT void *h_aligned_alloc(size_t alignment, size_t size) {
     unsigned arena = init();
     thread_unseal_metadata();
-    size = adjust_size_for_canaries(size);
+    size = adjust_size_for_canary(size);
     void *p = alloc_aligned_simple(arena, alignment, size);
     thread_seal_metadata();
     return p;
@@ -1508,7 +1508,7 @@ EXPORT void *h_memalign(size_t alignment, size_t size) ALIAS(h_aligned_alloc);
 EXPORT void *h_valloc(size_t size) {
     unsigned arena = init();
     thread_unseal_metadata();
-    size = adjust_size_for_canaries(size);
+    size = adjust_size_for_canary(size);
     void *p = alloc_aligned_simple(arena, PAGE_SIZE, size);
     thread_seal_metadata();
     return p;
@@ -1522,7 +1522,7 @@ EXPORT void *h_pvalloc(size_t size) {
     }
     unsigned arena = init();
     thread_unseal_metadata();
-    size = adjust_size_for_canaries(size);
+    size = adjust_size_for_canary(size);
     void *p = alloc_aligned_simple(arena, PAGE_SIZE, size);
     thread_seal_metadata();
     return p;
@@ -1555,7 +1555,7 @@ EXPORT void h_free_sized(void *p, size_t expected_size) {
         return;
     }
 
-    expected_size = adjust_size_for_canaries(expected_size);
+    expected_size = adjust_size_for_canary(expected_size);
 
     if (p < get_slab_region_end() && p >= ro.slab_region_start) {
         thread_unseal_metadata();
