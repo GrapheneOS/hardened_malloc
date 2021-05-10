@@ -150,6 +150,10 @@ static const u16 size_class_slots[] = {
 #endif
 };
 
+static size_t get_slots(unsigned class) {
+    return size_class_slots[class];
+}
+
 static const char *const size_class_labels[] = {
     /* 0 */ "malloc 0",
     /* 16 */ "malloc 16", "malloc 32", "malloc 48", "malloc 64",
@@ -485,7 +489,7 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
     size_t size = info.size ? info.size : 16;
 
     struct size_class *c = &ro.size_class_metadata[arena][info.class];
-    size_t slots = size_class_slots[info.class];
+    size_t slots = get_slots(info.class);
     size_t slab_size = get_slab_size(slots, size);
 
     mutex_lock(&c->lock);
@@ -645,7 +649,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     if (is_zero_size) {
         size = 16;
     }
-    size_t slots = size_class_slots[class];
+    size_t slots = get_slots(class);
     size_t slab_size = get_slab_size(slots, size);
 
     mutex_lock(&c->lock);
@@ -1125,7 +1129,7 @@ COLD static void init_slow_path(void) {
                 size = 16;
             }
             c->size_divisor = libdivide_u32_gen(size);
-            size_t slab_size = get_slab_size(size_class_slots[class], size);
+            size_t slab_size = get_slab_size(get_slots(class), size);
             c->slab_size_divisor = libdivide_u64_gen(slab_size);
             c->slab_info = allocator_state->slab_info_mapping[arena][class].slab_info;
         }
@@ -1579,7 +1583,7 @@ static inline void memory_corruption_check_small(const void *p) {
     if (is_zero_size) {
         size = 16;
     }
-    size_t slab_size = get_slab_size(size_class_slots[class], size);
+    size_t slab_size = get_slab_size(get_slots(class), size);
 
     mutex_lock(&c->lock);
 
@@ -1660,7 +1664,7 @@ EXPORT size_t h_malloc_object_size(void *p) {
         mutex_lock(&c->lock);
 
         struct slab_metadata *metadata = get_metadata(c, p);
-        size_t slab_size = get_slab_size(size_class_slots[class], size_class);
+        size_t slab_size = get_slab_size(get_slots(class), size_class);
         void *slab = get_slab(c, slab_size, metadata);
         size_t slot = libdivide_u32_do((const char *)p - (const char *)slab, &c->size_divisor);
 
@@ -1742,7 +1746,7 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
         for (unsigned class = 1; class < N_SIZE_CLASSES; class++) {
             struct size_class *c = &ro.size_class_metadata[arena][class];
             size_t size = size_classes[class];
-            size_t slab_size = get_slab_size(size_class_slots[class], size);
+            size_t slab_size = get_slab_size(get_slots(class), size);
 
             mutex_lock(&c->lock);
 
