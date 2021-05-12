@@ -86,5 +86,7 @@ void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t guard_
 }
 
 void deallocate_pages(void *usable, size_t usable_size, size_t guard_size) {
-    memory_unmap((char *)usable - guard_size, usable_size + guard_size * 2);
+    if (unlikely(memory_unmap((char *)usable - guard_size, usable_size + guard_size * 2))) {
+        memory_purge(usable, usable_size);
+    }
 }
