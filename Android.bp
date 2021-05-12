@@ -27,7 +27,6 @@ common_cflags = [
     "-DREGION_QUARANTINE_QUEUE_LENGTH=1024",
     "-DREGION_QUARANTINE_SKIP_THRESHOLD=33554432", // 32MiB
     "-DFREE_SLABS_QUARANTINE_RANDOM_LENGTH=32",
-    "-DCONFIG_CLASS_REGION_SIZE=2147483648", // 2GiB
     "-DN_ARENA=1",
     "-DCONFIG_STATS=true",
 ]
@@ -36,6 +35,14 @@ cc_defaults {
     name: "hardened_malloc_defaults",
     defaults: ["linux_bionic_supported"],
     cflags: common_cflags,
+    arch: {
+        arm64: {
+            cflags: ["-DCONFIG_CLASS_REGION_SIZE=2147483648"] // 2GiB
+        },
+        x86_64: {
+            cflags: ["-DCONFIG_CLASS_REGION_SIZE=34359738368"] // 32GiB
+        },
+    },
     conlyflags: ["-std=c11", "-Wmissing-prototypes"],
     stl: "none",
 }
