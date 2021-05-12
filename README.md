@@ -144,7 +144,7 @@ large number of guard pages created by hardened\_malloc. This can be done in
 `init.rc` (`system/core/rootdir/init.rc`) near the other virtual memory
 configuration:
 
-    write /proc/sys/vm/max_map_count 524240
+    write /proc/sys/vm/max_map_count 1048576
 
 This is unnecessary if you set `CONFIG_GUARD_SLABS_INTERVAL` to a very large
 value in the build configuration.
