@@ -16,6 +16,8 @@ Somewhat important and an easy sell:
     * also needed by jemalloc for different reasons
     * not needed if the kernel gets first class support for arbitrarily sized
       guard pages and a virtual memory quarantine feature
+    * `MREMAP_DONTUNMAP` is now available but doesn't support expanding the
+      mapping which may be an issue due to VMA merging being unreliable
 
 Fairly infeasible to land but could reduce overhead and extend coverage of
 security features to other code directly using mmap:
