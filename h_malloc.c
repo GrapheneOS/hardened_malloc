@@ -760,8 +760,10 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
                 enqueue_free_slab(c, metadata);
                 mutex_unlock(&c->lock);
                 return;
+            } else {
+                memory_purge(slab, slab_size);
+                // handle out-of-memory by putting it into the empty slabs list
             }
-            // handle out-of-memory by just putting it into the empty slabs list
         }
 
         metadata->next = c->empty_slabs;
