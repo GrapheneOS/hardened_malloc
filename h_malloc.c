@@ -1808,12 +1808,23 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
 
 EXPORT void h_malloc_stats(void) {}
 
-#if defined(__GLIBC__) || defined(__ANDROID__)
+// glibc mallinfo is broken and replaced with mallinfo2
+#if defined(__GLIBC__)
+EXPORT struct mallinfo h_mallinfo(void) {
+    return (struct mallinfo){0};
+}
+#endif
+
+#if (defined(__GLIBC__) && __GLIBC_PREREQ(2, 33)) || defined(__ANDROID__)
+#ifndef __GLIBC__
 EXPORT struct mallinfo h_mallinfo(void) {
     struct mallinfo info = {0};
+#else
+EXPORT struct mallinfo2 h_mallinfo2(void) {
+    struct mallinfo2 info = {0};
+#endif
 
-    // glibc mallinfo type definition and implementation are both broken
-#if CONFIG_STATS && !defined(__GLIBC__)
+#if CONFIG_STATS
     if (!is_init()) {
         return info;
     }

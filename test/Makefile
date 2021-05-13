@@ -14,6 +14,7 @@ CPPFLAGS += \
 EXECUTABLES := \
     offset \
     mallinfo \
+    mallinfo2 \
     malloc_info \
     large_array_growth
 

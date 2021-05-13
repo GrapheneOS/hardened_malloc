@@ -23,6 +23,7 @@ extern "C" {
 #define h_malloc_trim malloc_trim
 #define h_malloc_stats malloc_stats
 #define h_mallinfo mallinfo
+#define h_mallinfo2 mallinfo2
 #define h_malloc_info malloc_info
 
 #define h_memalign memalign
