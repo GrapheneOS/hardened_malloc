@@ -1621,7 +1621,6 @@ EXPORT size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *p) {
 
     if (p < get_slab_region_end() && p >= ro.slab_region_start) {
         thread_unseal_metadata();
-
         memory_corruption_check_small(p);
         thread_seal_metadata();
 
