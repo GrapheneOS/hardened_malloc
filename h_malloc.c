@@ -1797,9 +1797,13 @@ EXPORT void h_malloc_stats(void) {}
 EXPORT struct mallinfo h_mallinfo(void) {
     return (struct mallinfo){0};
 }
+
+#if __GLIBC_PREREQ(2, 33)
+#define HAVE_MALLINFO2
+#endif
 #endif
 
-#if (defined(__GLIBC__) && __GLIBC_PREREQ(2, 33)) || defined(__ANDROID__)
+#if defined(HAVE_MALLINFO2) || defined(__ANDROID__)
 #ifndef __GLIBC__
 EXPORT struct mallinfo h_mallinfo(void) {
     struct mallinfo info = {0};
