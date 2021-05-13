@@ -2018,6 +2018,7 @@ COLD EXPORT void h_malloc_enable(void) {
 
 #ifdef __GLIBC__
 COLD EXPORT void *h_malloc_get_state(void) {
+    errno = ENOSYS;
     return NULL;
 }
 
