@@ -1321,13 +1321,13 @@ static size_t adjust_size_for_canary(size_t size) {
 static inline void *alloc(size_t size) {
     unsigned arena = init();
     thread_unseal_metadata();
-    size = adjust_size_for_canary(size);
     void *p = allocate(arena, size);
     thread_seal_metadata();
     return p;
 }
 
 EXPORT void *h_malloc(size_t size) {
+    size = adjust_size_for_canary(size);
     return alloc(size);
 }
 
@@ -1337,11 +1337,8 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
         errno = ENOMEM;
         return NULL;
     }
-    unsigned arena = init();
-    thread_unseal_metadata();
     total_size = adjust_size_for_canary(total_size);
-    void *p = allocate(arena, total_size);
-    thread_seal_metadata();
+    void *p = alloc(total_size);
     if (!ZERO_ON_FREE && likely(p != NULL) && total_size && total_size <= MAX_SLAB_SIZE_CLASS) {
         memset(p, 0, total_size - canary_size);
     }
@@ -1349,11 +1346,10 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
 }
 
 EXPORT void *h_realloc(void *old, size_t size) {
+    size = adjust_size_for_canary(size);
     if (old == NULL) {
         return alloc(size);
     }
-
-    size = adjust_size_for_canary(size);
 
     if (size > MAX_SLAB_SIZE_CLASS) {
         size = get_large_size_class(size);
