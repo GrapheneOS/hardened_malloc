@@ -174,7 +174,7 @@ Make sure to raise `vm.max_map_count` substantially too to accomodate the very
 large number of guard pages created by hardened\_malloc. As an example, in
 `/etc/sysctl.d/hardened_malloc.conf`:
 
-    vm.max_map_count = 524240
+    vm.max_map_count = 1048576
 
 This is unnecessary if you set `CONFIG_GUARD_SLABS_INTERVAL` to a very large
 value in the build configuration.
