@@ -1512,7 +1512,7 @@ EXPORT void *h_valloc(size_t size) {
 
 EXPORT void *h_pvalloc(size_t size) {
     size = PAGE_CEILING(size);
-    if (!size) {
+    if (unlikely(!size)) {
         errno = ENOMEM;
         return NULL;
     }
