@@ -1304,7 +1304,7 @@ static int alloc_aligned(unsigned arena, void **memptr, size_t alignment, size_t
 static void *alloc_aligned_simple(unsigned arena, size_t alignment, size_t size) {
     void *ptr;
     int ret = alloc_aligned(arena, &ptr, alignment, size, 1);
-    if (ret) {
+    if (unlikely(ret)) {
         errno = ret;
         return NULL;
     }
