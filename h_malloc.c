@@ -1255,7 +1255,7 @@ static void deallocate_large(void *p, const size_t *expected_size) {
     regions_quarantine_deallocate_pages(p, size, guard_size);
 }
 
-static int alloc_aligned(unsigned arena, void **memptr, size_t alignment, size_t size, size_t min_alignment) {
+static int allocate_aligned(unsigned arena, void **memptr, size_t alignment, size_t size, size_t min_alignment) {
     if ((alignment - 1) & alignment || alignment < min_alignment) {
         return EINVAL;
     }
@@ -1301,21 +1301,30 @@ static int alloc_aligned(unsigned arena, void **memptr, size_t alignment, size_t
     return 0;
 }
 
-static void *alloc_aligned_simple(unsigned arena, size_t alignment, size_t size) {
-    void *ptr;
-    int ret = alloc_aligned(arena, &ptr, alignment, size, 1);
-    if (unlikely(ret)) {
-        errno = ret;
-        return NULL;
-    }
-    return ptr;
-}
-
 static size_t adjust_size_for_canary(size_t size) {
     if (size > 0 && size <= MAX_SLAB_SIZE_CLASS) {
         return size + canary_size;
     }
     return size;
+}
+
+static int alloc_aligned(void **memptr, size_t alignment, size_t size, size_t min_alignment) {
+    unsigned arena = init();
+    thread_unseal_metadata();
+    size = adjust_size_for_canary(size);
+    int ret = allocate_aligned(arena, memptr, alignment, size, min_alignment);
+    thread_seal_metadata();
+    return ret;
+}
+
+static void *alloc_aligned_simple(size_t alignment, size_t size) {
+    void *ptr;
+    int ret = alloc_aligned(&ptr, alignment, size, 1);
+    if (unlikely(ret)) {
+        errno = ret;
+        return NULL;
+    }
+    return ptr;
 }
 
 static inline void *alloc(size_t size) {
@@ -1487,33 +1496,18 @@ EXPORT void *h_realloc(void *old, size_t size) {
 }
 
 EXPORT int h_posix_memalign(void **memptr, size_t alignment, size_t size) {
-    unsigned arena = init();
-    thread_unseal_metadata();
-    size = adjust_size_for_canary(size);
-    int ret = alloc_aligned(arena, memptr, alignment, size, sizeof(void *));
-    thread_seal_metadata();
-    return ret;
+    return alloc_aligned(memptr, alignment, size, sizeof(void *));
 }
 
 EXPORT void *h_aligned_alloc(size_t alignment, size_t size) {
-    unsigned arena = init();
-    thread_unseal_metadata();
-    size = adjust_size_for_canary(size);
-    void *p = alloc_aligned_simple(arena, alignment, size);
-    thread_seal_metadata();
-    return p;
+    return alloc_aligned_simple(alignment, size);
 }
 
 EXPORT void *h_memalign(size_t alignment, size_t size) ALIAS(h_aligned_alloc);
 
 #ifndef __ANDROID__
 EXPORT void *h_valloc(size_t size) {
-    unsigned arena = init();
-    thread_unseal_metadata();
-    size = adjust_size_for_canary(size);
-    void *p = alloc_aligned_simple(arena, PAGE_SIZE, size);
-    thread_seal_metadata();
-    return p;
+    return alloc_aligned_simple(PAGE_SIZE, size);
 }
 
 EXPORT void *h_pvalloc(size_t size) {
@@ -1522,12 +1516,7 @@ EXPORT void *h_pvalloc(size_t size) {
         errno = ENOMEM;
         return NULL;
     }
-    unsigned arena = init();
-    thread_unseal_metadata();
-    size = adjust_size_for_canary(size);
-    void *p = alloc_aligned_simple(arena, PAGE_SIZE, size);
-    thread_seal_metadata();
-    return p;
+    return alloc_aligned_simple(PAGE_SIZE, size);
 }
 #endif
 
