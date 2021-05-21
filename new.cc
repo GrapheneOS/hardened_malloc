@@ -78,7 +78,6 @@ EXPORT void operator delete[](void *ptr, size_t size) noexcept {
     h_free_sized(ptr, size);
 }
 
-#if __cplusplus >= 201703L
 COLD static void *handle_out_of_memory(size_t size, size_t alignment, bool nothrow) {
     void *ptr = nullptr;
 
@@ -150,4 +149,3 @@ EXPORT void operator delete(void *ptr, size_t size, std::align_val_t) noexcept {
 EXPORT void operator delete[](void *ptr, size_t size, std::align_val_t) noexcept {
     h_free_sized(ptr, size);
 }
-#endif
