@@ -129,7 +129,8 @@ util.o: util.c util.h
 check: tidy
 
 tidy:
-	clang-tidy $(SOURCES) -- $(CPPFLAGS)
+	clang-tidy --extra-arg=-std=c11 $(filter %.c,$(SOURCES)) -- $(CPPFLAGS)
+	clang-tidy --extra-arg=-std=c++17 $(filter %.cc,$(SOURCES)) -- $(CPPFLAGS)
 
 clean:
 	rm -f libhardened_malloc.so $(OBJECTS)
