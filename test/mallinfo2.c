@@ -5,6 +5,8 @@
 #include "test_util.h"
 
 static void print_mallinfo2(void) {
+#if defined(__GLIBC__)
+#if __GLIBC_PREREQ(2, 33)
     struct mallinfo2 info = mallinfo2();
     printf("mallinfo2:\n");
     printf("arena: %zu\n", (size_t)info.arena);
@@ -17,6 +19,8 @@ static void print_mallinfo2(void) {
     printf("uordblks: %zu\n", (size_t)info.uordblks);
     printf("fordblks: %zu\n", (size_t)info.fordblks);
     printf("keepcost: %zu\n", (size_t)info.keepcost);
+#endif
+#endif
 }
 
 OPTNONE int main(void) {
