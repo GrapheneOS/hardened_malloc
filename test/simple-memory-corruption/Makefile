@@ -6,7 +6,8 @@ ifeq (,$(filter $(CONFIG_SLAB_CANARY),true false))
     $(error CONFIG_SLAB_CANARY must be true or false)
 endif
 
-CFLAGS += -DSLAB_CANARY=$(CONFIG_SLAB_CANARY)
+CPPFLAGS += -D_GNU_SOURCE \
+    -DSLAB_CANARY=$(CONFIG_SLAB_CANARY)
 
 LDLIBS := -lhardened_malloc
 
