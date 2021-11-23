@@ -1,8 +1,6 @@
 #include <bits/functexcept.h>
 #include <new>
 
-#define noreturn
-
 #include "h_malloc.h"
 #include "util.h"
 

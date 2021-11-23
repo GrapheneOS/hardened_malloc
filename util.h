@@ -2,7 +2,9 @@
 #define UTIL_H
 
 #include <stdint.h>
-#include <stdnoreturn.h>
+
+// C11 noreturn doesn't work in C++
+#define noreturn __attribute__((noreturn))
 
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
