@@ -81,8 +81,7 @@ there will be custom integration offering better performance in the future
 along with other hardening for the C standard library implementation.
 
 For Android, only the current generation, actively developed maintenance branch of the Android
-Open Source Project will be supported, which currently means `android11-qpr3-release` and
-`android12-release`.
+Open Source Project will be supported, which currently means `android12-release`.
 
 The Linux kernel's implementation of Memory Protection Keys was severely broken
 before Linux 5.0. The `CONFIG_SEAL_METADATA` feature should only be enabled for
