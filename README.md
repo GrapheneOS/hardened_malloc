@@ -65,12 +65,12 @@ used instead as this allocator fundamentally doesn't support that environment.
 
 ## Dependencies
 
-Debian stable (currently Debian 10) determines the most ancient set of
+Debian stable (currently Debian 11) determines the most ancient set of
 supported dependencies:
 
-* glibc 2.28
-* Linux 4.19
-* Clang 7.0 or GCC 8.3.0
+* glibc 2.31
+* Linux 5.10
+* Clang 11.0.1 or GCC 10.2.1
 
 However, using more recent releases is highly recommended. Older versions of
 the dependencies may be compatible at the moment but are not tested and will
