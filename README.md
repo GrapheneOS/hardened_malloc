@@ -32,7 +32,7 @@ to much less metadata overhead and memory waste from fragmentation than a more
 traditional allocator design. It aims to provide decent overall performance
 with a focus on long-term performance and memory usage rather than allocator
 micro-benchmarks. It offers scalability via a configurable number of entirely
-independently arenas, with the internal locking within arenas further divided
+independent arenas, with the internal locking within arenas further divided
 up per size class.
 
 This project currently supports Bionic (Android), musl and glibc. It may
