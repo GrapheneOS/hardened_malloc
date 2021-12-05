@@ -715,7 +715,7 @@ freeing as there would be if the kernel supported these features directly.
 ## Memory tagging
 
 Integrating extensive support for ARMv8.5 memory tagging is planned and this
-section will be expanded cover the details on the chosen design. The approach
+section will be expanded to cover the details on the chosen design. The approach
 for slab allocations is currently covered, but it can also be used for the
 allocator metadata region and large allocations.
 
