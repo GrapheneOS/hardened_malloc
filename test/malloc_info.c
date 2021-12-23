@@ -26,5 +26,7 @@ int main(void) {
         pthread_join(thread[i], NULL);
     }
 
+#if defined(__GLIBC__) || defined(__ANDROID__)
     malloc_info(0, stdout);
+#endif
 }
