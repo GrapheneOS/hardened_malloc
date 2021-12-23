@@ -5,6 +5,7 @@
 #include "test_util.h"
 
 static void print_mallinfo(void) {
+#if defined(__GLIBC__) || defined(__ANDROID__)
     struct mallinfo info = mallinfo();
     printf("mallinfo:\n");
     printf("arena: %zu\n", (size_t)info.arena);
@@ -17,6 +18,7 @@ static void print_mallinfo(void) {
     printf("uordblks: %zu\n", (size_t)info.uordblks);
     printf("fordblks: %zu\n", (size_t)info.fordblks);
     printf("keepcost: %zu\n", (size_t)info.keepcost);
+#endif
 }
 
 OPTNONE int main(void) {
