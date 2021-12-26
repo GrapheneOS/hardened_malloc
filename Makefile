@@ -43,7 +43,7 @@ ifeq ($(CONFIG_NATIVE),true)
 endif
 
 CFLAGS := $(CFLAGS) -std=c11 $(SHARED_FLAGS) -Wmissing-prototypes
-CXXFLAGS := $(CXXFLAGS) $(call safe_flag,-std=c++17,-std=c++14) $(SHARED_FLAGS)
+CXXFLAGS := $(CXXFLAGS) -std=c++17 $(SHARED_FLAGS)
 LDFLAGS := $(LDFLAGS) -Wl,--as-needed,-z,defs,-z,relro,-z,now,-z,nodlopen,-z,text
 
 SOURCES := chacha.c h_malloc.c memory.c pages.c random.c util.c
