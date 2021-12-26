@@ -23,3 +23,4 @@ all: $(EXECUTABLES)
 
 clean:
 	rm -f $(EXECUTABLES)
+	make -C simple-memory-corruption clean
