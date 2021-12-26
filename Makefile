@@ -134,6 +134,7 @@ tidy:
 
 clean:
 	rm -f libhardened_malloc.so $(OBJECTS)
+	make -C test/ clean
 
 test: libhardened_malloc.so
 	make -C test/
