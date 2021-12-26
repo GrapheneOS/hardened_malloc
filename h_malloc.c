@@ -946,7 +946,7 @@ static int regions_insert(void *p, size_t size, size_t guard_size) {
 }
 
 static struct region_metadata *regions_find(const void *p) {
-    struct region_allocator *ra = ro.region_allocator;
+    const struct region_allocator *ra = ro.region_allocator;
 
     size_t mask = ra->total - 1;
     size_t index = hash_page(p) & mask;
