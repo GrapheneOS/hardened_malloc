@@ -6,10 +6,10 @@
 #include "test_util.h"
 
 OPTNONE static void leak_memory(void) {
-    (void)malloc(1024 * 1024 * 1024);
-    (void)malloc(16);
-    (void)malloc(32);
-    (void)malloc(4096);
+    (void)!malloc(1024 * 1024 * 1024);
+    (void)!malloc(16);
+    (void)!malloc(32);
+    (void)!malloc(4096);
 }
 
 static void *do_work(void *p) {
