@@ -439,15 +439,13 @@ static void *slot_pointer(size_t size, void *slab, size_t slot) {
 }
 
 static void write_after_free_check(const char *p, size_t size) {
-    if (!WRITE_AFTER_FREE_CHECK) {
-        return;
-    }
-
+#ifdef WRITE_AFTER_FREE_CHECK
     for (size_t i = 0; i < size; i += sizeof(u64)) {
         if (*(const u64 *)(const void *)(p + i)) {
             fatal_error("detected write after free");
         }
     }
+#endif
 }
 
 static const u64 canary_mask = __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ ?
