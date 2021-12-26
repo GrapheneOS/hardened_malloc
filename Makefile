@@ -24,6 +24,9 @@ CONFIG_STATS := false
 define safe_flag
 $(shell $(CC) $(if $(filter clang,$(CC)),-Werror=unknown-warning-option) -E $1 - </dev/null >/dev/null 2>&1 && echo $1 || echo $2)
 endef
+define safe_flag_cpp
+$(shell $(CXX) $(if $(filter clang++,$(CXX)),-Werror=unknown-warning-option) -xc++ -E $1 - </dev/null >/dev/null 2>&1 && echo $1 || echo $2)
+endef
 
 CPPFLAGS := $(CPPFLAGS) -D_GNU_SOURCE -I include
 SHARED_FLAGS := -O3 -flto -fPIC -fvisibility=hidden $(call safe_flag,-fno-plt) \
@@ -43,15 +46,17 @@ ifeq ($(CONFIG_NATIVE),true)
 endif
 
 CFLAGS := $(CFLAGS) -std=c11 $(SHARED_FLAGS) -Wmissing-prototypes
-CXXFLAGS := $(CXXFLAGS) $(call safe_flag,-std=c++17,-std=c++14) $(SHARED_FLAGS)
+CXXFLAGS := $(CXXFLAGS) $(call safe_flag_cpp,-std=c++17,-std=c++14) $(SHARED_FLAGS)
 LDFLAGS := $(LDFLAGS) -Wl,--as-needed,-z,defs,-z,relro,-z,now,-z,nodlopen,-z,text
 
 SOURCES := chacha.c h_malloc.c memory.c pages.c random.c util.c
 OBJECTS := $(SOURCES:.c=.o)
 
 ifeq ($(CONFIG_CXX_ALLOCATOR),true)
+ifneq ($(CXX),clang++)
     # make sure LTO is compatible in case CC and CXX don't match (such as clang and g++)
     CXX := $(CC)
+endif
     LDLIBS += -lstdc++ -lgcc_s
 
     SOURCES += new.cc
