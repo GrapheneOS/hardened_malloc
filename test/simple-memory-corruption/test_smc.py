@@ -211,6 +211,15 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
             "impossibly_large_malloc")
         self.assertEqual(returncode, 0)
 
+    def test_uninitialized_read_small(self):
+        _stdout, stderr, returncode = self.run_test(
+            "uninitialized_read_small")
+        self.assertEqual(returncode, 0)
+
+    def test_uninitialized_read_large(self):
+        _stdout, stderr, returncode = self.run_test(
+            "uninitialized_read_large")
+        self.assertEqual(returncode, 0)
 
 
 if __name__ == '__main__':
