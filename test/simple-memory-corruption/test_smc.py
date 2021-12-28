@@ -206,6 +206,12 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
         self.assertEqual(stderr.decode(
             "utf-8"), "fatal allocator error: invalid malloc_object_size (quarantine)\n")
 
+    def test_impossibly_large_malloc(self):
+        _stdout, stderr, returncode = self.run_test(
+            "impossibly_large_malloc")
+        self.assertEqual(returncode, 0)
+
+
 
 if __name__ == '__main__':
     unittest.main()
