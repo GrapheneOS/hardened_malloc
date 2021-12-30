@@ -272,7 +272,7 @@ struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
 static const size_t slab_region_size = ARENA_SIZE * N_ARENA;
 static_assert(PAGE_SIZE == 4096, "bitmap handling will need adjustment for other page sizes");
 
-static void *get_slab(struct size_class *c, size_t slab_size, struct slab_metadata *metadata) {
+static void *get_slab(const struct size_class *c, size_t slab_size, const struct slab_metadata *metadata) {
     size_t index = metadata - c->slab_info;
     return (char *)c->class_region_start + (index * slab_size);
 }
@@ -330,7 +330,7 @@ static void clear_slot(struct slab_metadata *metadata, size_t index) {
 #endif
 }
 
-static bool get_slot(struct slab_metadata *metadata, size_t index) {
+static bool get_slot(const struct slab_metadata *metadata, size_t index) {
     size_t bucket = index / 64;
     return (metadata->bitmap[bucket] >> (index - bucket * 64)) & 1UL;
 }
@@ -346,7 +346,7 @@ static void clear_quarantine(struct slab_metadata *metadata, size_t index) {
     metadata->quarantine_bitmap[bucket] &= ~(1UL << (index - bucket * 64));
 }
 
-static bool get_quarantine(struct slab_metadata *metadata, size_t index) {
+static bool get_quarantine(const struct slab_metadata *metadata, size_t index) {
     size_t bucket = index / 64;
     return (metadata->quarantine_bitmap[bucket] >> (index - bucket * 64)) & 1UL;
 }
@@ -356,7 +356,7 @@ static u64 get_mask(size_t slots) {
     return slots < 64 ? ~0UL << slots : 0;
 }
 
-static size_t get_free_slot(struct random_state *rng, size_t slots, struct slab_metadata *metadata) {
+static size_t get_free_slot(struct random_state *rng, size_t slots, const struct slab_metadata *metadata) {
     if (SLOT_RANDOMIZE) {
         // randomize start location for linear search (uniform random choice is too slow)
         unsigned random_index = get_random_u16_uniform(rng, slots);
@@ -394,7 +394,7 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, struct slab_
     fatal_error("no zero bits");
 }
 
-static bool has_free_slots(size_t slots, struct slab_metadata *metadata) {
+static bool has_free_slots(size_t slots, const struct slab_metadata *metadata) {
 #ifdef SLAB_METADATA_COUNT
     return metadata->count < slots;
 #else
@@ -415,7 +415,7 @@ static bool has_free_slots(size_t slots, struct slab_metadata *metadata) {
 #endif
 }
 
-static bool is_free_slab(struct slab_metadata *metadata) {
+static bool is_free_slab(const struct slab_metadata *metadata) {
 #ifdef SLAB_METADATA_COUNT
     return !metadata->count;
 #else
@@ -424,7 +424,7 @@ static bool is_free_slab(struct slab_metadata *metadata) {
 #endif
 }
 
-static struct slab_metadata *get_metadata(struct size_class *c, const void *p) {
+static struct slab_metadata *get_metadata(const struct size_class *c, const void *p) {
     size_t offset = (const char *)p - (const char *)c->class_region_start;
     size_t index = libdivide_u64_do(offset, &c->slab_size_divisor);
     // still caught without this check either as a read access violation or "double free"
@@ -454,7 +454,7 @@ static const u64 canary_mask = __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ ?
     0xffffffffffffff00UL :
     0x00ffffffffffffffUL;
 
-static void set_canary(struct slab_metadata *metadata, void *p, size_t size) {
+static void set_canary(const struct slab_metadata *metadata, void *p, size_t size) {
     memcpy((char *)p + size - canary_size, &metadata->canary_value, canary_size);
 }
 
@@ -904,7 +904,7 @@ static int regions_grow(void) {
     }
 
     for (size_t i = 0; i < ra->total; i++) {
-        void *q = ra->regions[i].p;
+        const void *q = ra->regions[i].p;
         if (q != NULL) {
             size_t index = hash_page(q) & mask;
             while (p[index].p != NULL) {
@@ -958,7 +958,7 @@ static struct region_metadata *regions_find(const void *p) {
     return (r == p && r != NULL) ? &ra->regions[index] : NULL;
 }
 
-static void regions_delete(struct region_metadata *region) {
+static void regions_delete(const struct region_metadata *region) {
     struct region_allocator *ra = ro.region_allocator;
 
     size_t mask = ra->total - 1;
@@ -1242,7 +1242,7 @@ static void deallocate_large(void *p, const size_t *expected_size) {
     struct region_allocator *ra = ro.region_allocator;
 
     mutex_lock(&ra->lock);
-    struct region_metadata *region = regions_find(p);
+    const struct region_metadata *region = regions_find(p);
     if (region == NULL) {
         fatal_error("invalid free");
     }
@@ -1385,7 +1385,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
         struct region_allocator *ra = ro.region_allocator;
 
         mutex_lock(&ra->lock);
-        struct region_metadata *region = regions_find(old);
+        const struct region_metadata *region = regions_find(old);
         if (region == NULL) {
             fatal_error("invalid realloc");
         }
@@ -1577,7 +1577,7 @@ static inline void memory_corruption_check_small(const void *p) {
 
     mutex_lock(&c->lock);
 
-    struct slab_metadata *metadata = get_metadata(c, p);
+    const struct slab_metadata *metadata = get_metadata(c, p);
     void *slab = get_slab(c, slab_size, metadata);
     size_t slot = libdivide_u32_do((const char *)p - (const char *)slab, &c->size_divisor);
 
@@ -1625,7 +1625,7 @@ EXPORT size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *p) {
 
     struct region_allocator *ra = ro.region_allocator;
     mutex_lock(&ra->lock);
-    struct region_metadata *region = regions_find(p);
+    const struct region_metadata *region = regions_find(p);
     if (region == NULL) {
         fatal_error("invalid malloc_usable_size");
     }
@@ -1641,7 +1641,7 @@ EXPORT size_t h_malloc_object_size(void *p) {
         return 0;
     }
 
-    void *slab_region_end = get_slab_region_end();
+    const void *slab_region_end = get_slab_region_end();
     if (p < slab_region_end && p >= ro.slab_region_start) {
         thread_unseal_metadata();
 
@@ -1652,7 +1652,7 @@ EXPORT size_t h_malloc_object_size(void *p) {
 
         mutex_lock(&c->lock);
 
-        struct slab_metadata *metadata = get_metadata(c, p);
+        const struct slab_metadata *metadata = get_metadata(c, p);
         size_t slab_size = get_slab_size(get_slots(class), size_class);
         void *slab = get_slab(c, slab_size, metadata);
         size_t slot = libdivide_u32_do((const char *)p - (const char *)slab, &c->size_divisor);
@@ -1685,7 +1685,7 @@ EXPORT size_t h_malloc_object_size(void *p) {
 
     struct region_allocator *ra = ro.region_allocator;
     mutex_lock(&ra->lock);
-    struct region_metadata *region = regions_find(p);
+    const struct region_metadata *region = regions_find(p);
     size_t size = region == NULL ? SIZE_MAX : region->size;
     mutex_unlock(&ra->lock);
 
@@ -1698,7 +1698,7 @@ EXPORT size_t h_malloc_object_size_fast(void *p) {
         return 0;
     }
 
-    void *slab_region_end = get_slab_region_end();
+    const void *slab_region_end = get_slab_region_end();
     if (p < slab_region_end && p >= ro.slab_region_start) {
         size_t size = slab_usable_size(p);
         return size ? size - canary_size : 0;
