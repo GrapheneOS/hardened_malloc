@@ -211,6 +211,11 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
             "impossibly_large_malloc")
         self.assertEqual(returncode, 0)
 
+    def test_canary_leak(self):
+        _stdout, stderr, returncode = self.run_test(
+            "canary_leak")
+        self.assertEqual(returncode, 0)
+
 
 
 if __name__ == '__main__':

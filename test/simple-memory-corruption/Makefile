@@ -46,7 +46,8 @@ EXECUTABLES := \
     malloc_object_size_offset \
     invalid_malloc_object_size_small \
     invalid_malloc_object_size_small_quarantine \
-    impossibly_large_malloc
+    impossibly_large_malloc \
+    canary_leak
 
 all: $(EXECUTABLES)
 
