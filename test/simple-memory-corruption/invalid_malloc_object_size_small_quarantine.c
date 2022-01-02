@@ -1,9 +1,10 @@
 #include <malloc.h>
 
+#include "../test_util.h"
+
 size_t malloc_object_size(void *ptr);
 
-__attribute__((optimize(0)))
-int main() {
+OPTNONE int main(void) {
     void *p = malloc(16);
     if (!p) {
         return 1;
