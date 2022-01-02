@@ -100,7 +100,7 @@ executables using glibc or musl:
     ./preload.sh krita --new-image RGBA,U8,500,500
 
 It can be necessary to substantially increase the `vm.max_map_count` sysctl to
-accomodate the large number of mappings caused by guard slabs and large
+accommodate the large number of mappings caused by guard slabs and large
 allocation guard regions. The number of mappings can also be drastically
 reduced via a significant increase to `CONFIG_GUARD_SLABS_INTERVAL` but the
 feature has a low performance and memory usage cost so that isn't recommended.
@@ -138,7 +138,7 @@ between performance and security. However, this reduces security for threat
 models where persistent state is untrusted, i.e. verified boot and attestation
 (see the [attestation sister project](https://attestation.app/about)).
 
-Make sure to raise `vm.max_map_count` substantially too to accomodate the very
+Make sure to raise `vm.max_map_count` substantially too to accommodate the very
 large number of guard pages created by hardened\_malloc. This can be done in
 `init.rc` (`system/core/rootdir/init.rc`) near the other virtual memory
 configuration:
@@ -169,7 +169,7 @@ generally not a recommended approach for production usage. The recommendation
 is to enable it globally and make exceptions for performance critical cases by
 running the application in a container / namespace without it enabled.
 
-Make sure to raise `vm.max_map_count` substantially too to accomodate the very
+Make sure to raise `vm.max_map_count` substantially too to accommodate the very
 large number of guard pages created by hardened\_malloc. As an example, in
 `/etc/sysctl.d/hardened_malloc.conf`:
 
@@ -494,7 +494,7 @@ ChaCha8 is a great fit because it's extremely fast across platforms without
 relying on hardware support or complex platform-specific code. The security
 margins of ChaCha20 would be completely overkill for the use case. Using
 ChaCha8 avoids needing to resort to a non-cryptographically secure PRNG or
-something without a lot of scrunity. The current implementation is simply the
+something without a lot of scrutiny. The current implementation is simply the
 reference implementation of ChaCha8 converted into a pure keystream by ripping
 out the XOR of the message into the keystream.
 
@@ -779,7 +779,7 @@ would be incremented to 5 if one of the adjacent tags was 4):
 
     | 3  | 4  | 15 | 7  | 14 | 15 |
 
-The last slot is randomly chosen for the next alocation, and is assigned the
+The last slot is randomly chosen for the next allocation, and is assigned the
 random value 14. However, it's placed next to an allocation with the tag 14 so
 the tag is incremented and wraps around to 0:
 
