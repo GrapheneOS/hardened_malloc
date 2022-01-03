@@ -28,7 +28,7 @@
 #define STRINGIFY(s) #s
 #define ALIAS(f) __attribute__((alias(STRINGIFY(f))))
 
-static inline int ffzl(long x) {
+static inline int ffzl(unsigned long x) {
     return __builtin_ffsl(~x);
 }
 
