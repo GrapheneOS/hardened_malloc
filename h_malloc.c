@@ -359,11 +359,11 @@ static u64 get_mask(size_t slots) {
 static size_t get_free_slot(struct random_state *rng, size_t slots, const struct slab_metadata *metadata) {
     if (SLOT_RANDOMIZE) {
         // randomize start location for linear search (uniform random choice is too slow)
-        unsigned random_index = get_random_u16_uniform(rng, slots);
-        unsigned first_bitmap = random_index / 64;
+        size_t random_index = get_random_u16_uniform(rng, slots);
+        size_t first_bitmap = random_index / 64;
         u64 random_split = ~(~0UL << (random_index - first_bitmap * 64));
 
-        unsigned i = first_bitmap;
+        size_t i = first_bitmap;
         u64 masked = metadata->bitmap[i];
         masked |= random_split;
         for (;;) {
@@ -379,7 +379,7 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, const struct
             masked = metadata->bitmap[i];
         }
     } else {
-        for (unsigned i = 0; i <= (slots - 1) / 64; i++) {
+        for (size_t i = 0; i <= (slots - 1) / 64; i++) {
             u64 masked = metadata->bitmap[i];
             if (i == (slots - 1) / 64) {
                 masked |= get_mask(slots - i * 64);
