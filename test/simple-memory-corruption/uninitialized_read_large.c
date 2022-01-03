@@ -4,7 +4,7 @@
 
 OPTNONE int main(void) {
     char *p = malloc(256 * 1024);
-    for (unsigned i = 0; i < 8; i++) {
+    for (unsigned i = 0; i < 256 * 1024; i++) {
         if (p[i] != 0) {
             return 1;
         }
