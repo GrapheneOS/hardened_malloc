@@ -92,7 +92,9 @@ struct slab_metadata {
     u64 bitmap[4];
     struct slab_metadata *next;
     struct slab_metadata *prev;
+#if SLAB_CANARY
     u64 canary_value;
+#endif
 #ifdef SLAB_METADATA_COUNT
     u16 count;
 #endif
@@ -450,16 +452,30 @@ static void write_after_free_check(const char *p, size_t size) {
     }
 }
 
-static const u64 canary_mask = __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ ?
-    0xffffffffffffff00UL :
-    0x00ffffffffffffffUL;
+static void set_slab_canary_value(UNUSED struct slab_metadata *metadata, UNUSED struct random_state *rng) {
+#if SLAB_CANARY
+    static const u64 canary_mask = __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ ?
+        0xffffffffffffff00UL :
+        0x00ffffffffffffffUL;
 
-static void set_canary(const struct slab_metadata *metadata, void *p, size_t size) {
-    memcpy((char *)p + size - canary_size, &metadata->canary_value, canary_size);
+    metadata->canary_value = get_random_u64(rng) & canary_mask;
+#endif
 }
 
-static u64 get_random_canary(struct random_state *rng) {
-    return get_random_u64(rng) & canary_mask;
+static void set_canary(UNUSED const struct slab_metadata *metadata, UNUSED void *p, UNUSED size_t size) {
+#if SLAB_CANARY
+    memcpy((char *)p + size - canary_size, &metadata->canary_value, canary_size);
+#endif
+}
+
+static void check_canary(UNUSED const struct slab_metadata *metadata, UNUSED const void *p, UNUSED size_t size) {
+#if SLAB_CANARY
+    u64 canary_value;
+    memcpy(&canary_value, (const char *)p + size - canary_size, canary_size);
+    if (unlikely(canary_value != metadata->canary_value)) {
+        fatal_error("canary corrupted");
+    }
+#endif
 }
 
 static inline void stats_small_allocate(UNUSED struct size_class *c, UNUSED size_t size) {
@@ -525,7 +541,7 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
 
         if (c->free_slabs_head != NULL) {
             struct slab_metadata *metadata = c->free_slabs_head;
-            metadata->canary_value = get_random_canary(&c->rng);
+            set_slab_canary_value(metadata, &c->rng);
 
             void *slab = get_slab(c, slab_size, metadata);
             if (requested_size && memory_protect_rw(slab, slab_size)) {
@@ -561,7 +577,7 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
             mutex_unlock(&c->lock);
             return NULL;
         }
-        metadata->canary_value = get_random_canary(&c->rng);
+        set_slab_canary_value(metadata, &c->rng);
 
         c->partial_slabs = slots > 1 ? metadata : NULL;
         void *slab = get_slab(c, slab_size, metadata);
@@ -673,13 +689,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     }
 
     if (!is_zero_size) {
-        if (SLAB_CANARY) {
-            u64 canary_value;
-            memcpy(&canary_value, (char *)p + size - canary_size, canary_size);
-            if (unlikely(canary_value != metadata->canary_value)) {
-                fatal_error("canary corrupted");
-            }
-        }
+        check_canary(metadata, p, size);
 
         if (ZERO_ON_FREE) {
             memset(p, 0, size - canary_size);
@@ -1589,12 +1599,8 @@ static inline void memory_corruption_check_small(const void *p) {
         fatal_error("invalid malloc_usable_size");
     }
 
-    if (!is_zero_size && SLAB_CANARY) {
-        u64 canary_value;
-        memcpy(&canary_value, (const char *)p + size - canary_size, canary_size);
-        if (unlikely(canary_value != metadata->canary_value)) {
-            fatal_error("canary corrupted");
-        }
+    if (!is_zero_size) {
+        check_canary(metadata, p, size);
     }
 
 #if SLAB_QUARANTINE
