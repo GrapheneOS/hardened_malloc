@@ -48,9 +48,11 @@ extern "C" {
 #endif
 
 // C standard
-void *h_malloc(size_t size);
-void *h_calloc(size_t nmemb, size_t size);
-void *h_realloc(void *ptr, size_t size);
+__attribute__((alloc_size(1))) void *h_malloc(size_t size);
+__attribute__((alloc_size(1, 2))) void *h_calloc(size_t nmemb, size_t size);
+__attribute__((alloc_size(2))) void *h_realloc(void *ptr, size_t size);
+__attribute__((alloc_align(1)))
+__attribute__((alloc_size(2)))
 void *h_aligned_alloc(size_t alignment, size_t size);
 void h_free(void *ptr);
 
@@ -76,6 +78,8 @@ int h_malloc_info(int options, FILE *fp);
 #endif
 
 // obsolete glibc extensions
+__attribute__((alloc_align(1)))
+__attribute__((alloc_size(2)))
 void *h_memalign(size_t alignment, size_t size);
 #ifndef __ANDROID__
 void *h_valloc(size_t size);
