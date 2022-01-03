@@ -673,7 +673,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     }
 
     if (!is_zero_size) {
-        if (canary_size) {
+        if (SLAB_CANARY) {
             u64 canary_value;
             memcpy(&canary_value, (char *)p + size - canary_size, canary_size);
             if (unlikely(canary_value != metadata->canary_value)) {
@@ -1589,7 +1589,7 @@ static inline void memory_corruption_check_small(const void *p) {
         fatal_error("invalid malloc_usable_size");
     }
 
-    if (!is_zero_size && canary_size) {
+    if (!is_zero_size && SLAB_CANARY) {
         u64 canary_value;
         memcpy(&canary_value, (const char *)p + size - canary_size, canary_size);
         if (unlikely(canary_value != metadata->canary_value)) {
