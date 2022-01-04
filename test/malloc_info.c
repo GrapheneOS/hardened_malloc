@@ -4,6 +4,7 @@
 #include <malloc.h>
 
 #include "test_util.h"
+#include "../util.h"
 
 OPTNONE static void leak_memory(void) {
     (void)!malloc(1024 * 1024 * 1024);
@@ -12,7 +13,7 @@ OPTNONE static void leak_memory(void) {
     (void)!malloc(4096);
 }
 
-static void *do_work(void *p) {
+static void *do_work(UNUSED void *p) {
     leak_memory();
     return NULL;
 }
