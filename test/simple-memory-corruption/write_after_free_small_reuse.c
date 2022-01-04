@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "../test_util.h"
+#include "../../util.h"
 
 OPTNONE int main(void) {
     char *p = malloc(128);
@@ -9,7 +10,7 @@ OPTNONE int main(void) {
         return 1;
     }
     free(p);
-    char *q = malloc(128);
+    UNUSED char *q = malloc(128);
 
     p[65] = 'a';
 
