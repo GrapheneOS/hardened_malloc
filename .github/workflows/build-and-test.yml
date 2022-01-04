@@ -29,3 +29,12 @@ jobs:
         run: apk add build-base python3
       - name: Build
         run: make test
+  build-ubuntu-gcc-aarch64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: sudo apt install --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libgcc-s1-arm64-cross cpp-aarch64-linux-gnu
+      - name: Build
+        run: CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-gcc++ make CONFIG_NATIVE=false
+ 
