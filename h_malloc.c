@@ -316,7 +316,7 @@ static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_si
     return metadata;
 }
 
-static void set_slot(struct slab_metadata *metadata, size_t index) {
+static void set_used_slot(struct slab_metadata *metadata, size_t index) {
     size_t bucket = index / 64;
     metadata->bitmap[bucket] |= 1UL << (index - bucket * 64);
 #ifdef SLAB_METADATA_COUNT
@@ -324,7 +324,7 @@ static void set_slot(struct slab_metadata *metadata, size_t index) {
 #endif
 }
 
-static void clear_slot(struct slab_metadata *metadata, size_t index) {
+static void clear_used_slot(struct slab_metadata *metadata, size_t index) {
     size_t bucket = index / 64;
     metadata->bitmap[bucket] &= ~(1UL << (index - bucket * 64));
 #ifdef SLAB_METADATA_COUNT
@@ -332,23 +332,23 @@ static void clear_slot(struct slab_metadata *metadata, size_t index) {
 #endif
 }
 
-static bool get_slot(const struct slab_metadata *metadata, size_t index) {
+static bool is_used_slot(const struct slab_metadata *metadata, size_t index) {
     size_t bucket = index / 64;
     return (metadata->bitmap[bucket] >> (index - bucket * 64)) & 1UL;
 }
 
 #if SLAB_QUARANTINE
-static void set_quarantine(struct slab_metadata *metadata, size_t index) {
+static void set_quarantine_slot(struct slab_metadata *metadata, size_t index) {
     size_t bucket = index / 64;
     metadata->quarantine_bitmap[bucket] |= 1UL << (index - bucket * 64);
 }
 
-static void clear_quarantine(struct slab_metadata *metadata, size_t index) {
+static void clear_quarantine_slot(struct slab_metadata *metadata, size_t index) {
     size_t bucket = index / 64;
     metadata->quarantine_bitmap[bucket] &= ~(1UL << (index - bucket * 64));
 }
 
-static bool get_quarantine(const struct slab_metadata *metadata, size_t index) {
+static bool is_quarantine_slot(const struct slab_metadata *metadata, size_t index) {
     size_t bucket = index / 64;
     return (metadata->quarantine_bitmap[bucket] >> (index - bucket * 64)) & 1UL;
 }
@@ -527,7 +527,7 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
 
             void *slab = get_slab(c, slab_size, metadata);
             size_t slot = get_free_slot(&c->rng, slots, metadata);
-            set_slot(metadata, slot);
+            set_used_slot(metadata, slot);
             void *p = slot_pointer(size, slab, slot);
             if (requested_size) {
                 write_after_free_check(p, size - canary_size);
@@ -560,7 +560,7 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
             c->partial_slabs = slots > 1 ? metadata : NULL;
 
             size_t slot = get_free_slot(&c->rng, slots, metadata);
-            set_slot(metadata, slot);
+            set_used_slot(metadata, slot);
             void *p = slot_pointer(size, slab, slot);
             if (requested_size) {
                 set_canary(metadata, p, size);
@@ -582,7 +582,7 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
         c->partial_slabs = slots > 1 ? metadata : NULL;
         void *slab = get_slab(c, slab_size, metadata);
         size_t slot = get_free_slot(&c->rng, slots, metadata);
-        set_slot(metadata, slot);
+        set_used_slot(metadata, slot);
         void *p = slot_pointer(size, slab, slot);
         if (requested_size) {
             set_canary(metadata, p, size);
@@ -596,7 +596,7 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
 
     struct slab_metadata *metadata = c->partial_slabs;
     size_t slot = get_free_slot(&c->rng, slots, metadata);
-    set_slot(metadata, slot);
+    set_used_slot(metadata, slot);
 
     if (!has_free_slots(slots, metadata)) {
         c->partial_slabs = c->partial_slabs->next;
@@ -684,7 +684,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
         fatal_error("invalid unaligned free");
     }
 
-    if (!get_slot(metadata, slot)) {
+    if (!is_used_slot(metadata, slot)) {
         fatal_error("double free");
     }
 
@@ -697,11 +697,11 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     }
 
 #if SLAB_QUARANTINE
-    if (get_quarantine(metadata, slot)) {
+    if (is_quarantine_slot(metadata, slot)) {
         fatal_error("double free (quarantine)");
     }
 
-    set_quarantine(metadata, slot);
+    set_quarantine_slot(metadata, slot);
 
     size_t quarantine_shift = __builtin_clzl(size) - (63 - MAX_SLAB_SIZE_CLASS_SHIFT);
 
@@ -739,7 +739,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     slab = get_slab(c, slab_size, metadata);
     slot = libdivide_u32_do((char *)p - (char *)slab, &c->size_divisor);
 
-    clear_quarantine(metadata, slot);
+    clear_quarantine_slot(metadata, slot);
 #endif
 
     // triggered even for slots == 1 and then undone below
@@ -753,7 +753,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
         c->partial_slabs = metadata;
     }
 
-    clear_slot(metadata, slot);
+    clear_used_slot(metadata, slot);
 
     if (is_free_slab(metadata)) {
         if (metadata->prev) {
@@ -1595,7 +1595,7 @@ static inline void memory_corruption_check_small(const void *p) {
         fatal_error("invalid unaligned malloc_usable_size");
     }
 
-    if (!get_slot(metadata, slot)) {
+    if (!is_used_slot(metadata, slot)) {
         fatal_error("invalid malloc_usable_size");
     }
 
@@ -1604,7 +1604,7 @@ static inline void memory_corruption_check_small(const void *p) {
     }
 
 #if SLAB_QUARANTINE
-    if (get_quarantine(metadata, slot)) {
+    if (is_quarantine_slot(metadata, slot)) {
         fatal_error("invalid malloc_usable_size (quarantine)");
     }
 #endif
@@ -1663,12 +1663,12 @@ EXPORT size_t h_malloc_object_size(const void *p) {
         void *slab = get_slab(c, slab_size, metadata);
         size_t slot = libdivide_u32_do((const char *)p - (const char *)slab, &c->size_divisor);
 
-        if (!get_slot(metadata, slot)) {
+        if (!is_used_slot(metadata, slot)) {
             fatal_error("invalid malloc_object_size");
         }
 
 #if SLAB_QUARANTINE
-        if (get_quarantine(metadata, slot)) {
+        if (is_quarantine_slot(metadata, slot)) {
             fatal_error("invalid malloc_object_size (quarantine)");
         }
 #endif
