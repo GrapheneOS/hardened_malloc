@@ -7,7 +7,7 @@ OPTNONE int main(void) {
     if (!p) {
         return 1;
     }
-    *(p + 8 + 7) = 0;
+    *(p + 8 + 7) ^= 1;
     free(p);
     return 0;
 }
