@@ -7,7 +7,8 @@ OPTNONE int main(void) {
     if (!p) {
         return 1;
     }
-    *(p + 256 * 1024 + 7) = 0;
+    size_t size = malloc_usable_size(p);
+    *(p + size + 7) = 0;
     free(p);
     return 0;
 }
