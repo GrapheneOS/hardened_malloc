@@ -104,10 +104,10 @@ void h_malloc_enable(void);
 // hardened_malloc extensions
 
 // return an upper bound on object size for any pointer based on malloc metadata
-size_t h_malloc_object_size(void *ptr);
+size_t h_malloc_object_size(const void *ptr);
 
 // similar to malloc_object_size, but avoiding locking so the results are much more limited
-size_t h_malloc_object_size_fast(void *ptr);
+size_t h_malloc_object_size_fast(const void *ptr);
 
 // The free function with an extra parameter for passing the size requested at
 // allocation time.

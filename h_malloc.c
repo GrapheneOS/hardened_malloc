@@ -1642,7 +1642,7 @@ EXPORT size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *p) {
     return size;
 }
 
-EXPORT size_t h_malloc_object_size(void *p) {
+EXPORT size_t h_malloc_object_size(const void *p) {
     if (p == NULL) {
         return 0;
     }
@@ -1699,7 +1699,7 @@ EXPORT size_t h_malloc_object_size(void *p) {
     return size;
 }
 
-EXPORT size_t h_malloc_object_size_fast(void *p) {
+EXPORT size_t h_malloc_object_size_fast(const void *p) {
     if (p == NULL) {
         return 0;
     }
