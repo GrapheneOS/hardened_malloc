@@ -39,8 +39,10 @@ EXECUTABLES := \
     uninitialized_free \
     uninitialized_realloc \
     uninitialized_malloc_usable_size \
-    eight_byte_overflow_small \
-    eight_byte_overflow_large \
+    overflow_large_1_byte \
+    overflow_large_8_byte \
+    overflow_small_1_byte \
+    overflow_small_8_byte \
     string_overflow \
     delete_type_size_mismatch \
     unaligned_malloc_usable_size_small \

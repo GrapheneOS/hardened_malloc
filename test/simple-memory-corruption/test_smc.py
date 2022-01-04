@@ -48,14 +48,26 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
         self.assertEqual(stderr.decode("utf-8"),
                          "fatal allocator error: double free (quarantine)\n")
 
-    def test_eight_byte_overflow_large(self):
+    def test_overflow_large_1_byte(self):
         _stdout, _stderr, returncode = self.run_test(
-            "eight_byte_overflow_large")
+            "overflow_large_1_byte")
         self.assertEqual(returncode, -11)
 
-    def test_eight_byte_overflow_small(self):
+    def test_overflow_large_8_byte(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "overflow_large_8_byte")
+        self.assertEqual(returncode, -11)
+
+    def test_overflow_small_1_byte(self):
         _stdout, stderr, returncode = self.run_test(
-            "eight_byte_overflow_small")
+            "overflow_small_1_byte")
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode("utf-8"),
+                         "fatal allocator error: canary corrupted\n")
+
+    def test_overflow_small_8_byte(self):
+        _stdout, stderr, returncode = self.run_test(
+            "overflow_small_8_byte")
         self.assertEqual(returncode, -6)
         self.assertEqual(stderr.decode("utf-8"),
                          "fatal allocator error: canary corrupted\n")
