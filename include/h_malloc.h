@@ -80,7 +80,7 @@ int h_malloc_info(int options, FILE *fp);
 __attribute__((malloc)) __attribute__((alloc_size(2))) __attribute__((alloc_align(1)))
 void *h_memalign(size_t alignment, size_t size);
 #ifndef __ANDROID__
-__attribute__((malloc)) void *h_valloc(size_t size);
+__attribute__((malloc)) __attribute__((alloc_size(1))) void *h_valloc(size_t size);
 __attribute__((malloc)) void *h_pvalloc(size_t size);
 #endif
 #ifdef __GLIBC__
