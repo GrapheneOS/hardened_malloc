@@ -13,7 +13,7 @@ CPPFLAGS += -D_GNU_SOURCE \
 
 LDLIBS := -lhardened_malloc
 
-LDFLAGS := -Wl,-L$(dir)../../,-R,$(dir)../../
+LDFLAGS := -Wl,-L$(dir)../../out,-R,$(dir)../../out
 
 EXECUTABLES := \
     double_free_large \

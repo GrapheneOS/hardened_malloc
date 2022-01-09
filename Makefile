@@ -1,25 +1,17 @@
-CONFIG_WERROR := true
-CONFIG_NATIVE := true
-CONFIG_CXX_ALLOCATOR := true
-CONFIG_UBSAN := false
-CONFIG_SEAL_METADATA := false
-CONFIG_ZERO_ON_FREE := true
-CONFIG_WRITE_AFTER_FREE_CHECK := true
-CONFIG_SLOT_RANDOMIZE := true
-CONFIG_SLAB_CANARY := true
-CONFIG_SLAB_QUARANTINE_RANDOM_LENGTH := 1
-CONFIG_SLAB_QUARANTINE_QUEUE_LENGTH := 1
-CONFIG_EXTENDED_SIZE_CLASSES := true
-CONFIG_LARGE_SIZE_CLASSES := true
-CONFIG_GUARD_SLABS_INTERVAL := 1
-CONFIG_GUARD_SIZE_DIVISOR := 2
-CONFIG_REGION_QUARANTINE_RANDOM_LENGTH := 256
-CONFIG_REGION_QUARANTINE_QUEUE_LENGTH := 1024
-CONFIG_REGION_QUARANTINE_SKIP_THRESHOLD := 33554432 # 32MiB
-CONFIG_FREE_SLABS_QUARANTINE_RANDOM_LENGTH := 32
-CONFIG_CLASS_REGION_SIZE := 34359738368 # 32GiB
-CONFIG_N_ARENA := 4
-CONFIG_STATS := false
+VARIANT := default
+
+ifneq ($(VARIANT),)
+    CONFIG_FILE := config/$(VARIANT).mk
+    include config/$(VARIANT).mk
+endif
+
+ifeq ($(VARIANT),default)
+    SUFFIX :=
+else
+    SUFFIX := -$(VARIANT)
+endif
+
+OUT := out$(SUFFIX)
 
 define safe_flag
 $(shell $(CC) $(if $(filter clang,$(CC)),-Werror=unknown-warning-option) -E $1 - </dev/null >/dev/null 2>&1 && echo $1 || echo $2)
@@ -53,6 +45,8 @@ ifeq ($(CONFIG_CXX_ALLOCATOR),true)
     SOURCES += new.cc
     OBJECTS += new.o
 endif
+
+OBJECTS := $(addprefix $(OUT)/,$(OBJECTS))
 
 ifeq ($(CONFIG_UBSAN),true)
     CFLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined
@@ -111,16 +105,26 @@ CPPFLAGS += \
     -DN_ARENA=$(CONFIG_N_ARENA) \
     -DCONFIG_STATS=$(CONFIG_STATS)
 
-libhardened_malloc.so: $(OBJECTS)
+$(OUT)/libhardened_malloc$(SUFFIX).so: $(OBJECTS) | $(OUT)
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared $^ $(LDLIBS) -o $@
 
-chacha.o: chacha.c chacha.h util.h
-h_malloc.o: h_malloc.c include/h_malloc.h mutex.h memory.h pages.h random.h util.h
-memory.o: memory.c memory.h util.h
-new.o: new.cc include/h_malloc.h util.h
-pages.o: pages.c pages.h memory.h util.h
-random.o: random.c random.h chacha.h util.h
-util.o: util.c util.h
+$(OUT):
+	mkdir -p $(OUT)
+
+$(OUT)/chacha.o: chacha.c chacha.h util.h $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.c) $(OUTPUT_OPTION) $<
+$(OUT)/h_malloc.o: h_malloc.c include/h_malloc.h mutex.h memory.h pages.h random.h util.h $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.c) $(OUTPUT_OPTION) $<
+$(OUT)/memory.o: memory.c memory.h util.h $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.c) $(OUTPUT_OPTION) $<
+$(OUT)/new.o: new.cc include/h_malloc.h util.h $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.cc) $(OUTPUT_OPTION) $<
+$(OUT)/pages.o: pages.c pages.h memory.h util.h $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.c) $(OUTPUT_OPTION) $<
+$(OUT)/random.o: random.c random.h chacha.h util.h $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.c) $(OUTPUT_OPTION) $<
+$(OUT)/util.o: util.c util.h $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.c) $(OUTPUT_OPTION) $<
 
 check: tidy
 
@@ -129,10 +133,10 @@ tidy:
 	clang-tidy --extra-arg=-std=c++17 $(filter %.cc,$(SOURCES)) -- $(CPPFLAGS)
 
 clean:
-	rm -f libhardened_malloc.so $(OBJECTS)
+	rm -f $(OUT)/libhardened_malloc.so $(OBJECTS)
 	make -C test/ clean
 
-test: libhardened_malloc.so
+test: $(OUT)/libhardened_malloc$(SUFFIX).so
 	make -C test/
 	python3 -m unittest discover --start-directory test/
 

@@ -1,6 +1,10 @@
 CONFIG_SLAB_CANARY := true
 CONFIG_EXTENDED_SIZE_CLASSES := true
 
+ifneq ($(VARIANT),)
+    $(error testing non-default variants not yet supported)
+endif
+
 ifeq (,$(filter $(CONFIG_SLAB_CANARY),true false))
     $(error CONFIG_SLAB_CANARY must be true or false)
 endif
