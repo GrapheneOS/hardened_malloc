@@ -30,7 +30,7 @@ ifeq ($(CONFIG_NATIVE),true)
     SHARED_FLAGS += -march=native
 endif
 
-CFLAGS := $(CFLAGS) -std=c11 $(SHARED_FLAGS) -Wmissing-prototypes
+CFLAGS := $(CFLAGS) -std=c17 $(SHARED_FLAGS) -Wmissing-prototypes
 CXXFLAGS := $(CXXFLAGS) -std=c++17 $(SHARED_FLAGS)
 LDFLAGS := $(LDFLAGS) -Wl,--as-needed,-z,defs,-z,relro,-z,now,-z,nodlopen,-z,text
 
@@ -129,7 +129,7 @@ $(OUT)/util.o: util.c util.h $(CONFIG_FILE) | $(OUT)
 check: tidy
 
 tidy:
-	clang-tidy --extra-arg=-std=c11 $(filter %.c,$(SOURCES)) -- $(CPPFLAGS)
+	clang-tidy --extra-arg=-std=c17 $(filter %.c,$(SOURCES)) -- $(CPPFLAGS)
 	clang-tidy --extra-arg=-std=c++17 $(filter %.cc,$(SOURCES)) -- $(CPPFLAGS)
 
 clean:
