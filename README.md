@@ -190,6 +190,15 @@ between portability, performance, memory usage or security. The core design
 choices are not configurable and the allocator remains very security-focused
 even with all the optional features disabled.
 
+The configuration system supports a configuration template system with two
+standard presets: the default configuration (`configs/default.mk`) and a light
+configuration (`configs/light.mk`). Packagers are strongly encouraged to ship
+both the standard `default` and `light` configuration. You can choose the
+configuration to build using `make VARIANT=light` where `make VARIANT=default`
+is the same as `make`. Non-default configuration templates will build a library
+with the suffix `-variant` such as `libhardened_malloc-light.so` and will use
+an `out-variant` directory instead of `out` for the build.
+
 For reduced memory usage at the expense of performance (this will also reduce
 the size of the empty slab caches and quarantines, saving a lot of memory,
 since those are currently based on the size of the largest size class):
