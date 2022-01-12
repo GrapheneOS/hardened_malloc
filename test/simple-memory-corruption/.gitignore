@@ -3,8 +3,6 @@ double_free_large
 double_free_large_delayed
 double_free_small
 double_free_small_delayed
-eight_byte_overflow_large
-eight_byte_overflow_small
 invalid_free_protected
 invalid_free_small_region
 invalid_free_small_region_far
@@ -30,4 +28,11 @@ malloc_object_size
 malloc_object_size_offset
 invalid_malloc_object_size_small
 invalid_malloc_object_size_small_quarantine
+impossibly_large_malloc
+overflow_large_1_byte
+overflow_large_8_byte
+overflow_small_1_byte
+overflow_small_8_byte
+uninitialized_read_large
+uninitialized_read_small
 __pycache__/
