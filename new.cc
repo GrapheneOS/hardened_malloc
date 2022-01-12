@@ -1,4 +1,8 @@
+#ifdef __APPLE__
 #include <new>
+#else
+#include <bits/functexcept.h>
+#endif
 
 #include "h_malloc.h"
 #include "util.h"
