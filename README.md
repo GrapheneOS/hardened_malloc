@@ -191,8 +191,8 @@ choices are not configurable and the allocator remains very security-focused
 even with all the optional features disabled.
 
 The configuration system supports a configuration template system with two
-standard presets: the default configuration (`configs/default.mk`) and a light
-configuration (`configs/light.mk`). Packagers are strongly encouraged to ship
+standard presets: the default configuration (`config/default.mk`) and a light
+configuration (`config/light.mk`). Packagers are strongly encouraged to ship
 both the standard `default` and `light` configuration. You can choose the
 configuration to build using `make VARIANT=light` where `make VARIANT=default`
 is the same as `make`. Non-default configuration templates will build a library
