@@ -1,2 +1,2 @@
-*.o
-*.so
+out/
+out-light/
