@@ -27,7 +27,9 @@
 
 #define ALIAS(f) 
 
-#ifndef __APPLE__
+#ifdef __APPLE__
+#define ALIAS(f) 
+#else
 #define STRINGIFY(s) #s
 #define ALIAS(f) __attribute__((alias(STRINGIFY(f))))
 #endif
