@@ -19,8 +19,7 @@ endef
 
 CPPFLAGS := $(CPPFLAGS) -D_GNU_SOURCE -I include
 SHARED_FLAGS := -O3 -flto -fPIC -fvisibility=hidden -fno-plt \
-    $(call safe_flag,-fstack-clash-protection) -fstack-protector-strong -pipe -Wall -Wextra \
-    $(call safe_flag,-Wcast-align=strict,-Wcast-align) -Wcast-qual -Wwrite-strings
+    $(call safe_flag,-Wcast-align) -Wcast-qual -Wwrite-strings
 
 ifeq ($(CONFIG_WERROR),true)
     SHARED_FLAGS += -Werror
@@ -32,7 +31,8 @@ endif
 
 CFLAGS := $(CFLAGS) -std=c11 $(SHARED_FLAGS) -Wmissing-prototypes
 CXXFLAGS := $(CXXFLAGS) -std=c++17 $(SHARED_FLAGS)
-LDFLAGS := $(LDFLAGS) -Wl,--as-needed,-z,defs,-z,relro,-z,now,-z,nodlopen,-z,text
+
+LDFLAGS := $(LDFLAGS) -Wl
 
 SOURCES := chacha.c h_malloc.c memory.c pages.c random.c util.c
 OBJECTS := $(SOURCES:.c=.o)
@@ -40,7 +40,7 @@ OBJECTS := $(SOURCES:.c=.o)
 ifeq ($(CONFIG_CXX_ALLOCATOR),true)
     # make sure LTO is compatible in case CC and CXX don't match (such as clang and g++)
     CXX := $(CC)
-    LDLIBS += -lstdc++ -lgcc_s
+    LDLIBS += -lstdc++
 
     SOURCES += new.cc
     OBJECTS += new.o

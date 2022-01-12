@@ -12,7 +12,11 @@ static void get_random_seed(void *buf, size_t size) {
         ssize_t r;
 
         do {
-            r = getrandom(buf, size, 0);
+            #ifdef __APPLE__ 
+                r = getentropy(buf, size);
+            #else
+                r = getrandom(buf, size, 0);
+            #endif
         } while (r == -1 && errno == EINTR);
 
         if (r <= 0) {

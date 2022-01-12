@@ -3,8 +3,6 @@
 
 #include <stdio.h>
 
-#include <malloc.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

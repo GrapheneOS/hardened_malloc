@@ -25,8 +25,13 @@
 #define UNUSED __attribute__((unused))
 #define EXPORT __attribute__((visibility("default")))
 
+#define ALIAS(f) 
+
+#ifndef __APPLE__
 #define STRINGIFY(s) #s
 #define ALIAS(f) __attribute__((alias(STRINGIFY(f))))
+#endif
+
 
 static inline int ffzl(unsigned long x) {
     return __builtin_ffsl(~x);

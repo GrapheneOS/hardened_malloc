@@ -1,7 +1,6 @@
 #include <errno.h>
 
 #include <sys/mman.h>
-#include <sys/prctl.h>
 
 #ifndef PR_SET_VMA
 #define PR_SET_VMA 0x53564d41

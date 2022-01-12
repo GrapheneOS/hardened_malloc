@@ -1,8 +1,8 @@
-#include <malloc.h>
 
 #include "../test_util.h"
+#include <malloc/malloc.h>
 
 OPTNONE int main(void) {
-    malloc_usable_size((void *)1);
+    malloc_size((void *)1);
     return 0;
 }

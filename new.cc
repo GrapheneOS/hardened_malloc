@@ -1,4 +1,3 @@
-#include <bits/functexcept.h>
 #include <new>
 
 #include "h_malloc.h"
