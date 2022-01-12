@@ -25,7 +25,6 @@
 #define UNUSED __attribute__((unused))
 #define EXPORT __attribute__((visibility("default")))
 
-#define ALIAS(f) 
 
 #ifdef __APPLE__
 #define ALIAS(f) 
