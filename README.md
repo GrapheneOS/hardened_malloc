@@ -200,6 +200,21 @@ is the same as `make`. Non-default configuration templates will build a library
 with the suffix `-variant` such as `libhardened_malloc-light.so` and will use
 an `out-variant` directory instead of `out` for the build.
 
+The `default` configuration template has all normal optional security features
+enabled (just not the niche `CONFIG_SEAL_METADATA`) and is quite aggressive in
+terms of sacrificing performance and memory usage for security. The `light`
+configuration template disables the slab quarantines, write after free check,
+slot randomization and raises the guard slab interval from 1 to 8 but leaves
+zero-on-free and slab canaries enabled. The `light` configuration has solid
+performance and memory usage while still being far more secure than mainstream
+allocators with much better security properties. Disabling zero-on-free would
+gain more performance but doesn't make much difference for small allocations
+without also disabling slab canaries. Slab canaries slightly raise memory use
+and slightly slow down performance but are quite important to mitigate small
+overflows and C string overflows. Disabling slab canaries is not recommended
+in most cases since it would no longer be a strict upgrade over traditional
+allocators with headers on allocations and basic consistency checks for them.
+
 For reduced memory usage at the expense of performance (this will also reduce
 the size of the empty slab caches and quarantines, saving a lot of memory,
 since those are currently based on the size of the largest size class):
@@ -207,24 +222,6 @@ since those are currently based on the size of the largest size class):
     make \
     N_ARENA=1 \
     CONFIG_EXTENDED_SIZE_CLASSES=false
-
-The default configuration has all normal security features enabled (just not
-the niche `CONFIG_SEAL_METADATA`) and is quite aggressive in terms of
-sacrificing performance and memory usage for security. An example of a leaner
-configuration disabling expensive security features other than zero-on-free /
-slab canaries along with using far fewer guard slabs:
-
-    make \
-    CONFIG_WRITE_AFTER_FREE_CHECK=false \
-    CONFIG_SLOT_RANDOMIZE=false \
-    CONFIG_SLAB_QUARANTINE_RANDOM_LENGTH=0 \
-    CONFIG_SLAB_QUARANTINE_QUEUE_LENGTH=0 \
-    CONFIG_GUARD_SLABS_INTERVAL=8
-
-This is a more appropriate configuration for a more mainstream OS choosing to
-use hardened\_malloc while making a smaller memory and performance sacrifice.
-The slot randomization isn't particularly expensive but it's low value and is
-one of the first things to disable when aiming for higher performance.
 
 The following boolean configuration options are available:
 
