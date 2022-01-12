@@ -122,7 +122,8 @@ make command as follows:
 
 ## Compatibility
 
-OpenSSH 8.1 or higher is required to allow the mprotect PROT_READ|PROT_WRITE system calls in the seccomp-bpf filter rather than killing the process.
+OpenSSH 8.1 or higher is required to allow the mprotect `PROT_READ|PROT_WRITE`
+system calls in the seccomp-bpf filter rather than killing the process.
 
 ## OS integration
 
