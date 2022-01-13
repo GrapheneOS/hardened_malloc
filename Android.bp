@@ -10,7 +10,6 @@ common_cflags = [
     "-Wcast-align",
     "-Wcast-qual",
     "-Wwrite-strings",
-    "-Wno-constant-logical-operand",
     "-Werror",
     "-DH_MALLOC_PREFIX",
     "-DZERO_ON_FREE=true",
