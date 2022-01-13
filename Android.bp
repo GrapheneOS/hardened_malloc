@@ -43,7 +43,7 @@ cc_defaults {
             cflags: ["-DCONFIG_CLASS_REGION_SIZE=34359738368"] // 32GiB
         },
     },
-    conlyflags: ["-std=c11", "-Wmissing-prototypes"],
+    conlyflags: ["-std=c17", "-Wmissing-prototypes"],
     stl: "none",
 }
 
