@@ -1,7 +1,6 @@
 dir=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
 CONFIG_SLAB_CANARY := true
-# Clang 13 still doesn't enable sized deallocation by default
 CXXFLAGS := -std=c++17 -fsized-deallocation
 
 ifeq (,$(filter $(CONFIG_SLAB_CANARY),true false))
