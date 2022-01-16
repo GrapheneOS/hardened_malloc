@@ -317,78 +317,78 @@ static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_si
 }
 
 static void set_used_slot(struct slab_metadata *metadata, size_t index) {
-    size_t bucket = index / 64;
-    metadata->bitmap[bucket] |= 1UL << (index - bucket * 64);
+    size_t bucket = index / U64_WIDTH;
+    metadata->bitmap[bucket] |= 1UL << (index - bucket * U64_WIDTH);
 #ifdef SLAB_METADATA_COUNT
     metadata->count++;
 #endif
 }
 
 static void clear_used_slot(struct slab_metadata *metadata, size_t index) {
-    size_t bucket = index / 64;
-    metadata->bitmap[bucket] &= ~(1UL << (index - bucket * 64));
+    size_t bucket = index / U64_WIDTH;
+    metadata->bitmap[bucket] &= ~(1UL << (index - bucket * U64_WIDTH));
 #ifdef SLAB_METADATA_COUNT
     metadata->count--;
 #endif
 }
 
 static bool is_used_slot(const struct slab_metadata *metadata, size_t index) {
-    size_t bucket = index / 64;
-    return (metadata->bitmap[bucket] >> (index - bucket * 64)) & 1UL;
+    size_t bucket = index / U64_WIDTH;
+    return (metadata->bitmap[bucket] >> (index - bucket * U64_WIDTH)) & 1UL;
 }
 
 #if SLAB_QUARANTINE
 static void set_quarantine_slot(struct slab_metadata *metadata, size_t index) {
-    size_t bucket = index / 64;
-    metadata->quarantine_bitmap[bucket] |= 1UL << (index - bucket * 64);
+    size_t bucket = index / U64_WIDTH;
+    metadata->quarantine_bitmap[bucket] |= 1UL << (index - bucket * U64_WIDTH);
 }
 
 static void clear_quarantine_slot(struct slab_metadata *metadata, size_t index) {
-    size_t bucket = index / 64;
-    metadata->quarantine_bitmap[bucket] &= ~(1UL << (index - bucket * 64));
+    size_t bucket = index / U64_WIDTH;
+    metadata->quarantine_bitmap[bucket] &= ~(1UL << (index - bucket * U64_WIDTH));
 }
 
 static bool is_quarantine_slot(const struct slab_metadata *metadata, size_t index) {
-    size_t bucket = index / 64;
-    return (metadata->quarantine_bitmap[bucket] >> (index - bucket * 64)) & 1UL;
+    size_t bucket = index / U64_WIDTH;
+    return (metadata->quarantine_bitmap[bucket] >> (index - bucket * U64_WIDTH)) & 1UL;
 }
 #endif
 
 static u64 get_mask(size_t slots) {
-    return slots < 64 ? ~0UL << slots : 0;
+    return slots < U64_WIDTH ? ~0UL << slots : 0;
 }
 
 static size_t get_free_slot(struct random_state *rng, size_t slots, const struct slab_metadata *metadata) {
     if (SLOT_RANDOMIZE) {
         // randomize start location for linear search (uniform random choice is too slow)
         size_t random_index = get_random_u16_uniform(rng, slots);
-        size_t first_bitmap = random_index / 64;
-        u64 random_split = ~(~0UL << (random_index - first_bitmap * 64));
+        size_t first_bitmap = random_index / U64_WIDTH;
+        u64 random_split = ~(~0UL << (random_index - first_bitmap * U64_WIDTH));
 
         size_t i = first_bitmap;
         u64 masked = metadata->bitmap[i];
         masked |= random_split;
         for (;;) {
-            if (i == slots / 64) {
-                masked |= get_mask(slots - i * 64);
+            if (i == slots / U64_WIDTH) {
+                masked |= get_mask(slots - i * U64_WIDTH);
             }
 
             if (masked != ~0UL) {
-                return ffzl(masked) - 1 + i * 64;
+                return ffzl(masked) - 1 + i * U64_WIDTH;
             }
 
-            i = i == (slots - 1) / 64 ? 0 : i + 1;
+            i = i == (slots - 1) / U64_WIDTH ? 0 : i + 1;
             masked = metadata->bitmap[i];
         }
     } else {
-        for (size_t i = 0; i <= (slots - 1) / 64; i++) {
+        for (size_t i = 0; i <= (slots - 1) / U64_WIDTH; i++) {
             u64 masked = metadata->bitmap[i];
-            if (i == (slots - 1) / 64) {
-                masked |= get_mask(slots - i * 64);
+            if (i == (slots - 1) / U64_WIDTH) {
+                masked |= get_mask(slots - i * U64_WIDTH);
             }
 
             if (masked != ~0UL) {
-                return ffzl(masked) - 1 + i * 64;
+                return ffzl(masked) - 1 + i * U64_WIDTH;
             }
         }
     }
@@ -400,19 +400,19 @@ static bool has_free_slots(size_t slots, const struct slab_metadata *metadata) {
 #ifdef SLAB_METADATA_COUNT
     return metadata->count < slots;
 #else
-    if (slots <= 64) {
+    if (slots <= U64_WIDTH) {
         u64 masked = metadata->bitmap[0] | get_mask(slots);
         return masked != ~0UL;
     }
-    if (slots <= 128) {
-        u64 masked = metadata->bitmap[1] | get_mask(slots - 64);
+    if (slots <= U64_WIDTH * 2) {
+        u64 masked = metadata->bitmap[1] | get_mask(slots - U64_WIDTH);
         return metadata->bitmap[0] != ~0UL || masked != ~0UL;
     }
-    if (slots <= 192) {
-        u64 masked = metadata->bitmap[2] | get_mask(slots - 128);
+    if (slots <= U64_WIDTH * 3) {
+        u64 masked = metadata->bitmap[2] | get_mask(slots - U64_WIDTH * 2);
         return metadata->bitmap[0] != ~0UL || metadata->bitmap[1] != ~0UL || masked != ~0UL;
     }
-    u64 masked = metadata->bitmap[3] | get_mask(slots - 192);
+    u64 masked = metadata->bitmap[3] | get_mask(slots - U64_WIDTH * 3);
     return metadata->bitmap[0] != ~0UL || metadata->bitmap[1] != ~0UL || metadata->bitmap[2] != ~0UL || masked != ~0UL;
 #endif
 }
@@ -1200,7 +1200,7 @@ static size_t get_large_size_class(size_t size) {
         // 1 MiB [5 MiB, 6 MiB, 7 MiB, 8 MiB]
         // etc.
         size = max(size, (size_t)PAGE_SIZE);
-        size_t spacing_shift = 64 - __builtin_clzl(size - 1) - 3;
+        size_t spacing_shift = U64_WIDTH - __builtin_clzl(size - 1) - 3;
         size_t spacing_class = 1ULL << spacing_shift;
         return align(size, spacing_class);
     }

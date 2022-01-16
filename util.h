@@ -46,6 +46,8 @@ typedef uint32_t u32;
 typedef uint64_t u64;
 typedef unsigned __int128 u128;
 
+#define U64_WIDTH 64
+
 #if CONFIG_SEAL_METADATA
 
 #ifdef __GLIBC__
