@@ -9,10 +9,6 @@ static bool add_guards(size_t size, size_t guard_size, size_t *total_size) {
         __builtin_add_overflow(*total_size, guard_size, total_size);
 }
 
-static uintptr_t alignment_ceiling(uintptr_t s, uintptr_t alignment) {
-    return ((s) + (alignment - 1)) & ((~alignment) + 1);
-}
-
 void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotect, const char *name) {
     size_t real_size;
     if (unlikely(add_guards(usable_size, guard_size, &real_size))) {
@@ -33,7 +29,7 @@ void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotect, cons
 }
 
 void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t guard_size, const char *name) {
-    usable_size = PAGE_CEILING(usable_size);
+    usable_size = page_align(usable_size);
     if (unlikely(!usable_size)) {
         errno = ENOMEM;
         return NULL;
@@ -59,7 +55,7 @@ void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t guard_
 
     void *usable = (char *)real + guard_size;
 
-    size_t lead_size = alignment_ceiling((uintptr_t)usable, alignment) - (uintptr_t)usable;
+    size_t lead_size = align((uintptr_t)usable, alignment) - (uintptr_t)usable;
     size_t trail_size = alloc_size - lead_size - usable_size;
     void *base = (char *)usable + lead_size;
 

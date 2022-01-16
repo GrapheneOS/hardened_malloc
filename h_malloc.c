@@ -194,7 +194,7 @@ static inline struct size_info get_size_info(size_t size) {
         return (struct size_info){0, 0};
     }
     if (size <= 128) {
-        return (struct size_info){(size + 15) & ~15, ((size - 1) >> 4) + 1};
+        return (struct size_info){align(size, 16), ((size - 1) >> 4) + 1};
     }
     for (unsigned class = 9; class < N_SIZE_CLASSES; class++) {
         size_t real_size = size_classes[class];
@@ -217,7 +217,7 @@ static inline struct size_info get_size_info_align(size_t size, size_t alignment
 }
 
 static size_t get_slab_size(size_t slots, size_t size) {
-    return PAGE_CEILING(slots * size);
+    return page_align(slots * size);
 }
 
 struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
@@ -1202,9 +1202,9 @@ static size_t get_large_size_class(size_t size) {
         size = max(size, (size_t)PAGE_SIZE);
         size_t spacing_shift = 64 - __builtin_clzl(size - 1) - 3;
         size_t spacing_class = 1ULL << spacing_shift;
-        return (size + (spacing_class - 1)) & ~(spacing_class - 1);
+        return align(size, spacing_class);
     }
-    return PAGE_CEILING(size);
+    return page_align(size);
 }
 
 static size_t get_guard_size(struct random_state *state, size_t size) {
@@ -1480,7 +1480,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
                     deallocate_pages(old, old_size, old_guard_size);
                 } else {
                     memory_unmap((char *)old - old_guard_size, old_guard_size);
-                    memory_unmap((char *)old + PAGE_CEILING(old_size), old_guard_size);
+                    memory_unmap((char *)old + page_align(old_size), old_guard_size);
                 }
                 thread_seal_metadata();
                 return new;
@@ -1524,7 +1524,7 @@ EXPORT void *h_valloc(size_t size) {
 }
 
 EXPORT void *h_pvalloc(size_t size) {
-    size = PAGE_CEILING(size);
+    size = page_align(size);
     if (unlikely(!size)) {
         errno = ENOMEM;
         return NULL;

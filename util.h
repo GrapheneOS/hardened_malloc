@@ -1,6 +1,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 // C11 noreturn doesn't work in C++
@@ -30,6 +31,11 @@
 
 static inline int ffzl(unsigned long x) {
     return __builtin_ffsl(~x);
+}
+
+static inline size_t align(size_t size, size_t align) {
+    size_t mask = align - 1;
+    return (size + mask) & ~mask;
 }
 
 COLD noreturn void fatal_error(const char *s);
