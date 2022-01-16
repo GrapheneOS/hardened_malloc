@@ -196,13 +196,16 @@ static inline struct size_info get_size_info(size_t size) {
     if (size <= 128) {
         return (struct size_info){align(size, 16), ((size - 1) >> 4) + 1};
     }
-    for (unsigned class = 9; class < N_SIZE_CLASSES; class++) {
-        size_t real_size = size_classes[class];
-        if (size <= real_size) {
-            return (struct size_info){real_size, class};
-        }
-    }
-    fatal_error("invalid size for slabs");
+
+    const size_t initial_spacing_multiplier = 5;
+    const size_t special_small_sizes = 5; // 0, 16, 32, 48, 64
+
+    size_t spacing_class_shift = log2u64(size - 1) - 2;
+    size_t spacing_class = 1ULL << spacing_class_shift;
+    size_t real_size = align(size, spacing_class);
+    size_t spacing_class_index = (real_size >> spacing_class_shift) - initial_spacing_multiplier;
+    size_t index = (spacing_class_shift - 4) * 4 + special_small_sizes + spacing_class_index;
+    return (struct size_info){real_size, index};
 }
 
 // alignment must be a power of 2 <= PAGE_SIZE since slabs are only page aligned
@@ -1199,10 +1202,7 @@ static size_t get_large_size_class(size_t size) {
         // 512 KiB [2560 KiB, 3 MiB, 3584 KiB, 4 MiB]
         // 1 MiB [5 MiB, 6 MiB, 7 MiB, 8 MiB]
         // etc.
-        size = max(size, (size_t)PAGE_SIZE);
-        size_t spacing_shift = U64_WIDTH - clz64(size - 1) - 3;
-        size_t spacing_class = 1ULL << spacing_shift;
-        return align(size, spacing_class);
+        return get_size_info(max(size, (size_t)PAGE_SIZE)).size;
     }
     return page_align(size);
 }
