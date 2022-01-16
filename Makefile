@@ -30,6 +30,10 @@ ifeq ($(CONFIG_NATIVE),true)
     SHARED_FLAGS += -march=native
 endif
 
+ifeq ($(CONFIG_UBSAN),true)
+    SHARED_FLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined
+endif
+
 CFLAGS := $(CFLAGS) -std=c17 $(SHARED_FLAGS) -Wmissing-prototypes
 CXXFLAGS := $(CXXFLAGS) -std=c++17 -fsized-deallocation $(SHARED_FLAGS)
 LDFLAGS := $(LDFLAGS) -Wl,--as-needed,-z,defs,-z,relro,-z,now,-z,nodlopen,-z,text
@@ -47,11 +51,6 @@ ifeq ($(CONFIG_CXX_ALLOCATOR),true)
 endif
 
 OBJECTS := $(addprefix $(OUT)/,$(OBJECTS))
-
-ifeq ($(CONFIG_UBSAN),true)
-    CFLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined
-    CXXFLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined
-endif
 
 ifeq (,$(filter $(CONFIG_SEAL_METADATA),true false))
     $(error CONFIG_SEAL_METADATA must be true or false)
