@@ -374,7 +374,7 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, const struct
             }
 
             if (masked != ~0UL) {
-                return ffzl(masked) - 1 + i * U64_WIDTH;
+                return ffz64(masked) - 1 + i * U64_WIDTH;
             }
 
             i = i == (slots - 1) / U64_WIDTH ? 0 : i + 1;
@@ -388,7 +388,7 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, const struct
             }
 
             if (masked != ~0UL) {
-                return ffzl(masked) - 1 + i * U64_WIDTH;
+                return ffz64(masked) - 1 + i * U64_WIDTH;
             }
         }
     }
@@ -703,7 +703,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
 
     set_quarantine_slot(metadata, slot);
 
-    size_t quarantine_shift = __builtin_clzl(size) - (63 - MAX_SLAB_SIZE_CLASS_SHIFT);
+    size_t quarantine_shift = clz64(size) - (63 - MAX_SLAB_SIZE_CLASS_SHIFT);
 
 #if SLAB_QUARANTINE_RANDOM_LENGTH > 0
     size_t slab_quarantine_random_length = SLAB_QUARANTINE_RANDOM_LENGTH << quarantine_shift;
@@ -1200,7 +1200,7 @@ static size_t get_large_size_class(size_t size) {
         // 1 MiB [5 MiB, 6 MiB, 7 MiB, 8 MiB]
         // etc.
         size = max(size, (size_t)PAGE_SIZE);
-        size_t spacing_shift = U64_WIDTH - __builtin_clzl(size - 1) - 3;
+        size_t spacing_shift = U64_WIDTH - clz64(size - 1) - 3;
         size_t spacing_class = 1ULL << spacing_shift;
         return align(size, spacing_class);
     }
@@ -1766,7 +1766,7 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
 
 #if SLAB_QUARANTINE && CONFIG_EXTENDED_SIZE_CLASSES
             if (size >= min_extended_size_class) {
-                size_t quarantine_shift = __builtin_clzl(size) - (63 - MAX_SLAB_SIZE_CLASS_SHIFT);
+                size_t quarantine_shift = clz64(size) - (63 - MAX_SLAB_SIZE_CLASS_SHIFT);
 
 #if SLAB_QUARANTINE_RANDOM_LENGTH > 0
                 size_t slab_quarantine_random_length = SLAB_QUARANTINE_RANDOM_LENGTH << quarantine_shift;
