@@ -133,10 +133,10 @@ tidy:
 
 clean:
 	rm -f $(OUT)/libhardened_malloc.so $(OBJECTS)
-	make -C test/ clean
+	$(MAKE) -C test/ clean
 
 test: $(OUT)/libhardened_malloc$(SUFFIX).so
-	make -C test/
+	$(MAKE) -C test/
 	python3 -m unittest discover --start-directory test/
 
 .PHONY: check clean tidy test

@@ -23,8 +23,8 @@ EXECUTABLES := \
     large_array_growth
 
 all: $(EXECUTABLES)
-	make -C simple-memory-corruption
+	$(MAKE) -C simple-memory-corruption
 
 clean:
 	rm -f $(EXECUTABLES)
-	make -C simple-memory-corruption clean
+	$(MAKE) -C simple-memory-corruption clean
