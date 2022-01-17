@@ -193,6 +193,7 @@ static inline struct size_info get_size_info(size_t size) {
     if (size == 0) {
         return (struct size_info){0, 0};
     }
+    // size <= 64 is needed for correctness and raising it to size <= 128 is an optimization
     if (size <= 128) {
         return (struct size_info){align(size, 16), ((size - 1) >> 4) + 1};
     }
