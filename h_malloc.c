@@ -198,8 +198,8 @@ static inline struct size_info get_size_info(size_t size) {
         return (struct size_info){align(size, 16), ((size - 1) >> 4) + 1};
     }
 
-    const size_t initial_spacing_multiplier = 5;
-    const size_t special_small_sizes = 5; // 0, 16, 32, 48, 64
+    static const size_t initial_spacing_multiplier = 5;
+    static const size_t special_small_sizes = 5; // 0, 16, 32, 48, 64
 
     size_t spacing_class_shift = log2u64(size - 1) - 2;
     size_t spacing_class = 1ULL << spacing_class_shift;
