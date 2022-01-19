@@ -4,7 +4,7 @@ chacha.c is a simple conversion of chacha-merged.c to a keystream-only implement
     D. J. Bernstein
     Public domain.
 
-malloc.c open-addressed hash table (regions_grow, regions_insert, regions_find, regions_delete):
+h_malloc.c open-addressed hash table (regions_grow, regions_insert, regions_find, regions_delete):
 
     Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
     Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
