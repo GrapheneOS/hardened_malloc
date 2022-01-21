@@ -190,7 +190,7 @@ struct size_info {
 };
 
 static inline struct size_info get_size_info(size_t size) {
-    if (size == 0) {
+    if (unlikely(size == 0)) {
         return (struct size_info){0, 0};
     }
     // size <= 64 is needed for correctness and raising it to size <= 128 is an optimization
@@ -510,7 +510,7 @@ static inline void stats_slab_deallocate(UNUSED struct size_class *c, UNUSED siz
 
 static inline void *allocate_small(unsigned arena, size_t requested_size) {
     struct size_info info = get_size_info(requested_size);
-    size_t size = info.size ? info.size : 16;
+    size_t size = likely(info.size) ? info.size : 16;
 
     struct size_class *c = &ro.size_class_metadata[arena][info.class];
     size_t slots = get_slots(info.class);
@@ -670,7 +670,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
         fatal_error("sized deallocation mismatch (small)");
     }
     bool is_zero_size = size == 0;
-    if (is_zero_size) {
+    if (unlikely(is_zero_size)) {
         size = 16;
     }
     size_t slots = get_slots(class);
@@ -692,7 +692,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
         fatal_error("double free");
     }
 
-    if (!is_zero_size) {
+    if (likely(!is_zero_size)) {
         check_canary(metadata, p, size);
 
         if (ZERO_ON_FREE) {
@@ -1581,7 +1581,7 @@ static inline void memory_corruption_check_small(const void *p) {
     struct size_class *c = &ro.size_class_metadata[size_class_info.arena][class];
     size_t size = size_classes[class];
     bool is_zero_size = size == 0;
-    if (is_zero_size) {
+    if (unlikely(is_zero_size)) {
         size = 16;
     }
     size_t slab_size = get_slab_size(get_slots(class), size);
@@ -1600,7 +1600,7 @@ static inline void memory_corruption_check_small(const void *p) {
         fatal_error("invalid malloc_usable_size");
     }
 
-    if (!is_zero_size) {
+    if (likely(!is_zero_size)) {
         check_canary(metadata, p, size);
     }
 
