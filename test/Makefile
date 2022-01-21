@@ -63,7 +63,6 @@ EXECUTABLES := \
     invalid_malloc_object_size_small_quarantine \
     impossibly_large_malloc
 
-
 all: $(EXECUTABLES)
 
 clean:
