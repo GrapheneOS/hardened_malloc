@@ -9,15 +9,20 @@ ifeq (,$(filter $(CONFIG_SLAB_CANARY),true false))
     $(error CONFIG_SLAB_CANARY must be true or false)
 endif
 
-LDLIBS := -lpthread -lhardened_malloc
-
 dir=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
-LDFLAGS := -Wl,-L$(dir)../out,-R,$(dir)../out
 
-CXXFLAGS := -std=c++17 -fsized-deallocation
-CPPFLAGS += \
+CPPFLAGS := \
+    -D_GNU_SOURCE \
     -DSLAB_CANARY=$(CONFIG_SLAB_CANARY) \
     -DCONFIG_EXTENDED_SIZE_CLASSES=$(CONFIG_EXTENDED_SIZE_CLASSES)
+
+SHARED_FLAGS := -O3
+
+CFLAGS := -std=c17 $(SHARED_FLAGS) -Wmissing-prototypes
+CXXFLAGS := -std=c++17 -fsized-deallocation $(SHARED_FLAGS)
+LDFLAGS := -Wl,-L$(dir)../out,-R,$(dir)../out
+
+LDLIBS := -lpthread -lhardened_malloc
 
 EXECUTABLES := \
     offset \
