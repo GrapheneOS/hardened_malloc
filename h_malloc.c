@@ -107,15 +107,15 @@ static const size_t min_align = 16;
 #define MIN_SLAB_SIZE_CLASS_SHIFT 4
 
 #if !CONFIG_EXTENDED_SIZE_CLASSES
-static const size_t MAX_SLAB_SIZE_CLASS = 16384;
+static const size_t max_slab_size_class = 16384;
 #define MAX_SLAB_SIZE_CLASS_SHIFT 14
 // limit on the number of cached empty slabs before attempting purging instead
-static const size_t max_empty_slabs_total = MAX_SLAB_SIZE_CLASS * 4;
+static const size_t max_empty_slabs_total = max_slab_size_class * 4;
 #else
-static const size_t MAX_SLAB_SIZE_CLASS = 131072;
+static const size_t max_slab_size_class = 131072;
 #define MAX_SLAB_SIZE_CLASS_SHIFT 17
 // limit on the number of cached empty slabs before attempting purging instead
-static const size_t max_empty_slabs_total = MAX_SLAB_SIZE_CLASS;
+static const size_t max_empty_slabs_total = max_slab_size_class;
 #endif
 
 #if SLAB_QUARANTINE && CONFIG_EXTENDED_SIZE_CLASSES
@@ -1243,7 +1243,7 @@ static void *allocate_large(size_t size) {
 }
 
 static inline void *allocate(unsigned arena, size_t size) {
-    return size <= MAX_SLAB_SIZE_CLASS ? allocate_small(arena, size) : allocate_large(size);
+    return size <= max_slab_size_class ? allocate_small(arena, size) : allocate_large(size);
 }
 
 static void deallocate_large(void *p, const size_t *expected_size) {
@@ -1275,7 +1275,7 @@ static int allocate_aligned(unsigned arena, void **memptr, size_t alignment, siz
     }
 
     if (alignment <= PAGE_SIZE) {
-        if (size <= MAX_SLAB_SIZE_CLASS && alignment > min_align) {
+        if (size <= max_slab_size_class && alignment > min_align) {
             size = get_size_info_align(size, alignment).size;
         }
 
@@ -1316,7 +1316,7 @@ static int allocate_aligned(unsigned arena, void **memptr, size_t alignment, siz
 }
 
 static size_t adjust_size_for_canary(size_t size) {
-    if (size > 0 && size <= MAX_SLAB_SIZE_CLASS) {
+    if (size > 0 && size <= max_slab_size_class) {
         return size + canary_size;
     }
     return size;
@@ -1362,7 +1362,7 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
     }
     total_size = adjust_size_for_canary(total_size);
     void *p = alloc(total_size);
-    if (!ZERO_ON_FREE && likely(p != NULL) && total_size && total_size <= MAX_SLAB_SIZE_CLASS) {
+    if (!ZERO_ON_FREE && likely(p != NULL) && total_size && total_size <= max_slab_size_class) {
         memset(p, 0, total_size - canary_size);
     }
     return p;
@@ -1374,7 +1374,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
         return alloc(size);
     }
 
-    if (size > MAX_SLAB_SIZE_CLASS) {
+    if (size > max_slab_size_class) {
         size = get_large_size_class(size);
         if (unlikely(!size)) {
             errno = ENOMEM;
@@ -1385,7 +1385,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
     size_t old_size;
     if (old < get_slab_region_end() && old >= ro.slab_region_start) {
         old_size = slab_usable_size(old);
-        if (size <= MAX_SLAB_SIZE_CLASS && get_size_info(size).size == old_size) {
+        if (size <= max_slab_size_class && get_size_info(size).size == old_size) {
             return old;
         }
         thread_unseal_metadata();
@@ -1409,7 +1409,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
         }
         mutex_unlock(&ra->lock);
 
-        if (size > MAX_SLAB_SIZE_CLASS) {
+        if (size > max_slab_size_class) {
             // in-place shrink
             if (size < old_size) {
                 void *new_end = (char *)old + size;
@@ -1496,11 +1496,11 @@ EXPORT void *h_realloc(void *old, size_t size) {
         return NULL;
     }
     size_t copy_size = min(size, old_size);
-    if (copy_size > 0 && copy_size <= MAX_SLAB_SIZE_CLASS) {
+    if (copy_size > 0 && copy_size <= max_slab_size_class) {
         copy_size -= canary_size;
     }
     memcpy(new, old, copy_size);
-    if (old_size <= MAX_SLAB_SIZE_CLASS) {
+    if (old_size <= max_slab_size_class) {
         deallocate_small(old, NULL);
     } else {
         deallocate_large(old, NULL);
