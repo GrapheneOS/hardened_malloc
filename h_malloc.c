@@ -292,7 +292,7 @@ static size_t get_metadata_max(size_t slab_size) {
 static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_size, bool non_zero_size) {
     if (unlikely(c->metadata_count >= c->metadata_allocated)) {
         size_t metadata_max = get_metadata_max(slab_size);
-        if (c->metadata_count >= metadata_max) {
+        if (unlikely(c->metadata_count >= metadata_max)) {
             errno = ENOMEM;
             return NULL;
         }
@@ -300,7 +300,7 @@ static struct slab_metadata *alloc_metadata(struct size_class *c, size_t slab_si
         if (allocate > metadata_max) {
             allocate = metadata_max;
         }
-        if (memory_protect_rw_metadata(c->slab_info, allocate * sizeof(struct slab_metadata))) {
+        if (unlikely(memory_protect_rw_metadata(c->slab_info, allocate * sizeof(struct slab_metadata)))) {
             return NULL;
         }
         c->metadata_allocated = allocate;
@@ -1231,7 +1231,7 @@ static void *allocate_large(size_t size) {
     }
 
     mutex_lock(&ra->lock);
-    if (regions_insert(p, size, guard_size)) {
+    if (unlikely(regions_insert(p, size, guard_size))) {
         mutex_unlock(&ra->lock);
         deallocate_pages(p, size, guard_size);
         return NULL;
@@ -1280,7 +1280,7 @@ static int allocate_aligned(unsigned arena, void **memptr, size_t alignment, siz
         }
 
         void *p = allocate(arena, size);
-        if (p == NULL) {
+        if (unlikely(p == NULL)) {
             return ENOMEM;
         }
         *memptr = p;
@@ -1299,12 +1299,12 @@ static int allocate_aligned(unsigned arena, void **memptr, size_t alignment, siz
     mutex_unlock(&ra->lock);
 
     void *p = allocate_pages_aligned(size, alignment, guard_size, "malloc large");
-    if (p == NULL) {
+    if (unlikely(p == NULL)) {
         return ENOMEM;
     }
 
     mutex_lock(&ra->lock);
-    if (regions_insert(p, size, guard_size)) {
+    if (unlikely(regions_insert(p, size, guard_size))) {
         mutex_unlock(&ra->lock);
         deallocate_pages(p, size, guard_size);
         return ENOMEM;
