@@ -434,7 +434,7 @@ static struct slab_metadata *get_metadata(const struct size_class *c, const void
     size_t offset = (const char *)p - (const char *)c->class_region_start;
     size_t index = libdivide_u64_do(offset, &c->slab_size_divisor);
     // still caught without this check either as a read access violation or "double free"
-    if (index >= c->metadata_allocated) {
+    if (unlikely(index >= c->metadata_allocated)) {
         fatal_error("invalid free within a slab yet to be used");
     }
     return c->slab_info + index;
@@ -450,7 +450,7 @@ static void write_after_free_check(const char *p, size_t size) {
     }
 
     for (size_t i = 0; i < size; i += sizeof(u64)) {
-        if (*(const u64 *)(const void *)(p + i)) {
+        if (unlikely(*(const u64 *)(const void *)(p + i))) {
             fatal_error("detected write after free");
         }
     }
@@ -666,7 +666,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
 
     struct size_class *c = &ro.size_class_metadata[size_class_info.arena][class];
     size_t size = size_classes[class];
-    if (expected_size && size != *expected_size) {
+    if (expected_size && unlikely(size != *expected_size)) {
         fatal_error("sized deallocation mismatch (small)");
     }
     bool is_zero_size = size == 0;
@@ -684,11 +684,11 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     void *slab = get_slab(c, slab_size, metadata);
     size_t slot = libdivide_u32_do((char *)p - (char *)slab, &c->size_divisor);
 
-    if (slot_pointer(size, slab, slot) != p) {
+    if (unlikely(slot_pointer(size, slab, slot) != p)) {
         fatal_error("invalid unaligned free");
     }
 
-    if (!is_used_slot(metadata, slot)) {
+    if (unlikely(!is_used_slot(metadata, slot))) {
         fatal_error("double free");
     }
 
@@ -701,7 +701,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     }
 
 #if SLAB_QUARANTINE
-    if (is_quarantine_slot(metadata, slot)) {
+    if (unlikely(is_quarantine_slot(metadata, slot))) {
         fatal_error("double free (quarantine)");
     }
 
@@ -1068,7 +1068,7 @@ static inline bool is_init(void) {
 }
 
 static inline void enforce_init(void) {
-    if (!is_init()) {
+    if (unlikely(!is_init())) {
         fatal_error("invalid uninitialized allocator usage");
     }
 }
@@ -1087,12 +1087,12 @@ COLD static void init_slow_path(void) {
     ro.metadata_pkey = pkey_alloc(0, 0);
 #endif
 
-    if (sysconf(_SC_PAGESIZE) != PAGE_SIZE) {
+    if (unlikely(sysconf(_SC_PAGESIZE) != PAGE_SIZE)) {
         fatal_error("runtime page size does not match compile-time page size which is not supported");
     }
 
     struct random_state *rng = allocate_pages(sizeof(struct random_state), PAGE_SIZE, true, "malloc init rng");
-    if (rng == NULL) {
+    if (unlikely(rng == NULL)) {
         fatal_error("failed to allocate init rng");
     }
     random_state_init(rng);
@@ -1102,10 +1102,10 @@ COLD static void init_slow_path(void) {
 
     struct allocator_state *allocator_state =
         allocate_pages(sizeof(struct allocator_state), metadata_guard_size, false, "malloc allocator_state");
-    if (allocator_state == NULL) {
+    if (unlikely(allocator_state == NULL)) {
         fatal_error("failed to reserve allocator state");
     }
-    if (memory_protect_rw_metadata(allocator_state, offsetof(struct allocator_state, regions_a))) {
+    if (unlikely(memory_protect_rw_metadata(allocator_state, offsetof(struct allocator_state, regions_a)))) {
         fatal_error("failed to unprotect allocator state");
     }
 
@@ -1119,12 +1119,12 @@ COLD static void init_slow_path(void) {
     ra->regions = ro.regions[0];
     ra->total = INITIAL_REGION_TABLE_SIZE;
     ra->free = INITIAL_REGION_TABLE_SIZE;
-    if (memory_protect_rw_metadata(ra->regions, ra->total * sizeof(struct region_metadata))) {
+    if (unlikely(memory_protect_rw_metadata(ra->regions, ra->total * sizeof(struct region_metadata)))) {
         fatal_error("failed to unprotect memory for regions table");
     }
 
     ro.slab_region_start = memory_map(slab_region_size);
-    if (ro.slab_region_start == NULL) {
+    if (unlikely(ro.slab_region_start == NULL)) {
         fatal_error("failed to allocate slab region");
     }
     void *slab_region_end = (char *)ro.slab_region_start + slab_region_size;
@@ -1158,7 +1158,7 @@ COLD static void init_slow_path(void) {
 
     atomic_store_explicit(&ro.slab_region_end, slab_region_end, memory_order_release);
 
-    if (memory_protect_ro(&ro, sizeof(ro))) {
+    if (unlikely(memory_protect_ro(&ro, sizeof(ro)))) {
         fatal_error("failed to protect allocator data");
     }
     memory_set_name(&ro, sizeof(ro), "malloc read-only after init");
@@ -1166,7 +1166,7 @@ COLD static void init_slow_path(void) {
     mutex_unlock(&lock);
 
     // may allocate, so wait until the allocator is initialized to avoid deadlocking
-    if (pthread_atfork(full_lock, full_unlock, post_fork_child)) {
+    if (unlikely(pthread_atfork(full_lock, full_unlock, post_fork_child))) {
         fatal_error("pthread_atfork failed");
     }
 }
@@ -1254,11 +1254,11 @@ static void deallocate_large(void *p, const size_t *expected_size) {
 
     mutex_lock(&ra->lock);
     const struct region_metadata *region = regions_find(p);
-    if (region == NULL) {
+    if (unlikely(region == NULL)) {
         fatal_error("invalid free");
     }
     size_t size = region->size;
-    if (expected_size && size != get_large_size_class(*expected_size)) {
+    if (expected_size && unlikely(size != get_large_size_class(*expected_size))) {
         fatal_error("sized deallocation mismatch (large)");
     }
     size_t guard_size = region->guard_size;
@@ -1397,7 +1397,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
 
         mutex_lock(&ra->lock);
         const struct region_metadata *region = regions_find(old);
-        if (region == NULL) {
+        if (unlikely(region == NULL)) {
             fatal_error("invalid realloc");
         }
         old_size = region->size;
@@ -1423,7 +1423,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
 
                 mutex_lock(&ra->lock);
                 struct region_metadata *region = regions_find(old);
-                if (region == NULL) {
+                if (unlikely(region == NULL)) {
                     fatal_error("invalid realloc");
                 }
                 region->size = size;
@@ -1469,7 +1469,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
 
                 mutex_lock(&ra->lock);
                 struct region_metadata *region = regions_find(old);
-                if (region == NULL) {
+                if (unlikely(region == NULL)) {
                     fatal_error("invalid realloc");
                 }
                 regions_delete(region);
@@ -1592,11 +1592,11 @@ static inline void memory_corruption_check_small(const void *p) {
     void *slab = get_slab(c, slab_size, metadata);
     size_t slot = libdivide_u32_do((const char *)p - (const char *)slab, &c->size_divisor);
 
-    if (slot_pointer(size, slab, slot) != p) {
+    if (unlikely(slot_pointer(size, slab, slot) != p)) {
         fatal_error("invalid unaligned malloc_usable_size");
     }
 
-    if (!is_used_slot(metadata, slot)) {
+    if (unlikely(!is_used_slot(metadata, slot))) {
         fatal_error("invalid malloc_usable_size");
     }
 
@@ -1605,7 +1605,7 @@ static inline void memory_corruption_check_small(const void *p) {
     }
 
 #if SLAB_QUARANTINE
-    if (is_quarantine_slot(metadata, slot)) {
+    if (unlikely(is_quarantine_slot(metadata, slot))) {
         fatal_error("invalid malloc_usable_size (quarantine)");
     }
 #endif
@@ -1633,7 +1633,7 @@ EXPORT size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *p) {
     struct region_allocator *ra = ro.region_allocator;
     mutex_lock(&ra->lock);
     const struct region_metadata *region = regions_find(p);
-    if (region == NULL) {
+    if (unlikely(region == NULL)) {
         fatal_error("invalid malloc_usable_size");
     }
     size_t size = region->size;
@@ -1664,12 +1664,12 @@ EXPORT size_t h_malloc_object_size(const void *p) {
         void *slab = get_slab(c, slab_size, metadata);
         size_t slot = libdivide_u32_do((const char *)p - (const char *)slab, &c->size_divisor);
 
-        if (!is_used_slot(metadata, slot)) {
+        if (unlikely(!is_used_slot(metadata, slot))) {
             fatal_error("invalid malloc_object_size");
         }
 
 #if SLAB_QUARANTINE
-        if (is_quarantine_slot(metadata, slot)) {
+        if (unlikely(is_quarantine_slot(metadata, slot))) {
             fatal_error("invalid malloc_object_size (quarantine)");
         }
 #endif
