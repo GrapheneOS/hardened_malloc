@@ -1078,7 +1078,7 @@ COLD static void init_slow_path(void) {
 
     mutex_lock(&lock);
 
-    if (is_init()) {
+    if (unlikely(is_init())) {
         mutex_unlock(&lock);
         return;
     }
@@ -1823,7 +1823,7 @@ EXPORT struct mallinfo2 h_mallinfo2(void) {
 #endif
 
 #if CONFIG_STATS
-    if (!is_init()) {
+    if (unlikely(!is_init())) {
         return info;
     }
 
@@ -1866,7 +1866,7 @@ EXPORT int h_malloc_info(int options, UNUSED FILE *fp) {
     fputs("<malloc version=\"hardened_malloc-1\">", fp);
 
 #if CONFIG_STATS
-    if (is_init()) {
+    if (likely(is_init())) {
         thread_unseal_metadata();
 
         for (unsigned arena = 0; arena < N_ARENA; arena++) {
@@ -1935,7 +1935,7 @@ EXPORT struct mallinfo h_mallinfo_arena_info(UNUSED size_t arena) {
     struct mallinfo info = {0};
 
 #if CONFIG_STATS
-    if (!is_init()) {
+    if (unlikely(!is_init())) {
         return info;
     }
 
@@ -1975,7 +1975,7 @@ EXPORT struct mallinfo h_mallinfo_bin_info(UNUSED size_t arena, UNUSED size_t bi
     struct mallinfo info = {0};
 
 #if CONFIG_STATS
-    if (!is_init()) {
+    if (unlikely(!is_init())) {
         return info;
     }
 
