@@ -44,7 +44,7 @@ OBJECTS := $(SOURCES:.c=.o)
 ifeq ($(CONFIG_CXX_ALLOCATOR),true)
     # make sure LTO is compatible in case CC and CXX don't match (such as clang and g++)
     CXX := $(CC)
-    LDLIBS += -lstdc++ -lgcc_s
+    LDLIBS += -lstdc++
 
     SOURCES += new.cc
     OBJECTS += new.o
