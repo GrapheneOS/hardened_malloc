@@ -72,3 +72,4 @@ all: $(EXECUTABLES)
 
 clean:
 	rm -f $(EXECUTABLES)
+	rm -fr ./__pycache__
