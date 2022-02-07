@@ -1,5 +1,4 @@
-#include <malloc.h>
-#include <stddef.h>
+#include <stdlib.h>
 
 #include "test_util.h"
 

@@ -1,6 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
 
+#if defined(__GLIBC__)
 #include <malloc.h>
+#endif
 
 #include "test_util.h"
 

@@ -1,7 +1,10 @@
 #include <errno.h>
 
 #include <sys/mman.h>
+
+#ifdef LABEL_MEMORY
 #include <sys/prctl.h>
+#endif
 
 #ifndef PR_SET_VMA
 #define PR_SET_VMA 0x53564d41
