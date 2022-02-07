@@ -6,9 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <threads.h>
 
-#include <malloc.h>
 #include <pthread.h>
 #include <unistd.h>
 
@@ -62,7 +60,7 @@ static_assert(N_ARENA <= 256, "maximum number of arenas is currently 256");
 
 #if N_ARENA > 1
 __attribute__((tls_model("initial-exec")))
-static thread_local unsigned thread_arena = N_ARENA;
+static _Thread_local unsigned thread_arena = N_ARENA;
 static atomic_uint thread_arena_counter = 0;
 #else
 static const unsigned thread_arena = 0;

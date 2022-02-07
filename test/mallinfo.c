@@ -1,6 +1,9 @@
+#include <stdlib.h>
 #include <stdio.h>
 
+#if defined(__GLIBC__) || defined(__ANDROID__)
 #include <malloc.h>
+#endif
 
 #include "test_util.h"
 
