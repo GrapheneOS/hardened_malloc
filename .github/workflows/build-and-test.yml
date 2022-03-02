@@ -10,13 +10,13 @@ jobs:
   build-ubuntu-gcc:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Build
         run: make test
   build-ubuntu-clang:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Build
         run: CC=clang CXX=clang++ make test
   build-musl:
@@ -24,7 +24,7 @@ jobs:
     container:
       image: alpine:latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install dependencies
         run: apk add build-base python3
       - name: Build
@@ -32,7 +32,7 @@ jobs:
   build-ubuntu-gcc-aarch64:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install dependencies
         run: sudo apt install --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libgcc-s1-arm64-cross cpp-aarch64-linux-gnu
       - name: Build
