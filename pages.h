@@ -16,11 +16,11 @@ void *allocate_pages(size_t usable_size, size_t guard_size, bool unprotect, cons
 void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t guard_size, const char *name);
 void deallocate_pages(void *usable, size_t usable_size, size_t guard_size);
 
-static inline size_t page_align(size_t size) {
+CONST static inline size_t page_align(size_t size) {
     return align(size, PAGE_SIZE);
 }
 
-static inline size_t hash_page(const void *p) {
+CONST static inline size_t hash_page(const void *p) {
     uintptr_t u = (uintptr_t)p >> PAGE_SHIFT;
     size_t sum = u;
     sum = (sum << 7) - sum + (u >> 16);
