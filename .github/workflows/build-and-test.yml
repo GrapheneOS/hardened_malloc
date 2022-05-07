@@ -29,6 +29,16 @@ jobs:
         run: apk update && apk add build-base python3
       - name: Build
         run: make test
+  build-clang-libcxx:
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: dnf install -y clang libcxx libcxx-devel
+      - name: Build
+        run: CC=clang CXX=clang++ make CONFIG_USE_LIBCXX=true
   build-ubuntu-gcc-aarch64:
     runs-on: ubuntu-latest
     steps:
