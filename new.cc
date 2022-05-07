@@ -1,4 +1,6 @@
+#if !defined(__clang__) || !CONFIG_USE_LIBCXX
 #include <bits/functexcept.h>
+#endif
 #include <new>
 
 #include "h_malloc.h"

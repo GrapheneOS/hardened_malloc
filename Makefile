@@ -44,7 +44,11 @@ OBJECTS := $(SOURCES:.c=.o)
 ifeq ($(CONFIG_CXX_ALLOCATOR),true)
     # make sure LTO is compatible in case CC and CXX don't match (such as clang and g++)
     CXX := $(CC)
-    LDLIBS += -lstdc++
+    ifeq ($(CONFIG_USE_LIBCXX),true)
+        LDLIBS += -lc++
+    else
+        LDLIBS += -lstdc++
+    endif
 
     SOURCES += new.cc
     OBJECTS += new.o
@@ -85,6 +89,7 @@ ifeq (,$(filter $(CONFIG_STATS),true false))
 endif
 
 CPPFLAGS += \
+    -DCONFIG_USE_LIBCXX=$(CONFIG_USE_LIBCXX) \
     -DCONFIG_SEAL_METADATA=$(CONFIG_SEAL_METADATA) \
     -DZERO_ON_FREE=$(CONFIG_ZERO_ON_FREE) \
     -DWRITE_AFTER_FREE_CHECK=$(CONFIG_WRITE_AFTER_FREE_CHECK) \
