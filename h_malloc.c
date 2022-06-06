@@ -1087,6 +1087,27 @@ COLD static void handle_bugs(void) {
         ro.purge_slabs = false;
         ro.region_quarantine_protect = false;
     }
+
+    char cmdline[256];
+    if (readlink("/proc/self/cmdline", cmdline, sizeof(cmdline)) == -1) {
+        return;
+    }
+
+    static const char *const broken_apps[] = {
+        "com.blizzard.diablo.immortal",
+        "com.halfbrick.jetpackjoyride"
+    };
+
+    // Workaround for apps (mostly games) which have memory corruption
+    for (unsigned i = 0; i < sizeof(broken_apps) / sizeof(broken_apps[0]); i++) {
+        if (strcmp(broken_apps[i], cmdline) == 0) {
+            ro.zero_on_free = false;
+            ro.purge_slabs = false;
+            ro.region_quarantine_protect = false;
+            break;
+        }
+    }
+
 }
 
 COLD static void init_slow_path(void) {
