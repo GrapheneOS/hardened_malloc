@@ -80,7 +80,7 @@ static union {
     char padding[PAGE_SIZE];
 } ro __attribute__((aligned(PAGE_SIZE)));
 
-static inline void *get_slab_region_end() {
+static inline void *get_slab_region_end(void) {
     return atomic_load_explicit(&ro.slab_region_end, memory_order_acquire);
 }
 
