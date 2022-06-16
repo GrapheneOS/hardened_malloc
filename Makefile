@@ -14,7 +14,7 @@ endif
 OUT := out$(SUFFIX)
 
 define safe_flag
-$(shell $(CC) $(if $(filter clang,$(CC)),-Werror=unknown-warning-option) -E $1 - </dev/null >/dev/null 2>&1 && echo $1 || echo $2)
+$(shell $(CC) $(if $(filter clang%,$(CC)),-Werror=unknown-warning-option) -E $1 - </dev/null >/dev/null 2>&1 && echo $1 || echo $2)
 endef
 
 CPPFLAGS := $(CPPFLAGS) -D_GNU_SOURCE -I include
