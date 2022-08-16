@@ -80,4 +80,7 @@ cc_library {
             cflags: ["-DLABEL_MEMORY"],
         },
     },
+    apex_available: [
+        "com.android.runtime",
+    ],
 }
