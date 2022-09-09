@@ -181,6 +181,13 @@ large number of guard pages created by hardened\_malloc. As an example, in
 This is unnecessary if you set `CONFIG_GUARD_SLABS_INTERVAL` to a very large
 value in the build configuration.
 
+On arm64, make sure your kernel is configured to use 4k pages since we haven't
+yet added support for 16k and 64k pages. The kernel also has to be configured
+to use 4 level page tables for the full 48 bit address space instead of only
+having a 39 bit address space for the default hardened\_malloc configuration.
+It's possible to reduce the class region size substantially to make a 39 bit
+address space workable but the defaults won't work.
+
 ## Configuration
 
 You can set some configuration options at compile-time via arguments to the
