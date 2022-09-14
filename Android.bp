@@ -29,6 +29,7 @@ common_cflags = [
     "-DCONFIG_CLASS_REGION_SIZE=34359738368", // 32GiB
     "-DN_ARENA=1",
     "-DCONFIG_STATS=true",
+    "-DCONFIG_SELF_INIT=false",
 ]
 
 cc_defaults {
