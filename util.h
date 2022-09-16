@@ -29,6 +29,8 @@
 #define STRINGIFY(s) #s
 #define ALIAS(f) __attribute__((alias(STRINGIFY(f))))
 
+#define CONST __attribute__ ((const))
+
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
@@ -42,16 +44,16 @@ static inline int ffz64(u64 x) {
 }
 
 // parameter must not be 0
-static inline int clz64(u64 x) {
+CONST static inline int clz64(u64 x) {
     return __builtin_clzll(x);
 }
 
 // parameter must not be 0
-static inline u64 log2u64(u64 x) {
+CONST static inline u64 log2u64(u64 x) {
     return U64_WIDTH - clz64(x) - 1;
 }
 
-static inline size_t align(size_t size, size_t align) {
+CONST static inline size_t align(size_t size, size_t align) {
     size_t mask = align - 1;
     return (size + mask) & ~mask;
 }

@@ -154,7 +154,7 @@ static const u16 size_class_slots[] = {
 #endif
 };
 
-static size_t get_slots(unsigned class) {
+CONST static size_t get_slots(unsigned class) {
     return size_class_slots[class];
 }
 
@@ -187,7 +187,7 @@ struct size_info {
     size_t class;
 };
 
-static inline struct size_info get_size_info(size_t size) {
+CONST static inline struct size_info get_size_info(size_t size) {
     if (unlikely(size == 0)) {
         return (struct size_info){0, 0};
     }
@@ -218,7 +218,7 @@ static inline struct size_info get_size_info_align(size_t size, size_t alignment
     fatal_error("invalid size for slabs");
 }
 
-static size_t get_slab_size(size_t slots, size_t size) {
+CONST static size_t get_slab_size(size_t slots, size_t size) {
     return page_align(slots * size);
 }
 
@@ -283,7 +283,7 @@ static void *get_slab(const struct size_class *c, size_t slab_size, const struct
 
 #define MAX_METADATA_MAX (CLASS_REGION_SIZE / PAGE_SIZE)
 
-static size_t get_metadata_max(size_t slab_size) {
+CONST static size_t get_metadata_max(size_t slab_size) {
     return CLASS_REGION_SIZE / slab_size;
 }
 
@@ -356,7 +356,7 @@ static bool is_quarantine_slot(const struct slab_metadata *metadata, size_t inde
 }
 #endif
 
-static u64 get_mask(size_t slots) {
+CONST static u64 get_mask(size_t slots) {
     return slots < U64_WIDTH ? ~0UL << slots : 0;
 }
 
@@ -1192,7 +1192,7 @@ COLD __attribute__((constructor(101))) static void trigger_early_init(void) {
 #endif
 
 // Returns 0 on overflow.
-static size_t get_large_size_class(size_t size) {
+CONST static size_t get_large_size_class(size_t size) {
     if (CONFIG_LARGE_SIZE_CLASSES) {
         // Continue small size class growth pattern of power of 2 spacing classes:
         //
@@ -1315,7 +1315,7 @@ static int allocate_aligned(unsigned arena, void **memptr, size_t alignment, siz
     return 0;
 }
 
-static size_t adjust_size_for_canary(size_t size) {
+CONST static size_t adjust_size_for_canary(size_t size) {
     if (size > 0 && size <= max_slab_size_class) {
         return size + canary_size;
     }
