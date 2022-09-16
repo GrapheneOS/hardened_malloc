@@ -1857,7 +1857,7 @@ EXPORT struct mallinfo2 h_mallinfo2(void) {
 #endif
 
 #ifndef __ANDROID__
-EXPORT int h_malloc_info(int options, UNUSED FILE *fp) {
+EXPORT int h_malloc_info(int options, FILE *fp) {
     if (options) {
         errno = EINVAL;
         return -1;
