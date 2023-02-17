@@ -1,10 +1,10 @@
 common_cflags = [
+    "-pipe",
     "-O3",
     //"-flto",
     "-fPIC",
     "-fvisibility=hidden",
     //"-fno-plt",
-    "-pipe",
     "-Wall",
     "-Wextra",
     "-Wcast-align",
