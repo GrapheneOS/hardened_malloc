@@ -19,7 +19,7 @@ endef
 
 CPPFLAGS := $(CPPFLAGS) -D_GNU_SOURCE -I include
 SHARED_FLAGS := -pipe -O3 -flto -fPIC -fvisibility=hidden -fno-plt \
-    $(call safe_flag,-fstack-clash-protection) $(call safe_flag,-fcf-protection) -fstack-protector-strong \
+    -fstack-clash-protection $(call safe_flag,-fcf-protection) -fstack-protector-strong \
     -Wall -Wextra $(call safe_flag,-Wcast-align=strict,-Wcast-align) -Wcast-qual -Wwrite-strings
 
 ifeq ($(CONFIG_WERROR),true)
