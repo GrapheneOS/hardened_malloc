@@ -658,6 +658,7 @@ static void enqueue_free_slab(struct size_class *c, struct slab_metadata *metada
     c->free_slabs_tail = substitute;
 }
 
+// preserves errno
 static inline void deallocate_small(void *p, const size_t *expected_size) {
     struct slab_size_class_info size_class_info = slab_size_class(p);
     size_t class = size_class_info.class;
@@ -770,6 +771,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
         metadata->prev = NULL;
 
         if (c->empty_slabs_total + slab_size > max_empty_slabs_total) {
+            int saved_errno = errno;
             if (!memory_map_fixed(slab, slab_size)) {
                 label_slab(slab, slab_size, class);
                 stats_slab_deallocate(c, slab_size);
@@ -778,6 +780,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
                 return;
             }
             memory_purge(slab, slab_size);
+            errno = saved_errno;
             // handle out-of-memory by putting it into the empty slabs list
         }
 
@@ -1534,6 +1537,7 @@ EXPORT void *h_pvalloc(size_t size) {
 }
 #endif
 
+// preserves errno
 EXPORT void h_free(void *p) {
     if (p == NULL) {
         return;
@@ -1546,7 +1550,9 @@ EXPORT void h_free(void *p) {
         return;
     }
 
+    int saved_errno = errno;
     deallocate_large(p, NULL);
+    errno = saved_errno;
 
     thread_seal_metadata();
 }
