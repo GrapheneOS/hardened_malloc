@@ -1883,12 +1883,13 @@ EXPORT int h_malloc_info(int options, FILE *fp) {
                 mutex_unlock(&c->lock);
 
                 if (nmalloc || ndalloc || slab_allocated || allocated) {
-                    fprintf(fp, "<bin nr=\"%u\" size=\"%" PRIu32 "\">", class, size_classes[class]);
-                    fprintf(fp, "<nmalloc>%" PRIu64 "</nmalloc>", nmalloc);
-                    fprintf(fp, "<ndalloc>%" PRIu64 "</ndalloc>", ndalloc);
-                    fprintf(fp, "<slab_allocated>%zu</slab_allocated>", slab_allocated);
-                    fprintf(fp, "<allocated>%zu</allocated>", allocated);
-                    fputs("</bin>", fp);
+                    fprintf(fp, "<bin nr=\"%u\" size=\"%" PRIu32 "\">"
+                            "<nmalloc>%" PRIu64 "</nmalloc>"
+                            "<ndalloc>%" PRIu64 "</ndalloc>"
+                            "<slab_allocated>%zu</slab_allocated>"
+                            "<allocated>%zu</allocated>"
+                            "</bin>", class, size_classes[class], nmalloc, ndalloc, slab_allocated,
+                            allocated);
                 }
             }
 
@@ -1900,9 +1901,9 @@ EXPORT int h_malloc_info(int options, FILE *fp) {
         size_t region_allocated = ra->allocated;
         mutex_unlock(&ra->lock);
 
-        fprintf(fp, "<heap nr=\"%u\">", N_ARENA);
-        fprintf(fp, "<allocated_large>%zu</allocated_large>", region_allocated);
-        fputs("</heap>", fp);
+        fprintf(fp, "<heap nr=\"%u\">"
+                "<allocated_large>%zu</allocated_large>"
+                "</heap>", N_ARENA, region_allocated);
 
         thread_seal_metadata();
     }
