@@ -1,5 +1,5 @@
 # Hardened malloc
-
+[![Build and run tests](https://github.com/GrapheneOS/hardened_malloc/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/GrapheneOS/hardened_malloc/actions/workflows/build-and-test.yml)
 * [Introduction](#introduction)
 * [Dependencies](#dependencies)
 * [Testing](#testing)
