@@ -81,9 +81,7 @@ there will be custom integration offering better performance in the future
 along with other hardening for the C standard library implementation.
 
 For Android, only the current generation, actively developed maintenance branch of the Android
-Open Source Project will be supported, which currently means `android13-release`. The `12.1`
-branch is temporarily supported while we finish migrating to Android 13. If you want us to
-continue supporting it you'll need to provide GrapheneOS with developers and funding.
+Open Source Project will be supported, which currently means `android13-qpr2-release`.
 
 The Linux kernel's implementation of Memory Protection Keys was severely broken
 before Linux 5.0. The `CONFIG_SEAL_METADATA` feature should only be enabled for
