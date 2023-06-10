@@ -83,13 +83,6 @@ along with other hardening for the C standard library implementation.
 For Android, only the current generation, actively developed maintenance branch of the Android
 Open Source Project will be supported, which currently means `android13-qpr2-release`.
 
-The Linux kernel's implementation of Memory Protection Keys was severely broken
-before Linux 5.0. The `CONFIG_SEAL_METADATA` feature should only be enabled for
-use on kernels newer than 5.0 or longterm branches with a backport of the [fix
-for the
-issue](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=a31e184e4f69965c99c04cc5eb8a4920e0c63737).
-This issue was discovered and reported by the hardened\_malloc project.
-
 ## Testing
 
 ### Individual Applications
