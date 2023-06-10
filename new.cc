@@ -1,4 +1,8 @@
+// needed with libstdc++ but not libc++
+#if __has_include(<bits/functexcept.h>)
 #include <bits/functexcept.h>
+#endif
+
 #include <new>
 
 #include "h_malloc.h"
