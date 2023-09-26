@@ -1493,7 +1493,8 @@ EXPORT void *h_realloc(void *old, size_t size) {
         }
     }
 
-    void *new = allocate(thread_arena, size);
+    int arena = init();
+    void *new = allocate(arena, size);
     if (new == NULL) {
         thread_seal_metadata();
         return NULL;
