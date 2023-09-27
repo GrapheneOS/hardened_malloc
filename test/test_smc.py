@@ -233,6 +233,11 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
             "uninitialized_read_large")
         self.assertEqual(returncode, 0)
 
+    def test_realloc_init(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "realloc_init")
+        self.assertEqual(returncode, 0)
+
 
 if __name__ == '__main__':
     unittest.main()

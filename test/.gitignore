@@ -40,4 +40,5 @@ overflow_small_1_byte
 overflow_small_8_byte
 uninitialized_read_large
 uninitialized_read_small
+realloc_init
 __pycache__/
