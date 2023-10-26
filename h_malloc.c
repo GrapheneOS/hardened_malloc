@@ -2148,3 +2148,11 @@ COLD EXPORT int h_malloc_set_state(UNUSED void *state) {
     return -2;
 }
 #endif
+
+#ifdef __ANDROID__
+COLD EXPORT void h_malloc_disable_memory_tagging(void) {
+#ifdef HAS_ARM_MTE
+    __is_memtag_enabled = false;
+#endif
+}
+#endif

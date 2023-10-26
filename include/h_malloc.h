@@ -99,6 +99,7 @@ int h_malloc_iterate(uintptr_t base, size_t size, void (*callback)(uintptr_t ptr
               void *arg);
 void h_malloc_disable(void);
 void h_malloc_enable(void);
+void h_malloc_disable_memory_tagging(void);
 #endif
 
 // hardened_malloc extensions
