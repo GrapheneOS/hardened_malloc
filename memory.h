@@ -11,6 +11,9 @@
 int get_metadata_key(void);
 
 void *memory_map(size_t size);
+#ifdef HAS_ARM_MTE
+void *memory_map_mte(size_t size);
+#endif
 bool memory_map_fixed(void *ptr, size_t size);
 bool memory_unmap(void *ptr, size_t size);
 bool memory_protect_ro(void *ptr, size_t size);
