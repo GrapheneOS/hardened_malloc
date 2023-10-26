@@ -484,19 +484,43 @@ static void set_slab_canary_value(UNUSED struct slab_metadata *metadata, UNUSED 
         0x00ffffffffffffffUL;
 
     metadata->canary_value = get_random_u64(rng) & canary_mask;
+#ifdef HAS_ARM_MTE
+    if (unlikely(metadata->canary_value == 0)) {
+        metadata->canary_value = 0x100;
+    }
+#endif
 #endif
 }
 
 static void set_canary(UNUSED const struct slab_metadata *metadata, UNUSED void *p, UNUSED size_t size) {
 #if SLAB_CANARY
+#ifdef HAS_ARM_MTE
+    if (likely(is_memtag_enabled())) {
+        return;
+    }
+#endif
+
     memcpy((char *)p + size - canary_size, &metadata->canary_value, canary_size);
 #endif
 }
 
 static void check_canary(UNUSED const struct slab_metadata *metadata, UNUSED const void *p, UNUSED size_t size) {
 #if SLAB_CANARY
+#ifdef HAS_ARM_MTE
+    if (likely(is_memtag_enabled())) {
+        return;
+    }
+#endif
+
     u64 canary_value;
     memcpy(&canary_value, (const char *)p + size - canary_size, canary_size);
+
+#ifdef HAS_ARM_MTE
+    if (unlikely(canary_value == 0)) {
+        return;
+    }
+#endif
+
     if (unlikely(canary_value != metadata->canary_value)) {
         fatal_error("canary corrupted");
     }
