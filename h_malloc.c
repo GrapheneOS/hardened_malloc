@@ -464,6 +464,12 @@ static void write_after_free_check(const char *p, size_t size) {
         return;
     }
 
+#ifdef HAS_ARM_MTE
+    if (likely(is_memtag_enabled())) {
+        return;
+    }
+#endif
+
     for (size_t i = 0; i < size; i += sizeof(u64)) {
         if (unlikely(*(const u64 *)(const void *)(p + i))) {
             fatal_error("detected write after free");
