@@ -28,6 +28,20 @@ void *memory_map(size_t size) {
     return p;
 }
 
+#ifdef HAS_ARM_MTE
+// Note that PROT_MTE can't be cleared via mprotect
+void *memory_map_mte(size_t size) {
+    void *p = mmap(NULL, size, PROT_MTE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+    if (unlikely(p == MAP_FAILED)) {
+        if (errno != ENOMEM) {
+            fatal_error("non-ENOMEM MTE mmap failure");
+        }
+        return NULL;
+    }
+    return p;
+}
+#endif
+
 bool memory_map_fixed(void *ptr, size_t size) {
     void *p = mmap(ptr, size, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_FIXED, -1, 0);
     bool ret = p == MAP_FAILED;
