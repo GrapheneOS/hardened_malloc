@@ -1,6 +1,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -55,6 +56,23 @@ static inline u64 log2u64(u64 x) {
 static inline size_t align(size_t size, size_t align) {
     size_t mask = align - 1;
     return (size + mask) & ~mask;
+}
+
+// u4_arr_{set,get} are helper functions for using u8 array as an array of unsigned 4-bit values.
+static_assert(sizeof(u8) == 1, "unexpected u8 size");
+
+// val is treated as a 4-bit value
+static inline void u4_arr_set(u8 *arr, size_t idx, u8 val) {
+    size_t off = idx >> 1;
+    size_t shift = (idx & 1) << 2;
+    u8 mask = (u8) (0xf0 >> shift);
+    arr[off] = (arr[off] & mask) | (val << shift);
+}
+
+static inline u8 u4_arr_get(const u8 *arr, size_t idx) {
+    size_t off = idx >> 1;
+    size_t shift = (idx & 1) << 2;
+    return (u8) ((arr[off] >> shift) & 0xf);
 }
 
 COLD noreturn void fatal_error(const char *s);
