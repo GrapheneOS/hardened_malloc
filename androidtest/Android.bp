@@ -1,0 +1,25 @@
+java_test_host {
+    name: "HMallocTest",
+    srcs: [
+        "src/**/*.java",
+    ],
+
+    libs: [
+        "tradefed",
+        "compatibility-tradefed",
+        "compatibility-host-util",
+    ],
+
+    static_libs: [
+        "cts-host-utils",
+        "frameworks-base-hostutils",
+    ],
+
+    test_suites: [
+        "general-tests",
+    ],
+
+    data_device_bins_64: [
+        "memtag_test",
+    ],
+}

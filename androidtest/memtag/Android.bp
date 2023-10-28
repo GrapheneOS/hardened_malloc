@@ -1,0 +1,16 @@
+cc_test {
+    name: "memtag_test",
+    srcs: ["memtag_test.cc"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-Wextra",
+        "-O0",
+    ],
+
+    compile_multilib: "64",
+
+    sanitize: {
+        memtag_heap: true,
+    },
+}
