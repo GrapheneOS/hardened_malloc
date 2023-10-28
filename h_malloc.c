@@ -67,10 +67,6 @@ static atomic_uint thread_arena_counter = 0;
 static const unsigned thread_arena = 0;
 #endif
 
-#ifdef MEMTAG
-bool __is_memtag_enabled = true;
-#endif
-
 static union {
     struct {
         void *slab_region_start;
@@ -81,6 +77,9 @@ static union {
 #ifdef USE_PKEY
         int metadata_pkey;
 #endif
+#ifdef MEMTAG
+        bool is_memtag_disabled;
+#endif
     };
     char padding[PAGE_SIZE];
 } ro __attribute__((aligned(PAGE_SIZE)));
@@ -88,6 +87,12 @@ static union {
 static inline void *get_slab_region_end(void) {
     return atomic_load_explicit(&ro.slab_region_end, memory_order_acquire);
 }
+
+#ifdef MEMTAG
+static inline bool is_memtag_enabled(void) {
+    return !ro.is_memtag_disabled;
+}
+#endif
 
 #define SLAB_METADATA_COUNT
 
@@ -2152,7 +2157,20 @@ COLD EXPORT int h_malloc_set_state(UNUSED void *state) {
 #ifdef __ANDROID__
 COLD EXPORT void h_malloc_disable_memory_tagging(void) {
 #ifdef HAS_ARM_MTE
-    __is_memtag_enabled = false;
+    if (!ro.is_memtag_disabled) {
+        if (is_init()) {
+            if (unlikely(memory_protect_rw(&ro, sizeof(ro)))) {
+                fatal_error("failed to unprotect allocator data");
+            }
+            ro.is_memtag_disabled = true;
+            if (unlikely(memory_protect_ro(&ro, sizeof(ro)))) {
+                fatal_error("failed to protect allocator data");
+            }
+        } else {
+            // bionic calls this function very early in some cases
+            ro.is_memtag_disabled = true;
+        }
+    }
 #endif
 }
 #endif

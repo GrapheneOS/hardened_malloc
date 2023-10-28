@@ -10,18 +10,6 @@
 #define TAG_WIDTH 4
 #endif
 
-#ifdef MEMTAG
-extern bool __is_memtag_enabled;
-#endif
-
-static inline bool is_memtag_enabled(void) {
-#ifdef MEMTAG
-    return __is_memtag_enabled;
-#else
-    return false;
-#endif
-}
-
 static inline void *untag_pointer(void *ptr) {
 #ifdef HAS_ARM_MTE
     const uintptr_t mask = UINTPTR_MAX >> 8;
