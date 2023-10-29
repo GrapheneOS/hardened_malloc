@@ -491,7 +491,11 @@ static void set_slab_canary_value(UNUSED struct slab_metadata *metadata, UNUSED 
     metadata->canary_value = get_random_u64(rng) & canary_mask;
 #ifdef HAS_ARM_MTE
     if (unlikely(metadata->canary_value == 0)) {
-        metadata->canary_value = 0x100;
+        // 0 is reserved to support disabling MTE at runtime (this is required on Android).
+        // When MTE is enabled, writing and reading of canaries is disabled, i.e. canary remains zeroed.
+        // After MTE is disabled, canaries that are set to 0 are ignored, since they wouldn't match
+        // slab's metadata->canary_value.
+        metadata->canary_value = 0x100; // 0x100 was chosen as the smallest acceptable value
     }
 #endif
 #endif
