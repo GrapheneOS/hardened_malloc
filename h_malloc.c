@@ -1181,13 +1181,14 @@ static inline void enforce_init(void) {
     }
 }
 
-COLD static void init_slow_path(void) {
-    static struct mutex lock = MUTEX_INITIALIZER;
+static struct mutex init_lock = MUTEX_INITIALIZER;
 
-    mutex_lock(&lock);
+COLD static void init_slow_path(void) {
+
+    mutex_lock(&init_lock);
 
     if (unlikely(is_init())) {
-        mutex_unlock(&lock);
+        mutex_unlock(&init_lock);
         return;
     }
 
@@ -1278,7 +1279,7 @@ COLD static void init_slow_path(void) {
     }
     memory_set_name(&ro, sizeof(ro), "malloc read-only after init");
 
-    mutex_unlock(&lock);
+    mutex_unlock(&init_lock);
 
     // may allocate, so wait until the allocator is initialized to avoid deadlocking
     if (unlikely(pthread_atfork(full_lock, full_unlock, post_fork_child))) {
@@ -2157,6 +2158,7 @@ COLD EXPORT int h_malloc_set_state(UNUSED void *state) {
 #ifdef __ANDROID__
 COLD EXPORT void h_malloc_disable_memory_tagging(void) {
 #ifdef HAS_ARM_MTE
+    mutex_lock(&init_lock);
     if (!ro.is_memtag_disabled) {
         if (is_init()) {
             if (unlikely(memory_protect_rw(&ro, sizeof(ro)))) {
@@ -2171,6 +2173,7 @@ COLD EXPORT void h_malloc_disable_memory_tagging(void) {
             ro.is_memtag_disabled = true;
         }
     }
+    mutex_unlock(&init_lock);
 #endif
 }
 #endif
