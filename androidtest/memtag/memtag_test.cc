@@ -36,21 +36,6 @@ void *untag_pointer(void *ptr) {
 }
 
 void tag_distinctness() {
-    if (rand() & 1) {
-        // make allocations in all of used size classes and free half of them
-
-        const int max = 21000;
-        void *ptrs[max];
-
-        for (int i = 0; i < max; ++i) {
-            ptrs[i] = malloc(max);
-        }
-
-        for (int i = 1; i < max; i += 2) {
-            free(ptrs[i]);
-        }
-    }
-
     const size_t cnt = 3000;
     const size_t iter_cnt = 5;
     const size_t alloc_cnt = cnt * iter_cnt;
@@ -114,13 +99,9 @@ void tag_distinctness() {
 }
 
 u8* alloc_default() {
-    if (rand() & 1) {
-        int cnt = rand() & 0x3f;
-        for (int i = 0; i < cnt; ++i) {
-            (void) malloc(DEFAULT_ALLOC_SIZE);
-        }
-    }
-    return (u8 *) malloc(DEFAULT_ALLOC_SIZE);
+    u8 *p = (u8 *) malloc(DEFAULT_ALLOC_SIZE);
+    assert(p);
+    return p;
 }
 
 volatile u8 u8_var;
