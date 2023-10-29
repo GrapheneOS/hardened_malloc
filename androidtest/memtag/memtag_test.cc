@@ -35,49 +35,93 @@ void *untag_pointer(void *ptr) {
     return (void *) ((uintptr_t) ptr & mask);
 }
 
+// This test checks that slab slot allocation uses tag that is distint from tags of its neighbors
+// and from the tag of the previous allocation that used the same slot
 void tag_distinctness() {
-    const size_t cnt = 3000;
-    const size_t iter_cnt = 5;
-    const size_t alloc_cnt = cnt * iter_cnt;
+    // 0 and 15 are reserved
+    const int min_tag = 1;
+    const int max_tag = 14;
 
-    const int sizes[] = { 16, 160, 10240, 20480 };
+    struct SizeClass {
+        int size;
+        int slot_cnt;
+    };
 
-    for (size_t size_idx = 0; size_idx < sizeof(sizes) / sizeof(int); ++size_idx) {
-        const size_t full_alloc_size = sizes[size_idx];
+    // values from size_classes[] and size_class_slots[] in h_malloc.c
+    SizeClass size_classes[] = {
+        { .size = 16,    .slot_cnt = 256, },
+        { .size = 32,    .slot_cnt = 128, },
+        // this size class is used by allocations that are made by the addr_tag_map, which breaks
+        // tag distinctess checks
+        // { .size = 48,    .slot_cnt = 85,  },
+        { .size = 64,    .slot_cnt = 64,  },
+        { .size = 80,    .slot_cnt = 51,  },
+        { .size = 96,    .slot_cnt = 42,  },
+        { .size = 112,   .slot_cnt = 36,  },
+        { .size = 128,   .slot_cnt = 64,  },
+        { .size = 160,   .slot_cnt = 51,  },
+        { .size = 192,   .slot_cnt = 64,  },
+        { .size = 224,   .slot_cnt = 54,  },
+        { .size = 10240, .slot_cnt = 6,   },
+        { .size = 20480, .slot_cnt = 1,   },
+    };
+
+    int tag_usage[max_tag + 1];
+
+    for (size_t sc_idx = 0; sc_idx < sizeof(size_classes) / sizeof(SizeClass); ++sc_idx) {
+        SizeClass &sc = size_classes[sc_idx];
+
+        const size_t full_alloc_size = sc.size;
         const size_t alloc_size = full_alloc_size - CANARY_SIZE;
 
-        unordered_map<uptr, u8> map;
-        map.reserve(alloc_cnt);
+        // "tdc" is short for "tag distinctness check"
+        int left_neighbor_tdc_cnt = 0;
+        int right_neighbor_tdc_cnt = 0;
+        int prev_alloc_tdc_cnt = 0;
 
-        for (size_t iter = 0; iter < iter_cnt; ++iter) {
-            uptr allocations[cnt];
+        int iter_cnt = 600;
 
-            for (size_t i = 0; i < cnt; ++i) {
+        unordered_map<uptr, u8> addr_tag_map;
+        addr_tag_map.reserve(iter_cnt * sc.slot_cnt);
+
+        u64 seen_tags = 0;
+
+        for (int iter = 0; iter < iter_cnt; ++iter) {
+            uptr allocations[256]; // 256 is max slot count
+
+            for (int i = 0; i < sc.slot_cnt; ++i) {
                 u8 *p = (u8 *) malloc(alloc_size);
+                assert(p);
                 uptr addr = (uptr) untag_pointer(p);
                 u8 tag = get_pointer_tag(p);
-                assert(tag >= 1 && tag <= 14);
+
+                assert(tag >= min_tag && tag <= max_tag);
+                seen_tags |= 1 << tag;
+                ++tag_usage[tag];
 
                 // check most recent tags of left and right neighbors
 
-                auto left = map.find(addr - full_alloc_size);
-                if (left != map.end()) {
+                auto left = addr_tag_map.find(addr - full_alloc_size);
+                if (left != addr_tag_map.end()) {
                     assert(left->second != tag);
+                    ++left_neighbor_tdc_cnt;
                 }
 
-                auto right = map.find(addr + full_alloc_size);
-                if (right != map.end()) {
+                auto right = addr_tag_map.find(addr + full_alloc_size);
+                if (right != addr_tag_map.end()) {
                     assert(right->second != tag);
+                    ++right_neighbor_tdc_cnt;
                 }
 
                 // check previous tag of this slot
-                auto prev = map.find(addr);
-                if (prev != map.end()) {
+                auto prev = addr_tag_map.find(addr);
+                if (prev != addr_tag_map.end()) {
                     assert(prev->second != tag);
-                    map.erase(addr);
+                    ++prev_alloc_tdc_cnt;
+                    addr_tag_map.erase(addr);
                 }
 
-                map.emplace(addr, tag);
+                addr_tag_map.emplace(addr, tag);
 
                 for (size_t j = 0; j < alloc_size; ++j) {
                     // check that slot is zeroed
@@ -87,15 +131,52 @@ void tag_distinctness() {
                 }
 
                 allocations[i] = addr;
-                // async tag check failures are reported on context switch
-                do_context_switch();
             }
 
-            for (size_t i = 0; i < cnt; ++i) {
+            // free some of allocations to allow their slots to be reused
+            for (int i = sc.slot_cnt - 1; i >= 0; i -= 2) {
                 free((void *) allocations[i]);
             }
         }
+
+        // check that all of the tags were used, except reserved ones
+        assert(seen_tags == (0xffff & ~(1 << 0 | 1 << 15)));
+
+        printf("size_class\t%i\t" "tdc_left %i\t" "tdc_right %i\t" "tdc_prev_alloc %i\n",
+               sc.size, left_neighbor_tdc_cnt, right_neighbor_tdc_cnt, prev_alloc_tdc_cnt);
+
+        // make sure tag distinctess checks were actually performed
+        int min_tdc_cnt = sc.slot_cnt * iter_cnt / 5;
+
+        assert(prev_alloc_tdc_cnt > min_tdc_cnt);
+
+        if (sc.slot_cnt > 1) {
+            assert(left_neighbor_tdc_cnt > min_tdc_cnt);
+            assert(right_neighbor_tdc_cnt > min_tdc_cnt);
+        }
+
+        // async tag check failures are reported on context switch
+        do_context_switch();
     }
+
+    printf("\nTag use counters:\n");
+
+    int min = INT_MAX;
+    int max = 0;
+    double geomean = 0.0;
+    for (int i = min_tag; i <= max_tag; ++i) {
+        int v = tag_usage[i];
+        geomean += log(v);
+        min = std::min(min, v);
+        max = std::max(max, v);
+        printf("%i\t%i\n", i, tag_usage[i]);
+    }
+    int tag_cnt = 1 + max_tag - min_tag;
+    geomean = exp(geomean / tag_cnt);
+
+    double max_deviation = std::max((double) max - geomean, geomean - min);
+
+    printf("geomean: %.2f, max deviation from geomean: %.2f%%\n", geomean, (100.0 * max_deviation) / geomean);
 }
 
 u8* alloc_default() {
