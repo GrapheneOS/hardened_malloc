@@ -19,10 +19,19 @@ public class MemtagTest extends BaseHostJUnit4Test {
     private static final String TEST_BINARY = "/data/local/tmp/memtag_test";
 
     enum Result {
-        SUCCESS,
+        SUCCESS(0, ""),
         // it's expected that the device is configured to use asymm MTE tag checking mode
-        ASYNC_MTE_ERROR,
-        SYNC_MTE_ERROR,
+        ASYNC_MTE_ERROR(139, "SEGV_CODE 8"),
+        SYNC_MTE_ERROR(139, "SEGV_CODE 9"),
+        ;
+
+        public final int exitCode;
+        public final String stderr;
+
+        Result(int exitCode, String stderr) {
+            this.exitCode = exitCode;
+            this.stderr = stderr;
+        }
     }
 
     private static final int SEGV_EXIT_CODE = 139;
@@ -31,62 +40,12 @@ public class MemtagTest extends BaseHostJUnit4Test {
         var args = new ArrayList<String>();
         args.add(TEST_BINARY);
         args.add(name);
-        var device = getDevice();
-        long deviceDate = device.getDeviceDate();
         String cmdLine = String.join(" ", args);
-        var result = device.executeShellV2Command(cmdLine);
 
-        int expectedExitCode = expectedResult == Result.SUCCESS ? 0 : SEGV_EXIT_CODE;
+        var result = getDevice().executeShellV2Command(cmdLine);
 
-        assertEquals("process exit code", expectedExitCode, result.getExitCode().intValue());
-
-        if (expectedResult == Result.SUCCESS) {
-            return;
-        }
-
-        try {
-            // wait a bit for debuggerd to capture the crash
-            Thread.sleep(50);
-        } catch (InterruptedException e) {
-            throw new IllegalStateException(e);
-        }
-
-        try (var logcat = device.getLogcatSince(deviceDate)) {
-            try (var s = logcat.createInputStream()) {
-                String[] lines = new String(s.readAllBytes()).split("\n");
-                boolean foundCmd = false;
-                String cmd = "Cmdline: " + cmdLine;
-                String expectedSignalCode = switch (expectedResult) {
-                    case ASYNC_MTE_ERROR -> "SEGV_MTEAERR";
-                    case SYNC_MTE_ERROR -> "SEGV_MTESERR";
-                    default -> throw new IllegalStateException(expectedResult.name());
-                };
-                for (String line : lines) {
-                    if (!foundCmd) {
-                        if (line.contains(cmd)) {
-                            foundCmd = true;
-                        }
-                        continue;
-                    }
-
-                    if (line.contains("signal 11 (SIGSEGV), code")) {
-                        if (!line.contains(expectedSignalCode)) {
-                            break;
-                        } else {
-                            return;
-                        }
-                    }
-
-                    if (line.contains("backtrace")) {
-                        break;
-                    }
-                }
-
-                fail("missing " + expectedSignalCode + " crash in logcat");
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
-        }
+        assertEquals("process exit code", expectedResult.exitCode, result.getExitCode().intValue());
+        assertEquals("stderr", expectedResult.stderr, result.getStderr());
     }
 
     @Test

@@ -2,6 +2,7 @@
 #undef NDEBUG
 #include <assert.h>
 #include <malloc.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -249,6 +250,11 @@ map<string, function<void()>> tests = {
 #undef TEST
 };
 
+void segv_handler(int, siginfo_t *si, void *) {
+    fprintf(stderr, "SEGV_CODE %i", si->si_code);
+    exit(139); // standard exit code for SIGSEGV
+}
+
 int main(int argc, char **argv) {
     setbuf(stdout, NULL);
     assert(argc == 2);
@@ -258,6 +264,13 @@ int main(int argc, char **argv) {
     assert(test_fn != nullptr);
 
     assert(mallopt(M_BIONIC_SET_HEAP_TAGGING_LEVEL, M_HEAP_TAGGING_LEVEL_ASYNC) == 1);
+
+    struct sigaction sa = {
+        .sa_sigaction = segv_handler,
+        .sa_flags = SA_SIGINFO,
+    };
+
+    assert(sigaction(SIGSEGV, &sa, nullptr) == 0);
 
     test_fn();
     do_context_switch();
