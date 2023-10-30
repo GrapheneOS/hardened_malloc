@@ -562,12 +562,8 @@ static inline void stats_slab_deallocate(UNUSED struct size_class *c, UNUSED siz
 #endif
 }
 
-static void *tag_and_clear_slab_slot(struct slab_metadata *metadata, void *slot_ptr, size_t slot_idx, size_t slot_size) {
 #ifdef HAS_ARM_MTE
-    if (unlikely(!is_memtag_enabled())) {
-        return slot_ptr;
-    }
-
+static void *tag_and_clear_slab_slot(struct slab_metadata *metadata, void *slot_ptr, size_t slot_idx, size_t slot_size) {
     // arm_mte_tags is an array of 4-bit unsigned integers stored as u8 array (MTE tags are 4-bit wide)
     //
     // It stores the most recent tag for each slab slot, or 0 if the slot was never used.
@@ -596,13 +592,8 @@ static void *tag_and_clear_slab_slot(struct slab_metadata *metadata, void *slot_
     u4_arr_set(slot_tags, slot_idx + 1, get_pointer_tag(tagged_ptr));
 
     return tagged_ptr;
-#else
-    (void) metadata;
-    (void) slot_idx;
-    (void) slot_size;
-    return slot_ptr;
-#endif
 }
+#endif
 
 static inline void *allocate_small(unsigned arena, size_t requested_size) {
     struct size_info info = get_size_info(requested_size);
@@ -632,7 +623,11 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
             if (requested_size) {
                 write_after_free_check(p, size - canary_size);
                 set_canary(metadata, p, size);
-                p = tag_and_clear_slab_slot(metadata, p, slot, size);
+#ifdef HAS_ARM_MTE
+                if (likely(is_memtag_enabled())) {
+                    p = tag_and_clear_slab_slot(metadata, p, slot, size);
+                }
+#endif
             }
             stats_small_allocate(c, size);
 
@@ -665,7 +660,11 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
             void *p = slot_pointer(size, slab, slot);
             if (requested_size) {
                 set_canary(metadata, p, size);
-                p = tag_and_clear_slab_slot(metadata, p, slot, size);
+#ifdef HAS_ARM_MTE
+                if (likely(is_memtag_enabled())) {
+                    p = tag_and_clear_slab_slot(metadata, p, slot, size);
+                }
+#endif
             }
             stats_slab_allocate(c, slab_size);
             stats_small_allocate(c, size);
@@ -688,7 +687,11 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
         void *p = slot_pointer(size, slab, slot);
         if (requested_size) {
             set_canary(metadata, p, size);
-            p = tag_and_clear_slab_slot(metadata, p, slot, size);
+#ifdef HAS_ARM_MTE
+            if (likely(is_memtag_enabled())) {
+                p = tag_and_clear_slab_slot(metadata, p, slot, size);
+            }
+#endif
         }
         stats_slab_allocate(c, slab_size);
         stats_small_allocate(c, size);
@@ -713,7 +716,11 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
     if (requested_size) {
         write_after_free_check(p, size - canary_size);
         set_canary(metadata, p, size);
-        p = tag_and_clear_slab_slot(metadata, p, slot, size);
+#ifdef HAS_ARM_MTE
+        if (likely(is_memtag_enabled())) {
+            p = tag_and_clear_slab_slot(metadata, p, slot, size);
+        }
+#endif
     }
     stats_small_allocate(c, size);
 
