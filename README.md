@@ -470,16 +470,16 @@ was a bit less important and if a core goal was finding latent bugs.
     * Errors other than ENOMEM from mmap, munmap, mprotect and mremap treated
       as fatal, which can help to detect memory management gone wrong elsewhere
       in the process.
-* [future] Memory tagging for slab allocations via MTE on ARMv8.5+
+* Memory tagging for slab allocations via MTE on ARMv8.5+
     * random memory tags as the baseline, providing probabilistic protection
       against various forms of memory corruption
     * dedicated tag for free slots, set on free, for deterministic protection
       against accessing freed memory
-    * store previous random tag within freed slab allocations, and increment it
-      to get the next tag for that slot to provide deterministic use-after-free
-      detection through multiple cycles of memory reuse
     * guarantee distinct tags for adjacent memory allocations by incrementing
       past matching values for deterministic detection of linear overflows
+    * [future] store previous random tag and increment it to get the next tag
+      for that slot to provide deterministic use-after-free detection through
+      multiple cycles of memory reuse
 
 ## Randomness
 
@@ -720,6 +720,9 @@ the quarantine. This means there are 2x as many system calls for allocating and
 freeing as there would be if the kernel supported these features directly.
 
 ## Memory tagging
+
+**Memory tagging has been implemented and this section is currently
+out-of-date.**
 
 Integrating extensive support for ARMv8.5 memory tagging is planned and this
 section will be expanded to cover the details on the chosen design. The approach
