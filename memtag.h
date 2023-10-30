@@ -19,6 +19,15 @@ static inline void *untag_pointer(void *ptr) {
 #endif
 }
 
+static inline const void *untag_const_pointer(const void *ptr) {
+#ifdef HAS_ARM_MTE
+    const uintptr_t mask = UINTPTR_MAX >> 8;
+    return (const void *) ((uintptr_t) ptr & mask);
+#else
+    return ptr;
+#endif
+}
+
 static inline void *set_pointer_tag(void *ptr, u8 tag) {
 #ifdef HAS_ARM_MTE
     return (void *) (((uintptr_t) tag << 56) | (uintptr_t) untag_pointer(ptr));
