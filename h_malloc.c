@@ -1762,7 +1762,7 @@ EXPORT size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *arg) {
         return 0;
     }
 
-    void *p = untag_pointer((void *) (uintptr_t) arg);
+    const void *p = untag_const_pointer(arg);
 
     if (p < get_slab_region_end() && p >= ro.slab_region_start) {
         thread_unseal_metadata();
