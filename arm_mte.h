@@ -21,7 +21,7 @@ static inline void *arm_mte_create_random_tag(void *p, u64 exclusion_mask) {
 //
 // scudo is licensed under the Apache License v2.0 with LLVM Exceptions, which is compatible with
 // the hardened_malloc's MIT license
-static inline void arm_mte_store_tags_and_clear(void *tagged_ptr, size_t len) {
+static inline void arm_mte_tag_and_clear_mem(void *tagged_ptr, size_t len) {
     uintptr_t Begin = (uintptr_t) tagged_ptr;
     uintptr_t End = Begin + len;
     uintptr_t LineSize, Next, Tmp;

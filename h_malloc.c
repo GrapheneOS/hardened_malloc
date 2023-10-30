@@ -589,7 +589,7 @@ static void *tag_and_clear_slab_slot(struct slab_metadata *metadata, void *slot_
 
     void *tagged_ptr = arm_mte_create_random_tag(slot_ptr, tem);
     // slot addresses and sizes are always aligned by 16
-    arm_mte_store_tags_and_clear(tagged_ptr, slot_size);
+    arm_mte_tag_and_clear_mem(tagged_ptr, slot_size);
 
     // store new tag of this slot
     u4_arr_set(slot_tags, slot_idx + 1, get_pointer_tag(tagged_ptr));
@@ -798,7 +798,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
         bool skip_zero = false;
 #ifdef HAS_ARM_MTE
         if (likely(is_memtag_enabled())) {
-            arm_mte_store_tags_and_clear(set_pointer_tag(p, RESERVED_TAG), size);
+            arm_mte_tag_and_clear_mem(set_pointer_tag(p, RESERVED_TAG), size);
             // metadata->arm_mte_tags is intentionally not updated, it should keep the previous slot
             // tag after slot is freed
             skip_zero = true;
