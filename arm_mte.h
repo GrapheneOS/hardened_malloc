@@ -12,6 +12,8 @@ static inline void *arm_mte_create_random_tag(void *p, u64 exclusion_mask) {
 
 // Tag the memory region with the tag specified in tag bits of tagged_ptr. Memory region itself is
 // zeroed.
+// tagged_ptr has to be aligned by 16, and len has to be a multiple of 16 (tag granule size).
+//
 // Arm's software optimization guide says:
 // "it is recommended to use STZGM (or DCZGVA) to set tag if data is not a concern." (STZGM and
 // DCGZVA are zeroing variants of tagging instructions).
