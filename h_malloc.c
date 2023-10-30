@@ -807,8 +807,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
 #ifdef HAS_ARM_MTE
         if (likely(is_memtag_enabled())) {
             arm_mte_tag_and_clear_mem(set_pointer_tag(p, RESERVED_TAG), size);
-            // metadata->arm_mte_tags is intentionally not updated, it should keep the previous slot
-            // tag after slot is freed
+            // metadata->arm_mte_tags is intentionally not updated, see tag_and_clear_slab_slot()
             skip_zero = true;
         }
 #endif
