@@ -577,7 +577,8 @@ static void *tag_and_clear_slab_slot(struct slab_metadata *metadata, void *slot_
     // is constructed.
     u8 *slot_tags = metadata->arm_mte_tags;
 
-    // Tag exclusion mask
+    // Tag exclusion mask. 0 tag is always excluded to detect accesses to slab memory via untagged
+    // pointers. Moreover, 0 tag is excluded in bionic via PR_MTE_TAG_MASK prctl
     u64 tem = (1 << 0) | (1 << RESERVED_TAG);
 
     // current or previous tag of left neighbor or 0 if there's no left neighbor or if it was never used
