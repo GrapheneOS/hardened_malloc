@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include <map>
+#include <set>
 #include <string>
 #include <unordered_map>
 
@@ -181,9 +182,26 @@ void tag_distinctness() {
 }
 
 u8* alloc_default() {
-    u8 *p = (u8 *) malloc(DEFAULT_ALLOC_SIZE);
-    assert(p);
-    return p;
+    const size_t full_alloc_size = DEFAULT_ALLOC_SIZE + CANARY_SIZE;
+    set<uptr> addrs;
+
+    // make sure allocation has both left and right neighbors, otherwise overflow/underflow tests
+    // will fail when allocation is at the end/beginning of slab
+    for (;;) {
+        u8 *p = (u8 *) malloc(DEFAULT_ALLOC_SIZE);
+        assert(p);
+
+        uptr addr = (uptr) untag_pointer(p);
+        uptr left = addr - full_alloc_size;
+        if (addrs.find(left) != addrs.end()) {
+            uptr right = addr + full_alloc_size;
+            if (addrs.find(right) != addrs.end()) {
+                return p;
+            }
+        }
+
+        addrs.emplace(addr);
+    }
 }
 
 volatile u8 u8_var;
