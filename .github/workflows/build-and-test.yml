@@ -9,14 +9,28 @@ on:
 jobs:
   build-ubuntu-gcc:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version: [12]
     steps:
       - uses: actions/checkout@v4
+      - name: Setting up gcc version
+        run: |
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${{ matrix.version }} 100
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${{ matrix.version }} 100
       - name: Build
         run: make test
   build-ubuntu-clang:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version: [14, 15]
     steps:
       - uses: actions/checkout@v4
+      - name: Setting up clang version
+        run: |
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${{ matrix.version }} 100
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${{ matrix.version }} 100
       - name: Build
         run: CC=clang CXX=clang++ make test
   build-musl:
