@@ -495,7 +495,8 @@ static void set_slab_canary_value(UNUSED struct slab_metadata *metadata, UNUSED 
         // When MTE is enabled, writing and reading of canaries is disabled, i.e. canary remains zeroed.
         // After MTE is disabled, canaries that are set to 0 are ignored, since they wouldn't match
         // slab's metadata->canary_value.
-        metadata->canary_value = 0x100; // 0x100 was chosen as the smallest acceptable value
+        // 0x100 was chosen arbitrarily, and can be encoded as an immediate value on ARM by the compiler.
+        metadata->canary_value = 0x100;
     }
 #endif
 #endif
