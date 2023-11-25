@@ -61,7 +61,12 @@ bool memory_unmap(void *ptr, size_t size) {
 
 static bool memory_protect_prot(void *ptr, size_t size, int prot, UNUSED int pkey) {
 #ifdef USE_PKEY
-    bool ret = pkey_mprotect(ptr, size, prot, pkey);
+    bool ret;
+    if (pkey > 0) {
+        ret = pkey_mprotect(ptr, size, prot, pkey);
+    } else {
+        ret = mprotect(ptr, size, prot);
+    }
 #else
     bool ret = mprotect(ptr, size, prot);
 #endif
