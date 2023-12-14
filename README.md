@@ -159,6 +159,9 @@ line to the `/etc/ld.so.preload` configuration file:
 The format of this configuration file is a whitespace-separated list, so it's
 good practice to put each library on a separate line.
 
+On Debian systems `libhardened_malloc.so` should be installed into `/usr/lib/`
+to avoid preload failures caused by AppArmor profile restrictions.
+
 Using the `LD_PRELOAD` environment variable to load it on a case-by-case basis
 will not work when `AT_SECURE` is set such as with setuid binaries. It's also
 generally not a recommended approach for production usage. The recommendation
