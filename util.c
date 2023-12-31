@@ -6,6 +6,8 @@
 
 #ifdef __ANDROID__
 #include <async_safe/log.h>
+int mallopt(int param, int value);
+#define M_BIONIC_RESTORE_DEFAULT_SIGABRT_HANDLER (-1003)
 #endif
 
 #include "util.h"
@@ -30,6 +32,7 @@ static int write_full(int fd, const char *buf, size_t length) {
 
 COLD noreturn void fatal_error(const char *s) {
 #ifdef __ANDROID__
+    mallopt(M_BIONIC_RESTORE_DEFAULT_SIGABRT_HANDLER, 0);
     async_safe_fatal("hardened_malloc: fatal allocator error: %s", s);
 #else
     const char *prefix = "fatal allocator error: ";
