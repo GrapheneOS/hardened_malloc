@@ -763,7 +763,7 @@ since they would be useful for:
 When memory tagging is enabled, checking for write-after-free at allocation
 time and checking canaries are both disabled. Canaries will be more thoroughly
 disabled when using memory tagging in the future, but Android currently has
-[very dynamic memory tagging support](https://source.android.com/docs/security/test/memory-safety/arm-mte) 
+[very dynamic memory tagging support](https://source.android.com/docs/security/test/memory-safety/arm-mte)
 where it can be enabled/disabled at any time which creates a barrier to
 optimizing by disabling redundant features.
 
