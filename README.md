@@ -724,19 +724,26 @@ freeing as there would be if the kernel supported these features directly.
 
 ## Memory tagging
 
-Random tags are set for all slab allocations when allocated. 5 possible values
-are excluded: the default 0 tag, a statically reserved free tag, the previous
-tag used for the slot, the current (or previous) tag used for the slot to the
-left and the current (or previous) tag used for the slot to the right. 3 of
-these are dynamic random values. When a slab allocation is freed, the reserved
-free tag is set for the slot. Linear overflows are deterministically detected.
-Use-after-free has deterministic detection until the freed slot goes through
-both the random and FIFO quarantines, gets allocated again, goes through both
-quarantines again and then finally gets allocated again for a 2nd time. Since
-the default 0 tag isn't used, untagged memory can't access malloc allocations
-and vice versa, although it may make sense to reuse the default tag for free
-data to avoid reducing the possible random tags from 15 to 14, since freed
-data is always zeroed anyway.
+Random tags are set for all slab allocations when allocated, with 5 excluded values:
+
+1. the default `0` tag
+2. a statically *reserved free tag*
+3. the previous tag used for the slot
+4. the current (or previous) tag used for the slot to the left
+5. the current (or previous) tag used for the slot to the right
+
+When a slab allocation is freed, the *reserved free tag* is set for the slot.
+
+This ensures the following properties:
+
+- Linear overflows are deterministically detected.
+- Use-after-free are deterministically detected until the freed slot goes through
+  both the random and FIFO quarantines, gets allocated again, goes through both
+  quarantines again and then finally gets allocated again for a 2nd time.
+  Since the default `0` tag isn't used, untagged memory can't access malloc allocations
+  and vice versa, although it may make sense to reuse the default tag for free
+  data to avoid reducing the possible random tags from 15 to 14, since freed
+  data is always zeroed anyway.
 
 Slab allocations are done in a statically reserved region for each size class
 and all metadata is in a statically reserved region, so interactions between
@@ -745,17 +752,20 @@ different uses of the same address space is not applicable.
 Large allocations beyond the largest slab allocation size class (128k by
 default) are guaranteed to have randomly sized guard regions to the left and
 right. Random and FIFO address space quarantines provide use-after-free
-detection. Random tags would still be useful for probabilistic detection of
-overflows, probabilistic detection of use-after-free once the address space is
-out of the quarantine and reused for another allocation and deterministic
-detection of use-after-free for reuse by another allocator. We need to test
-whether the cost is acceptable for enabling this by default.
+detection. We need to test whether the cost of random tags is acceptable to enabled them by default,
+since they would be useful for:
+
+- probabilistic detection of overflows
+- probabilistic detection of use-after-free once the address space is
+  out of the quarantine and reused for another allocation
+- deterministic detection of use-after-free for reuse by another allocator.
 
 When memory tagging is enabled, checking for write-after-free at allocation
 time and checking canaries are both disabled. Canaries will be more thoroughly
 disabled when using memory tagging in the future, but Android currently has
-very dynamic memory tagging support where it can be enabled/disabled at any
-time which creates a barrier to optimizing by disabling redundant features.
+[very dynamic memory tagging support](https://source.android.com/docs/security/test/memory-safety/arm-mte) 
+where it can be enabled/disabled at any time which creates a barrier to
+optimizing by disabling redundant features.
 
 ## API extensions
 
