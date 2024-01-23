@@ -204,54 +204,63 @@ u8* alloc_default() {
     }
 }
 
-volatile u8 u8_var;
+int expected_segv_code;
+
+#define expect_segv(exp, segv_code) ({\
+    expected_segv_code = segv_code; \
+    volatile auto val = exp; \
+    (void) val; \
+    do_context_switch(); \
+    fprintf(stderr, "didn't receive SEGV code %i", segv_code); \
+    exit(1); })
+
+// it's expected that the device is configured to use asymm MTE tag checking mode (sync read checks,
+// async write checks)
+#define expect_read_segv(exp) expect_segv(exp, SEGV_MTESERR)
+#define expect_write_segv(exp) expect_segv(exp, SEGV_MTEAERR)
 
 void read_after_free() {
     u8 *p = alloc_default();
     free(p);
-    volatile u8 v = p[0];
-    (void) v;
+    expect_read_segv(p[0]);
 }
 
 void write_after_free() {
     u8 *p = alloc_default();
     free(p);
-    p[0] = 1;
+    expect_write_segv(p[0] = 1);
 }
 
 void underflow_read() {
     u8 *p = alloc_default();
-    volatile u8 v = p[-1];
-    (void) v;
+    expect_read_segv(p[-1]);
 }
 
 void underflow_write() {
     u8 *p = alloc_default();
-    p[-1] = 1;
+    expect_write_segv(p[-1] = 1);
 }
 
 void overflow_read() {
     u8 *p = alloc_default();
-    volatile u8 v = p[DEFAULT_ALLOC_SIZE + CANARY_SIZE];
-    (void) v;
+    expect_read_segv(p[DEFAULT_ALLOC_SIZE + CANARY_SIZE]);
 }
 
 void overflow_write() {
     u8 *p = alloc_default();
-    p[DEFAULT_ALLOC_SIZE + CANARY_SIZE] = 1;
+    expect_write_segv(p[DEFAULT_ALLOC_SIZE + CANARY_SIZE] = 1);
 }
 
 void untagged_read() {
     u8 *p = alloc_default();
     p = (u8 *) untag_pointer(p);
-    volatile u8 v = p[0];
-    (void) v;
+    expect_read_segv(p[0]);
 }
 
 void untagged_write() {
     u8 *p = alloc_default();
     p = (u8 *) untag_pointer(p);
-    p[0] = 1;
+    expect_write_segv(p[0] = 1);
 }
 
 map<string, function<void()>> tests = {
@@ -269,8 +278,12 @@ map<string, function<void()>> tests = {
 };
 
 void segv_handler(int, siginfo_t *si, void *) {
-    fprintf(stderr, "SEGV_CODE %i", si->si_code);
-    exit(139); // standard exit code for SIGSEGV
+    if (expected_segv_code == 0 || expected_segv_code != si->si_code) {
+        fprintf(stderr, "received unexpected SEGV_CODE %i", si->si_code);
+        exit(139); // standard exit code for SIGSEGV
+    }
+
+    exit(0);
 }
 
 int main(int argc, char **argv) {
