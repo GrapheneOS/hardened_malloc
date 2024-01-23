@@ -47,9 +47,9 @@ void *set_pointer_tag(void *ptr, u8 tag) {
 // This test checks that slab slot allocation uses tag that is distint from tags of its neighbors
 // and from the tag of the previous allocation that used the same slot
 void tag_distinctness() {
-    // 0 and 15 are reserved
+    // tag 0 is reserved
     const int min_tag = 1;
-    const int max_tag = 14;
+    const int max_tag = 0xf;
 
     struct SizeClass {
         int size;
@@ -148,8 +148,8 @@ void tag_distinctness() {
             }
         }
 
-        // check that all of the tags were used, except reserved ones
-        assert(seen_tags == (0xffff & ~(1 << 0 | 1 << 15)));
+        // check that all of the tags were used, except for the reserved tag 0
+        assert(seen_tags == (0xffff & ~(1 << 0)));
 
         printf("size_class\t%i\t" "tdc_left %i\t" "tdc_right %i\t" "tdc_prev_alloc %i\n",
                sc.size, left_neighbor_tdc_cnt, right_neighbor_tdc_cnt, prev_alloc_tdc_cnt);

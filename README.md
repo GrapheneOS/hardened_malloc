@@ -724,15 +724,15 @@ freeing as there would be if the kernel supported these features directly.
 
 ## Memory tagging
 
-Random tags are set for all slab allocations when allocated, with 5 excluded values:
+Random tags are set for all slab allocations when allocated, with 4 excluded values:
 
-1. the default `0` tag
-2. a statically *reserved free tag*
-3. the previous tag used for the slot
-4. the current (or previous) tag used for the slot to the left
-5. the current (or previous) tag used for the slot to the right
+1. the reserved `0` tag
+2. the previous tag used for the slot
+3. the current (or previous) tag used for the slot to the left
+4. the current (or previous) tag used for the slot to the right
 
-When a slab allocation is freed, the *reserved free tag* is set for the slot.
+When a slab allocation is freed, the reserved `0` tag is set for the slot. 
+Slab allocation slots are cleared before reuse when memory tagging is enabled.
 
 This ensures the following properties:
 
@@ -740,10 +740,8 @@ This ensures the following properties:
 - Use-after-free are deterministically detected until the freed slot goes through
   both the random and FIFO quarantines, gets allocated again, goes through both
   quarantines again and then finally gets allocated again for a 2nd time.
-  Since the default `0` tag isn't used, untagged memory can't access malloc allocations
-  and vice versa, although it may make sense to reuse the default tag for free
-  data to avoid reducing the possible random tags from 15 to 14, since freed
-  data is always zeroed anyway.
+- Since the default `0` tag is reserved, untagged pointers can't access slab 
+  allocations and vice versa.
 
 Slab allocations are done in a statically reserved region for each size class
 and all metadata is in a statically reserved region, so interactions between
