@@ -6,7 +6,8 @@
 #ifdef HAS_ARM_MTE
 #include "arm_mte.h"
 #define MEMTAG 1
-#define RESERVED_TAG 15
+// Note that bionic libc always reserves tag 0 via PR_MTE_TAG_MASK prctl
+#define RESERVED_TAG 0
 #define TAG_WIDTH 4
 #endif
 
