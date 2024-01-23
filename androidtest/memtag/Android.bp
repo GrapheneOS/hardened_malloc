@@ -6,6 +6,7 @@ cc_test {
         "-Werror",
         "-Wextra",
         "-O0",
+        "-march=armv9-a+memtag",
     ],
 
     compile_multilib: "64",
