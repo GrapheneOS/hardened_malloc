@@ -71,4 +71,9 @@ public class MemtagTest extends BaseHostJUnit4Test {
     public void untagged_write() throws DeviceNotAvailableException {
         runTest("untagged_write");
     }
+
+    @Test
+    public void madvise_dontneed() throws DeviceNotAvailableException {
+        runTest("madvise_dontneed");
+    }
 }

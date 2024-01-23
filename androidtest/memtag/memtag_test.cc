@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <sys/mman.h>
 #include <sys/utsname.h>
 #include <unistd.h>
 
@@ -13,6 +14,8 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+
+#include "../../arm_mte.h"
 
 using namespace std;
 
@@ -35,6 +38,10 @@ u8 get_pointer_tag(void *ptr) {
 void *untag_pointer(void *ptr) {
     const uintptr_t mask = UINTPTR_MAX >> 8;
     return (void *) ((uintptr_t) ptr & mask);
+}
+
+void *set_pointer_tag(void *ptr, u8 tag) {
+    return (void *) (((uintptr_t) tag << 56) | (uintptr_t) untag_pointer(ptr));
 }
 
 // This test checks that slab slot allocation uses tag that is distint from tags of its neighbors
@@ -263,6 +270,39 @@ void untagged_write() {
     expect_write_segv(p[0] = 1);
 }
 
+// checks that each of memory locations inside the buffer is tagged with expected_tag
+void check_tag(void *buf, size_t len, u8 expected_tag) {
+    for (size_t i = 0; i < len; ++i) {
+        assert(get_pointer_tag(__arm_mte_get_tag((void *) ((uintptr_t) buf + i))) == expected_tag);
+    }
+}
+
+void madvise_dontneed() {
+    const size_t len = 100'000;
+    void *ptr = mmap(NULL, len, PROT_READ | PROT_WRITE | PROT_MTE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    assert(ptr != MAP_FAILED);
+
+    // check that 0 is the initial tag
+    check_tag(ptr, len, 0);
+
+    arm_mte_tag_and_clear_mem(set_pointer_tag(ptr, 1), len);
+    check_tag(ptr, len, 1);
+
+    memset(set_pointer_tag(ptr, 1), 1, len);
+
+    assert(madvise(ptr, len, MADV_DONTNEED) == 0);
+    // check that MADV_DONTNEED resets the tag
+    check_tag(ptr, len, 0);
+
+    // check that MADV_DONTNEED clears the memory
+    for (size_t i = 0; i < len; ++i) {
+        assert(((u8 *) ptr)[i] == 0);
+    }
+
+    // check that mistagged read after MADV_DONTNEED fails
+    expect_read_segv(*((u8 *) set_pointer_tag(ptr, 1)));
+}
+
 map<string, function<void()>> tests = {
 #define TEST(s) { #s, s }
     TEST(tag_distinctness),
@@ -274,6 +314,7 @@ map<string, function<void()>> tests = {
     TEST(underflow_write),
     TEST(untagged_read),
     TEST(untagged_write),
+    TEST(madvise_dontneed),
 #undef TEST
 };
 
