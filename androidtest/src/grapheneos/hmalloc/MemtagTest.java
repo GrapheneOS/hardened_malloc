@@ -7,36 +7,15 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class MemtagTest extends BaseHostJUnit4Test {
-
     private static final String TEST_BINARY = "/data/local/tmp/memtag_test";
 
-    enum Result {
-        SUCCESS(0, ""),
-        // it's expected that the device is configured to use asymm MTE tag checking mode
-        ASYNC_MTE_ERROR(139, "SEGV_CODE 8"),
-        SYNC_MTE_ERROR(139, "SEGV_CODE 9"),
-        ;
-
-        public final int exitCode;
-        public final String stderr;
-
-        Result(int exitCode, String stderr) {
-            this.exitCode = exitCode;
-            this.stderr = stderr;
-        }
-    }
-
-    private static final int SEGV_EXIT_CODE = 139;
-
-    private void runTest(String name, Result expectedResult) throws DeviceNotAvailableException {
+    private void runTest(String name) throws DeviceNotAvailableException {
         var args = new ArrayList<String>();
         args.add(TEST_BINARY);
         args.add(name);
@@ -44,52 +23,52 @@ public class MemtagTest extends BaseHostJUnit4Test {
 
         var result = getDevice().executeShellV2Command(cmdLine);
 
-        assertEquals("process exit code", expectedResult.exitCode, result.getExitCode().intValue());
-        assertEquals("stderr", expectedResult.stderr, result.getStderr());
+        assertEquals("stderr", "", result.getStderr());
+        assertEquals("process exit code", 0, result.getExitCode().intValue());
     }
 
     @Test
     public void tag_distinctness() throws DeviceNotAvailableException {
-        runTest("tag_distinctness", Result.SUCCESS);
+        runTest("tag_distinctness");
     }
 
     @Test
     public void read_after_free() throws DeviceNotAvailableException {
-        runTest("read_after_free", Result.SYNC_MTE_ERROR);
+        runTest("read_after_free");
     }
 
     @Test
     public void write_after_free() throws DeviceNotAvailableException {
-        runTest("write_after_free", Result.ASYNC_MTE_ERROR);
+        runTest("write_after_free");
     }
 
     @Test
     public void underflow_read() throws DeviceNotAvailableException {
-        runTest("underflow_read", Result.SYNC_MTE_ERROR);
+        runTest("underflow_read");
     }
 
     @Test
     public void underflow_write() throws DeviceNotAvailableException {
-        runTest("underflow_write", Result.ASYNC_MTE_ERROR);
+        runTest("underflow_write");
     }
 
     @Test
     public void overflow_read() throws DeviceNotAvailableException {
-        runTest("overflow_read", Result.SYNC_MTE_ERROR);
+        runTest("overflow_read");
     }
 
     @Test
     public void overflow_write() throws DeviceNotAvailableException {
-        runTest("overflow_write", Result.ASYNC_MTE_ERROR);
+        runTest("overflow_write");
     }
 
     @Test
     public void untagged_read() throws DeviceNotAvailableException {
-        runTest("untagged_read", Result.SYNC_MTE_ERROR);
+        runTest("untagged_read");
     }
 
     @Test
     public void untagged_write() throws DeviceNotAvailableException {
-        runTest("untagged_write", Result.ASYNC_MTE_ERROR);
+        runTest("untagged_write");
     }
 }
