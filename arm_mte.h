@@ -2,11 +2,11 @@
 #define ARM_MTE_H
 
 #include <arm_acle.h>
-#include <util.h>
+#include <stdint.h>
 
 // Returns a tagged pointer.
 // See https://developer.arm.com/documentation/ddi0602/2023-09/Base-Instructions/IRG--Insert-Random-Tag-
-static inline void *arm_mte_create_random_tag(void *p, u64 exclusion_mask) {
+static inline void *arm_mte_create_random_tag(void *p, uint64_t exclusion_mask) {
     return __arm_mte_create_random_tag(p, exclusion_mask);
 }
 
