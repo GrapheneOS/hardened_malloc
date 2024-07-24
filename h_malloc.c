@@ -1295,7 +1295,12 @@ COLD static void init_slow_path(void) {
 
     atomic_store_explicit(&ro.slab_region_end, slab_region_end, memory_order_release);
 
+#if defined(__ANDROID__) && defined(HAS_ARM_MTE)
+    /* Do not seal to support disabling memory tagging */
     if (unlikely(memory_protect_ro(&ro, sizeof(ro)))) {
+#else
+    if (unlikely(memory_protect_seal(&ro, sizeof(ro)))) {
+#endif
         fatal_error("failed to protect allocator data");
     }
     memory_set_name(&ro, sizeof(ro), "malloc read-only after init");
