@@ -74,7 +74,7 @@ cc_library {
             cflags: ["-DLABEL_MEMORY"],
         },
         device_has_arm_mte: {
-            cflags: ["-DHAS_ARM_MTE", "-march=armv9-a+memtag"]
+            cflags: ["-DHAS_ARM_MTE", "-march=armv8-a+memtag"]
         },
     },
     apex_available: [
