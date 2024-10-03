@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #if defined(__GLIBC__) || defined(__ANDROID__)
 #include <malloc.h>
