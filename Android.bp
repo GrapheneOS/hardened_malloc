@@ -5,8 +5,6 @@ common_cflags = [
     "-fPIC",
     "-fvisibility=hidden",
     //"-fno-plt",
-    "-Wall",
-    "-Wextra",
     "-Wcast-align",
     "-Wcast-qual",
     "-Wwrite-strings",
