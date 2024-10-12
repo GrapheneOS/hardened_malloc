@@ -94,6 +94,15 @@ static inline bool is_memtag_enabled(void) {
 }
 #endif
 
+static void *memory_map_tagged(size_t size) {
+#ifdef HAS_ARM_MTE
+    if (likely51(is_memtag_enabled())) {
+        return memory_map_mte(size);
+    }
+#endif
+    return memory_map(size);
+}
+
 #define SLAB_METADATA_COUNT
 
 struct slab_metadata {
@@ -1242,15 +1251,7 @@ COLD static void init_slow_path(void) {
     if (unlikely(memory_protect_rw_metadata(ra->regions, ra->total * sizeof(struct region_metadata)))) {
         fatal_error("failed to unprotect memory for regions table");
     }
-#ifdef HAS_ARM_MTE
-    if (likely51(is_memtag_enabled())) {
-        ro.slab_region_start = memory_map_mte(slab_region_size);
-    } else {
-        ro.slab_region_start = memory_map(slab_region_size);
-    }
-#else
-    ro.slab_region_start = memory_map(slab_region_size);
-#endif
+    ro.slab_region_start = memory_map_tagged(slab_region_size);
     if (unlikely(ro.slab_region_start == NULL)) {
         fatal_error("failed to allocate slab region");
     }
