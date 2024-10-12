@@ -103,6 +103,15 @@ static void *memory_map_tagged(size_t size) {
     return memory_map(size);
 }
 
+static bool memory_map_fixed_tagged(void *ptr, size_t size) {
+#ifdef HAS_ARM_MTE
+    if (likely51(is_memtag_enabled())) {
+        return memory_map_fixed_mte(ptr, size);
+    }
+#endif
+    return memory_map_fixed(ptr, size);
+}
+
 #define SLAB_METADATA_COUNT
 
 struct slab_metadata {
@@ -899,7 +908,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
 
         if (c->empty_slabs_total + slab_size > max_empty_slabs_total) {
             int saved_errno = errno;
-            if (!memory_map_fixed(slab, slab_size)) {
+            if (!memory_map_fixed_tagged(slab, slab_size)) {
                 label_slab(slab, slab_size, class);
                 stats_slab_deallocate(c, slab_size);
                 enqueue_free_slab(c, metadata);
@@ -1896,7 +1905,7 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
             struct slab_metadata *iterator = c->empty_slabs;
             while (iterator) {
                 void *slab = get_slab(c, slab_size, iterator);
-                if (memory_map_fixed(slab, slab_size)) {
+                if (memory_map_fixed_tagged(slab, slab_size)) {
                     break;
                 }
                 label_slab(slab, slab_size, class);
