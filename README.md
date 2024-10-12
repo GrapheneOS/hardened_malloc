@@ -731,7 +731,7 @@ Random tags are set for all slab allocations when allocated, with 4 excluded val
 3. the current (or previous) tag used for the slot to the left
 4. the current (or previous) tag used for the slot to the right
 
-When a slab allocation is freed, the reserved `0` tag is set for the slot. 
+When a slab allocation is freed, the reserved `0` tag is set for the slot.
 Slab allocation slots are cleared before reuse when memory tagging is enabled.
 
 This ensures the following properties:
@@ -740,7 +740,7 @@ This ensures the following properties:
 - Use-after-free are deterministically detected until the freed slot goes through
   both the random and FIFO quarantines, gets allocated again, goes through both
   quarantines again and then finally gets allocated again for a 2nd time.
-- Since the default `0` tag is reserved, untagged pointers can't access slab 
+- Since the default `0` tag is reserved, untagged pointers can't access slab
   allocations and vice versa.
 
 Slab allocations are done in a statically reserved region for each size class

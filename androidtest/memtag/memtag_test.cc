@@ -346,6 +346,6 @@ int main(int argc, char **argv) {
 
     test_fn();
     do_context_switch();
-    
+
     return 0;
 }
