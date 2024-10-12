@@ -9,7 +9,9 @@
 #define noreturn __attribute__((noreturn))
 
 #define likely(x) __builtin_expect(!!(x), 1)
+#define likely51(x) __builtin_expect_with_probability(!!(x), 1, 0.51)
 #define unlikely(x) __builtin_expect(!!(x), 0)
+#define unlikely51(x) __builtin_expect_with_probability(!!(x), 0, 0.51)
 
 #define min(x, y) ({ \
     __typeof__(x) _x = (x); \

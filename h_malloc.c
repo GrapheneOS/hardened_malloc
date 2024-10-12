@@ -470,7 +470,7 @@ static void write_after_free_check(const char *p, size_t size) {
     }
 
 #ifdef HAS_ARM_MTE
-    if (likely(is_memtag_enabled())) {
+    if (likely51(is_memtag_enabled())) {
         return;
     }
 #endif
@@ -505,7 +505,7 @@ static void set_slab_canary_value(UNUSED struct slab_metadata *metadata, UNUSED 
 static void set_canary(UNUSED const struct slab_metadata *metadata, UNUSED void *p, UNUSED size_t size) {
 #if SLAB_CANARY
 #ifdef HAS_ARM_MTE
-    if (likely(is_memtag_enabled())) {
+    if (likely51(is_memtag_enabled())) {
         return;
     }
 #endif
@@ -517,7 +517,7 @@ static void set_canary(UNUSED const struct slab_metadata *metadata, UNUSED void 
 static void check_canary(UNUSED const struct slab_metadata *metadata, UNUSED const void *p, UNUSED size_t size) {
 #if SLAB_CANARY
 #ifdef HAS_ARM_MTE
-    if (likely(is_memtag_enabled())) {
+    if (likely51(is_memtag_enabled())) {
         return;
     }
 #endif
@@ -624,7 +624,7 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
                 write_after_free_check(p, size - canary_size);
                 set_canary(metadata, p, size);
 #ifdef HAS_ARM_MTE
-                if (likely(is_memtag_enabled())) {
+                if (likely51(is_memtag_enabled())) {
                     p = tag_and_clear_slab_slot(metadata, p, slot, size);
                 }
 #endif
@@ -661,7 +661,7 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
             if (requested_size) {
                 set_canary(metadata, p, size);
 #ifdef HAS_ARM_MTE
-                if (likely(is_memtag_enabled())) {
+                if (likely51(is_memtag_enabled())) {
                     p = tag_and_clear_slab_slot(metadata, p, slot, size);
                 }
 #endif
@@ -688,7 +688,7 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
         if (requested_size) {
             set_canary(metadata, p, size);
 #ifdef HAS_ARM_MTE
-            if (likely(is_memtag_enabled())) {
+            if (likely51(is_memtag_enabled())) {
                 p = tag_and_clear_slab_slot(metadata, p, slot, size);
             }
 #endif
@@ -717,7 +717,7 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
         write_after_free_check(p, size - canary_size);
         set_canary(metadata, p, size);
 #ifdef HAS_ARM_MTE
-        if (likely(is_memtag_enabled())) {
+        if (likely51(is_memtag_enabled())) {
             p = tag_and_clear_slab_slot(metadata, p, slot, size);
         }
 #endif
@@ -805,7 +805,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
 
         bool skip_zero = false;
 #ifdef HAS_ARM_MTE
-        if (likely(is_memtag_enabled())) {
+        if (likely51(is_memtag_enabled())) {
             arm_mte_tag_and_clear_mem(set_pointer_tag(p, RESERVED_TAG), size);
             // metadata->arm_mte_tags is intentionally not updated, see tag_and_clear_slab_slot()
             skip_zero = true;
@@ -1243,7 +1243,7 @@ COLD static void init_slow_path(void) {
         fatal_error("failed to unprotect memory for regions table");
     }
 #ifdef HAS_ARM_MTE
-    if (likely(is_memtag_enabled())) {
+    if (likely51(is_memtag_enabled())) {
         ro.slab_region_start = memory_map_mte(slab_region_size);
     } else {
         ro.slab_region_start = memory_map(slab_region_size);
