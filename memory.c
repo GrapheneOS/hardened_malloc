@@ -17,8 +17,8 @@
 #include "memory.h"
 #include "util.h"
 
-void *memory_map(size_t size) {
-    void *p = mmap(NULL, size, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+static void *memory_map_prot(size_t size, int prot) {
+    void *p = mmap(NULL, size, prot, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
     if (unlikely(p == MAP_FAILED)) {
         if (errno != ENOMEM) {
             fatal_error("non-ENOMEM mmap failure");
@@ -28,17 +28,14 @@ void *memory_map(size_t size) {
     return p;
 }
 
+void *memory_map(size_t size) {
+    return memory_map_prot(size, PROT_NONE);
+}
+
 #ifdef HAS_ARM_MTE
 // Note that PROT_MTE can't be cleared via mprotect
 void *memory_map_mte(size_t size) {
-    void *p = mmap(NULL, size, PROT_MTE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-    if (unlikely(p == MAP_FAILED)) {
-        if (errno != ENOMEM) {
-            fatal_error("non-ENOMEM MTE mmap failure");
-        }
-        return NULL;
-    }
-    return p;
+    return memory_map_prot(size, PROT_MTE);
 }
 #endif
 
