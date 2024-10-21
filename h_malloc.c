@@ -233,7 +233,7 @@ static inline struct size_info get_size_info(size_t size) {
     }
     // size <= 64 is needed for correctness and raising it to size <= 128 is an optimization
     if (size <= 128) {
-        return (struct size_info){align(size, 16), ((size - 1) >> 4) + 1};
+        return (struct size_info){.size = align(size, 16), .class = ((size - 1) >> 4) + 1};
     }
 
     static const size_t initial_spacing_multiplier = 5;
@@ -244,7 +244,7 @@ static inline struct size_info get_size_info(size_t size) {
     size_t real_size = align(size, spacing_class);
     size_t spacing_class_index = (real_size >> spacing_class_shift) - initial_spacing_multiplier;
     size_t index = (spacing_class_shift - 4) * 4 + special_small_sizes + spacing_class_index;
-    return (struct size_info){real_size, index};
+    return (struct size_info){.size = real_size, .class = index};
 }
 
 // alignment must be a power of 2 <= PAGE_SIZE since slabs are only page aligned
@@ -252,7 +252,7 @@ static inline struct size_info get_size_info_align(size_t size, size_t alignment
     for (unsigned class = 1; class < N_SIZE_CLASSES; class++) {
         size_t real_size = size_classes[class];
         if (size <= real_size && !(real_size & (alignment - 1))) {
-            return (struct size_info){real_size, class};
+            return (struct size_info){.size = real_size, class};
         }
     }
     fatal_error("invalid size for slabs");
@@ -758,7 +758,7 @@ static struct slab_size_class_info slab_size_class(const void *p) {
         arena = offset / ARENA_SIZE;
         offset -= arena * ARENA_SIZE;
     }
-    return (struct slab_size_class_info){arena, offset / REAL_CLASS_REGION_SIZE};
+    return (struct slab_size_class_info){arena, .class = offset / REAL_CLASS_REGION_SIZE};
 }
 
 static size_t slab_usable_size(const void *p) {
@@ -1000,8 +1000,7 @@ static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t gua
         memory_set_name(p, size, "malloc large quarantine");
     }
 
-    struct quarantine_info target =
-        (struct quarantine_info){(char *)p - guard_size, size + guard_size * 2};
+    struct quarantine_info target = {.p = (char *)p - guard_size, .size = size + guard_size * 2};
 
     struct region_allocator *ra = ro.region_allocator;
 
