@@ -159,8 +159,11 @@ line to the `/etc/ld.so.preload` configuration file:
 The format of this configuration file is a whitespace-separated list, so it's
 good practice to put each library on a separate line.
 
-On Debian systems `libhardened_malloc.so` should be installed into `/usr/lib/`
-to avoid preload failures caused by AppArmor profile restrictions.
+For maximum compatibility `libhardened_malloc.so` can be installed into
+`/usr/lib/` to avoid preload failures caused by AppArmor profiles or systemd
+ExecPaths= restrictions. Check for logs of the following format:
+
+    ERROR: ld.so: object '/usr/local/lib/libhardened_malloc.so' from /etc/ld.so.preload cannot be preloaded (failed to map segment from shared object): ignored.
 
 Using the `LD_PRELOAD` environment variable to load it on a case-by-case basis
 will not work when `AT_SECURE` is set such as with setuid binaries. It's also
