@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [12]
+        version: [12, 13, 14]
     steps:
       - uses: actions/checkout@v4
       - name: Setting up gcc version
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [14, 15]
+        version: [14, 15, 16, 17, 18]
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
