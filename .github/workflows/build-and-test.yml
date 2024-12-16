@@ -27,6 +27,8 @@ jobs:
         version: [14, 15]
     steps:
       - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends clang-14 clang-15
       - name: Setting up clang version
         run: |
           sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${{ matrix.version }} 100
