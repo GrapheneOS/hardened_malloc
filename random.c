@@ -5,6 +5,10 @@
 #include "random.h"
 #include "util.h"
 
+#if CONFIG_BLOCK_OPS_CHECK_SIZE && !defined(HAS_ARM_MTE)
+#include "musl.h"
+#endif
+
 #include <sys/random.h>
 
 static void get_random_seed(void *buf, size_t size) {
@@ -65,7 +69,7 @@ void get_random_bytes(struct random_state *state, void *buf, size_t size) {
 
         size_t remaining = RANDOM_CACHE_SIZE - state->index;
         size_t copy_size = min(size, remaining);
-        memcpy(buf, state->cache + state->index, copy_size);
+        h_memcpy_internal(buf, state->cache + state->index, copy_size);
         state->index += copy_size;
 
         buf = (char *)buf + copy_size;
@@ -79,7 +83,7 @@ u16 get_random_u16(struct random_state *state) {
     if (remaining < sizeof(value)) {
         refill(state);
     }
-    memcpy(&value, state->cache + state->index, sizeof(value));
+    h_memcpy_internal(&value, state->cache + state->index, sizeof(value));
     state->index += sizeof(value);
     return value;
 }
@@ -106,7 +110,7 @@ u64 get_random_u64(struct random_state *state) {
     if (remaining < sizeof(value)) {
         refill(state);
     }
-    memcpy(&value, state->cache + state->index, sizeof(value));
+    h_memcpy_internal(&value, state->cache + state->index, sizeof(value));
     state->index += sizeof(value);
     return value;
 }

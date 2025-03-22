@@ -67,7 +67,33 @@ EXECUTABLES := \
     invalid_malloc_object_size_small \
     invalid_malloc_object_size_small_quarantine \
     impossibly_large_malloc \
-    realloc_init
+    realloc_init \
+    memcpy_buffer_overflow \
+    memcpy_read_overflow \
+    memcpy_valid_same \
+    memcpy_valid_mismatched \
+    memccpy_buffer_overflow \
+    memccpy_read_overflow \
+    memccpy_valid_same \
+    memccpy_valid_mismatched \
+    memmove_buffer_overflow \
+    memmove_read_overflow \
+    memmove_valid_same \
+    memmove_valid_mismatched \
+    memset_buffer_overflow \
+    memset_valid_same \
+    memset_valid_mismatched \
+    wmemcpy_buffer_overflow \
+    wmemcpy_read_overflow \
+    wmemcpy_valid_same \
+    wmemcpy_valid_mismatched \
+    wmemmove_buffer_overflow \
+    wmemmove_read_overflow \
+    wmemmove_valid_same \
+    wmemmove_valid_mismatched \
+    wmemset_buffer_overflow \
+    wmemset_valid_same \
+    wmemset_valid_mismatched
 
 all: $(EXECUTABLES)
 
