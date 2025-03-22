@@ -28,6 +28,7 @@ common_cflags = [
     "-DN_ARENA=1",
     "-DCONFIG_STATS=true",
     "-DCONFIG_SELF_INIT=false",
+    "-DCONFIG_BLOCK_OPS_CHECK_SIZE=false",
 ]
 
 cc_defaults {
