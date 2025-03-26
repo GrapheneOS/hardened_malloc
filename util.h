@@ -32,6 +32,13 @@
 #define STRINGIFY(s) #s
 #define ALIAS(f) __attribute__((alias(STRINGIFY(f))))
 
+// supported since GCC 15
+#if __has_attribute (nonstring)
+#  define NONSTRING __attribute__ ((nonstring))
+#else
+#  define NONSTRING
+#endif
+
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
