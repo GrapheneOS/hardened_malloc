@@ -13,6 +13,7 @@ extern "C" {
 #define h_malloc malloc
 #define h_calloc calloc
 #define h_realloc realloc
+#define h_reallocarray reallocarray
 #define h_aligned_alloc aligned_alloc
 #define h_free free
 
@@ -51,6 +52,7 @@ extern "C" {
 __attribute__((malloc)) __attribute__((alloc_size(1))) void *h_malloc(size_t size);
 __attribute__((malloc)) __attribute__((alloc_size(1, 2))) void *h_calloc(size_t nmemb, size_t size);
 __attribute__((alloc_size(2))) void *h_realloc(void *ptr, size_t size);
+__attribute__((alloc_size(2, 3))) void *h_reallocarray(void *ptr, size_t nmemb, size_t size);
 __attribute__((malloc)) __attribute__((alloc_size(2))) __attribute__((alloc_align(1)))
 void *h_aligned_alloc(size_t alignment, size_t size);
 void h_free(void *ptr);
