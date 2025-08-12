@@ -13,7 +13,7 @@ jobs:
       matrix:
         version: [12, 13, 14]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setting up gcc version
         run: |
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${{ matrix.version }} 100
@@ -26,7 +26,7 @@ jobs:
       matrix:
         version: [14, 15, 16, 17, 18]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends clang-14 clang-15
       - name: Setting up clang version
@@ -40,7 +40,7 @@ jobs:
     container:
       image: alpine:latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install dependencies
         run: apk update && apk add build-base python3
       - name: Build
@@ -48,7 +48,7 @@ jobs:
   build-ubuntu-gcc-aarch64:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libgcc-s1-arm64-cross cpp-aarch64-linux-gnu
       - name: Build
