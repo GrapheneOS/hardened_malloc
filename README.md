@@ -72,7 +72,7 @@ supported dependencies:
 * Linux 6.12
 * Clang 19.1.7 or GCC 14.2.0
 
-For Android, the Linux GKI 5.10, 5.15, 6.1, 6.6 and 6.12 branches are supported.
+For Android, the Linux GKI 6.1, 6.6 and 6.12 branches are supported.
 
 However, using more recent releases is highly recommended. Older versions of
 the dependencies may be compatible at the moment but are not tested and will
