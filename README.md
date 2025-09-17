@@ -65,14 +65,14 @@ used instead as this allocator fundamentally doesn't support that environment.
 
 ## Dependencies
 
-Debian stable (currently Debian 12) determines the most ancient set of
+Debian stable (currently Debian 13) determines the most ancient set of
 supported dependencies:
 
-* glibc 2.36
-* Linux 6.1
-* Clang 14.0.6 or GCC 12.2.0
+* glibc 2.41
+* Linux 6.12
+* Clang 19.1.7 or GCC 14.2.0
 
-For Android, the Linux GKI 5.10, 5.15 and 6.1 branches are supported.
+For Android, the Linux GKI 5.10, 5.15, 6.1, 6.6 and 6.12 branches are supported.
 
 However, using more recent releases is highly recommended. Older versions of
 the dependencies may be compatible at the moment but are not tested and will
@@ -83,7 +83,7 @@ there will be custom integration offering better performance in the future
 along with other hardening for the C standard library implementation.
 
 For Android, only the current generation, actively developed maintenance branch of the Android
-Open Source Project will be supported, which currently means `android15-release`.
+Open Source Project will be supported, which currently means `android16-release`.
 
 ## Testing
 
