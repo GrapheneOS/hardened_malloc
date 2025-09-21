@@ -44,7 +44,7 @@ void *set_pointer_tag(void *ptr, u8 tag) {
     return (void *) (((uintptr_t) tag << 56) | (uintptr_t) untag_pointer(ptr));
 }
 
-// This test checks that slab slot allocation uses tag that is distint from tags of its neighbors
+// This test checks that slab slot allocation uses tag that is distinct from tags of its neighbors
 // and from the tag of the previous allocation that used the same slot
 void tag_distinctness() {
     // tag 0 is reserved
