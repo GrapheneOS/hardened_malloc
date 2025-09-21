@@ -98,7 +98,7 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
         self.assertEqual(stderr.decode("utf-8"),
                          "fatal allocator error: invalid free\n")
 
-    def test_invalid_malloc_usable_size_small_quarantene(self):
+    def test_invalid_malloc_usable_size_small_quarantine(self):
         _stdout, stderr, returncode = self.run_test(
             "invalid_malloc_usable_size_small_quarantine")
         self.assertEqual(returncode, -6)
