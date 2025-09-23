@@ -20,6 +20,10 @@
 #include "random.h"
 #include "util.h"
 
+#if __x86_64__
+#include "immintrin.h"
+#endif
+
 #ifdef USE_PKEY
 #include <sys/mman.h>
 #endif
@@ -405,19 +409,8 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, const struct
         // randomize start location for linear search (uniform random choice is too slow)
         size_t random_index = get_random_u16_uniform(rng, slots);
         size_t first_bitmap = random_index / U64_WIDTH;
-#if __x86_64__ && __BMI2__
-        u64 tmp;
-        __asm__ (
-
-            // set up mask
-            "mov $0xfffffffffffffff8, %1\n\t"
-            // tmp is now same as shift amount mod 256 in portable case
-            "pext %[tmp], %[random_index], %1\n\t"
-
-            : [tmp] "=r" (tmp)
-            : [random_index] "r" (random_index));
-        // gcc/clang is smart enough to generate code with no spills here
-        u64 random_split = ~(~0UL << (tmp));
+#if __x86_64__ && (__BMI2__)
+        u64 random_split = ~(~0UL << _pext_u64(random_index, 8));
 #else
         u64 random_split = ~(~0UL << (random_index - first_bitmap * U64_WIDTH));
 #endif
