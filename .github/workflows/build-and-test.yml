@@ -11,9 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [12, 13, 14]
+        version: [12, 13, 14, 15]
     steps:
       - uses: actions/checkout@v5
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc
       - name: Setting up gcc version
         run: |
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${{ matrix.version }} 100
