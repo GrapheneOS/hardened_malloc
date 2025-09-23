@@ -410,9 +410,9 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, const struct
         __asm__ (
 
             // set up mask
-            "mov $0xfffffffffffffff8, %%rdx\n\t"
+            "mov $0xfffffffffffffff8, %1\n\t"
             // tmp is now same as shift amount mod 256 in portable case
-            "pext %[tmp], %[random_index], %%rdx\n\t"
+            "pext %[tmp], %[random_index], %1\n\t"
 
             : [tmp] "=r" (tmp)
             : [random_index] "r" (random_index));
