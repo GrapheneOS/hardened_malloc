@@ -20,9 +20,12 @@
 #include "random.h"
 #include "util.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wundef"
 #if __x86_64__
 #include "immintrin.h"
 #endif
+#pragma GCC diagnostic pop
 
 #ifdef USE_PKEY
 #include <sys/mman.h>
@@ -409,7 +412,11 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, const struct
         // randomize start location for linear search (uniform random choice is too slow)
         size_t random_index = get_random_u16_uniform(rng, slots);
         size_t first_bitmap = random_index / U64_WIDTH;
-#if __x86_64__ && (__BMI2__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wundef"
+// __BMI2__ is idiomatic to gcc unfortunately.
+#if __x86_64__ && (__BMI2__ || (__clang__ && __BMI2INTRIN_H_))
+#pragma GCC diagnostic pop
         u64 random_split = ~(~0UL << _pext_u64(random_index, 8));
 #else
         u64 random_split = ~(~0UL << (random_index - first_bitmap * U64_WIDTH));
