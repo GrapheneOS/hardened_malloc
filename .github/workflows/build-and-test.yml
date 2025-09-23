@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [12, 13, 14]
+        version: [14]
     steps:
       - uses: actions/checkout@v5
       - name: Setting up gcc version
@@ -24,11 +24,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [14, 15, 16, 17, 18, 19, 20]
+        version: [19, 20]
     steps:
       - uses: actions/checkout@v5
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends clang-14 clang-15 clang-19 clang-20
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends clang-19 clang-20
       - name: Setting up clang version
         run: |
           sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${{ matrix.version }} 100
