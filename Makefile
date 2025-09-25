@@ -141,7 +141,7 @@ tidy:
 	clang-tidy --extra-arg=-std=c++17 $(filter %.cc,$(SOURCES)) -- $(CPPFLAGS)
 
 clean:
-	rm -f $(OUT)/libhardened_malloc.so $(OBJECTS)
+	rm -f $(OUT)/libhardened_malloc.so $(OUT)/libhardened_malloc.a $(OBJECTS)
 	$(MAKE) -C test/ clean
 
 test: $(OUT)/libhardened_malloc$(SUFFIX).so
