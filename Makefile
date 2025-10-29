@@ -111,7 +111,7 @@ CPPFLAGS += \
     -DCONFIG_SELF_INIT=$(CONFIG_SELF_INIT)
 
 $(OUT)/libhardened_malloc$(SUFFIX).a: $(OBJECTS) | $(OUT)
-	ar rcs $@ $^
+	$(AR) rcs $@ $^
 
 $(OUT)/libhardened_malloc$(SUFFIX).so: $(OBJECTS) | $(OUT)
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared $^ $(LDLIBS) -o $@
