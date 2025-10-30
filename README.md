@@ -22,6 +22,7 @@
 * [API extensions](#api-extensions)
 * [Stats](#stats)
 * [System calls](#system-calls)
+* [Citations](#citations-and-mentions)
 
 ## Introduction
 
@@ -1007,3 +1008,13 @@ Additional system calls when `CONFIG_SEAL_METADATA=true` is set:
 Additional system calls for Android builds with `LABEL_MEMORY`:
 
 * `prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, ptr, size, name)`
+
+## Citations and mentions
+
+- [StarMalloc: Verifying a Modern, Hardened Memory Allocator](https://dl.acm.org/doi/10.1145/3689773) (2024)
+- [S2malloc: Statistically Secure Allocator for Use-After-Free Protection And More](https://arxiv.org/abs/2402.01894) (2024))
+- [TikTag: Breaking ARM's Memory Tagging Extension with Speculative Execution](https://arxiv.org/abs/2406.08719) (2024)
+- [GuaNary: Efficient Buffer Overflow Detection In Virtualized Clouds Using Intel EPT-based Sub-Page Write Protection Support](https://dl.acm.org/doi/10.1145/3626787) (2023)
+- [DangZero: Efficient Use-After-Free Detection via Direct Page Table Access](https://dl.acm.org/doi/10.1145/3548606.3560625) (2022)
+- [Understanding and Mitigating Memory Corruption Attacks](https://repository.library.northeastern.edu/files/neu:4f186m727/fulltext.pdf), PhD Dissertation (2022)
+- [HardsHeap: A Universal and Extensible Framework for Evaluating Secure Allocators](https://dl.acm.org/doi/10.1145/3460120.3484740) (2021)
