@@ -169,6 +169,20 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
         self.assertEqual(stderr.decode("utf-8"),
                          "fatal allocator error: invalid realloc\n")
 
+    def test_realloc_c23_undefined_behaviour(self):
+        _stdout, stderr, returncode = self.run_test("realloc_c23_undefined_behaviour")
+        self.assertEqual(returncode, 0)
+
+    def test_realloc_c23_undefined_behaviour_double_free(self):
+        _stdout, stderr, returncode = self.run_test("realloc_c23_undefined_behaviour_double_free")
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode("utf-8"),
+                         "fatal allocator error: double free (quarantine)\n")
+
+    def test_realloc_c23_undefined_behaviour_use_after_free(self):
+        _stdout, stderr, returncode = self.run_test("realloc_c23_undefined_behaviour_use_after_free")
+        self.assertEqual(returncode, -11)
+
     def test_write_after_free_large_reuse(self):
         _stdout, _stderr, returncode = self.run_test(
             "write_after_free_large_reuse")
