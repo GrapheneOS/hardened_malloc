@@ -83,7 +83,7 @@ there will be custom integration offering better performance in the future
 along with other hardening for the C standard library implementation.
 
 For Android, only the current generation, actively developed maintenance branch of the Android
-Open Source Project will be supported, which currently means `android16-release`.
+Open Source Project will be supported, which currently means `android16-qpr1-release`.
 
 ## Testing
 
