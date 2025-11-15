@@ -40,6 +40,10 @@ CXXFLAGS := $(CXXFLAGS) -std=c++17 -fsized-deallocation $(SHARED_FLAGS)
 LDFLAGS := $(LDFLAGS) -Wl,-O1,--as-needed,-z,defs,-z,relro,-z,now,-z,nodlopen,-z,text
 
 SOURCES := chacha.c h_malloc.c memory.c pages.c random.c util.c
+ifeq ($(CONFIG_BLOCK_OPS_CHECK_SIZE),true)
+    SOURCES += memcpy.c memccpy.c memmove.c memset.c swab.c wmemset.c
+    BOSC_EXTRAS := musl.h
+endif
 OBJECTS := $(SOURCES:.c=.o)
 
 ifeq ($(CONFIG_CXX_ALLOCATOR),true)
@@ -89,6 +93,10 @@ ifeq (,$(filter $(CONFIG_SELF_INIT),true false))
     $(error CONFIG_SELF_INIT must be true or false)
 endif
 
+ifeq (,$(filter $(CONFIG_BLOCK_OPS_CHECK_SIZE),true false))
+    $(error CONFIG_BLOCK_OPS_CHECK_SIZE must be true or false)
+endif
+
 CPPFLAGS += \
     -DCONFIG_SEAL_METADATA=$(CONFIG_SEAL_METADATA) \
     -DZERO_ON_FREE=$(CONFIG_ZERO_ON_FREE) \
@@ -108,7 +116,8 @@ CPPFLAGS += \
     -DCONFIG_CLASS_REGION_SIZE=$(CONFIG_CLASS_REGION_SIZE) \
     -DN_ARENA=$(CONFIG_N_ARENA) \
     -DCONFIG_STATS=$(CONFIG_STATS) \
-    -DCONFIG_SELF_INIT=$(CONFIG_SELF_INIT)
+    -DCONFIG_SELF_INIT=$(CONFIG_SELF_INIT) \
+    -DCONFIG_BLOCK_OPS_CHECK_SIZE=$(CONFIG_BLOCK_OPS_CHECK_SIZE)
 
 $(OUT)/libhardened_malloc$(SUFFIX).so: $(OBJECTS) | $(OUT)
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared $^ $(LDLIBS) -o $@
@@ -118,7 +127,7 @@ $(OUT):
 
 $(OUT)/chacha.o: chacha.c chacha.h util.h $(CONFIG_FILE) | $(OUT)
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
-$(OUT)/h_malloc.o: h_malloc.c include/h_malloc.h mutex.h memory.h pages.h random.h util.h $(CONFIG_FILE) | $(OUT)
+$(OUT)/h_malloc.o: h_malloc.c include/h_malloc.h mutex.h memory.h $(BOSC_EXTRAS) pages.h random.h util.h $(CONFIG_FILE) | $(OUT)
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
 $(OUT)/memory.o: memory.c memory.h util.h $(CONFIG_FILE) | $(OUT)
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
@@ -126,9 +135,22 @@ $(OUT)/new.o: new.cc include/h_malloc.h util.h $(CONFIG_FILE) | $(OUT)
 	$(COMPILE.cc) $(OUTPUT_OPTION) $<
 $(OUT)/pages.o: pages.c pages.h memory.h util.h $(CONFIG_FILE) | $(OUT)
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
-$(OUT)/random.o: random.c random.h chacha.h util.h $(CONFIG_FILE) | $(OUT)
+$(OUT)/random.o: random.c random.h chacha.h $(BOSC_EXTRAS) util.h $(CONFIG_FILE) | $(OUT)
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
 $(OUT)/util.o: util.c util.h $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.c) $(OUTPUT_OPTION) $<
+
+$(OUT)/memcpy.o: memcpy.c musl.h $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.c) -Wno-cast-align $(OUTPUT_OPTION) $<
+$(OUT)/memccpy.o: memccpy.c musl.h $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.c) -Wno-cast-align $(OUTPUT_OPTION) $<
+$(OUT)/memmove.o: memmove.c musl.h $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.c) -Wno-cast-align $(OUTPUT_OPTION) $<
+$(OUT)/memset.o: memset.c musl.h $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.c) -Wno-cast-align $(OUTPUT_OPTION) $<
+$(OUT)/swab.o: swab.c musl.h $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.c) -Wno-cast-align $(OUTPUT_OPTION) $<
+$(OUT)/wmemset.o: wmemset.c musl.h $(CONFIG_FILE) | $(OUT)
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
 
 check: tidy
