@@ -169,7 +169,7 @@ Using the `LD_PRELOAD` environment variable to load it on a case-by-case basis
 will not work when `AT_SECURE` is set such as with setuid binaries. It's also
 generally not a recommended approach for production usage. The recommendation
 is to enable it globally and make exceptions for performance critical cases by
-running the application in a container / namespace without it enabled.
+running the application in a container/namespace without it enabled.
 
 Make sure to raise `vm.max_map_count` substantially too to accommodate the very
 large number of guard pages created by hardened\_malloc. As an example, in
@@ -255,7 +255,7 @@ The following boolean configuration options are available:
 * `CONFIG_WRITE_AFTER_FREE_CHECK`: `true` (default) or `false` to control
   sanity checking that new small allocations contain zeroed memory. This can
   detect writes caused by a write-after-free vulnerability and mixes well with
-  the features for making memory reuse randomized / delayed. This has a
+  the features for making memory reuse randomized/delayed. This has a
   performance cost scaling to the size of the allocation, which is usually
   acceptable. This is not relevant to large allocations because they're always
   a fresh memory mapping from the kernel.
@@ -341,7 +341,7 @@ larger caches can substantially improves performance).
 
 ## Core design
 
-The core design of the allocator is very simple / minimalist. The allocator is
+The core design of the allocator is very simple/minimalist. The allocator is
 exclusive to 64-bit platforms in order to take full advantage of the abundant
 address space without being constrained by needing to keep the design
 compatible with 32-bit.
@@ -373,13 +373,13 @@ whether it's free, along with a separate bitmap for tracking allocations in the
 quarantine. The slab metadata entries in the array have intrusive lists
 threaded through them to track partial slabs (partially filled, and these are
 the first choice for allocation), empty slabs (limited amount of cached free
-memory) and free slabs (purged / memory protected).
+memory) and free slabs (purged/memory protected).
 
 Large allocations are tracked via a global hash table mapping their address to
 their size and random guard size. They're simply memory mappings and get mapped
 on allocation and then unmapped on free. Large allocations are the only dynamic
 memory mappings made by the allocator, since the address space for allocator
-state (including both small / large allocation metadata) and slab allocations
+state (including both small/large allocation metadata) and slab allocations
 is statically reserved.
 
 This allocator is aimed at production usage, not aiding with finding and fixing
@@ -390,7 +390,7 @@ messages. The design choices are based around minimizing overhead and
 maximizing security which often leads to different decisions than a tool
 attempting to find bugs. For example, it uses zero-based sanitization on free
 and doesn't minimize slack space from size class rounding between the end of an
-allocation and the canary / guard region. Zero-based filling has the least
+allocation and the canary/guard region. Zero-based filling has the least
 chance of uncovering latent bugs, but also the best chance of mitigating
 vulnerabilities. The canary feature is primarily meant to act as padding
 absorbing small overflows to render them harmless, so slack space is helpful
@@ -424,11 +424,11 @@ was a bit less important and if a core goal was finding latent bugs.
     * Top-level isolated regions for each arena
     * Divided up into isolated inner regions for each size class
         * High entropy random base for each size class region
-        * No deterministic / low entropy offsets between allocations with
+        * No deterministic/low entropy offsets between allocations with
           different size classes
     * Metadata is completely outside the slab allocation region
         * No references to metadata within the slab allocation region
-        * No deterministic / low entropy offsets to metadata
+        * No deterministic/low entropy offsets to metadata
     * Entire slab region starts out non-readable and non-writable
     * Slabs beyond the cache limit are purged and become non-readable and
       non-writable memory again
@@ -649,7 +649,7 @@ other. Static assignment can also reduce memory usage since threads may have
 varying usage of size classes.
 
 When there's substantial allocation or deallocation pressure, the allocator
-does end up calling into the kernel to purge / protect unused slabs by
+does end up calling into the kernel to purge/protect unused slabs by
 replacing them with fresh `PROT_NONE` regions along with unprotecting slabs
 when partially filled and cached empty slabs are depleted. There will be
 configuration over the amount of cached empty slabs, but it's not entirely a
@@ -696,7 +696,7 @@ The secondary benefit of thread caches is being able to avoid the underlying
 allocator implementation entirely for some allocations and deallocations when
 they're mixed together rather than many allocations being done together or many
 frees being done together. The value of this depends a lot on the application
-and it's entirely unsuitable / incompatible with a hardened allocator since it
+and it's entirely unsuitable/incompatible with a hardened allocator since it
 bypasses all of the underlying security and would destroy much of the security
 value.
 
@@ -960,7 +960,7 @@ doesn't handle large allocations within the arenas, so it presents those in the
 For example, with 4 arenas enabled, there will be a 5th arena in the statistics
 for the large allocations.
 
-The `nmalloc` / `ndalloc` fields are 64-bit integers tracking allocation and
+The `nmalloc`/`ndalloc` fields are 64-bit integers tracking allocation and
 deallocation count. These are defined as wrapping on overflow, per the jemalloc
 implementation.
 
