@@ -1,4 +1,4 @@
-# Hardened malloc
+# hardened_malloc
 
 * [Introduction](#introduction)
 * [Dependencies](#dependencies)
