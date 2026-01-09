@@ -55,6 +55,27 @@ __attribute__((malloc)) __attribute__((alloc_size(2))) __attribute__((alloc_alig
 void *h_aligned_alloc(size_t alignment, size_t size);
 void h_free(void *ptr);
 
+#if CONFIG_BLOCK_OPS_CHECK_SIZE && !defined(HAS_ARM_MTE)
+void *memcpy(void *dst, const void *src, size_t len);
+void *memccpy(void *dst, const void *src, int value, size_t len);
+void *memmove(void *dst, const void *src, size_t len);
+void *mempcpy(void *dst, const void *src, size_t len);
+void *memset(void *dst, int value, size_t len);
+void bcopy(const void *src, void *dst, size_t len);
+void swab(const void *src, void *dst, ssize_t len);
+wchar_t *wmemcpy(wchar_t *dst, const wchar_t *src, size_t len);
+wchar_t *wmemmove(wchar_t *dst, const wchar_t *src, size_t len);
+wchar_t *wmempcpy(wchar_t *dst, const wchar_t *src, size_t len);
+wchar_t *wmemset(wchar_t *dst, wchar_t value, size_t len);
+#define h_memcpy_internal musl_memcpy
+#define h_memmove_internal musl_memmove
+#define h_memset_internal musl_memset
+#else
+#define h_memcpy_internal memcpy
+#define h_memmove_internal memmove
+#define h_memset_internal memset
+#endif
+
 // POSIX
 int h_posix_memalign(void **memptr, size_t alignment, size_t size);
 
