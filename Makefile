@@ -110,6 +110,9 @@ CPPFLAGS += \
     -DCONFIG_STATS=$(CONFIG_STATS) \
     -DCONFIG_SELF_INIT=$(CONFIG_SELF_INIT)
 
+$(OUT)/libhardened_malloc$(SUFFIX).a: $(OBJECTS) | $(OUT)
+	$(AR) rcs $@ $^
+
 $(OUT)/libhardened_malloc$(SUFFIX).so: $(OBJECTS) | $(OUT)
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared $^ $(LDLIBS) -o $@
 
@@ -138,7 +141,7 @@ tidy:
 	clang-tidy --extra-arg=-std=c++17 $(filter %.cc,$(SOURCES)) -- $(CPPFLAGS)
 
 clean:
-	rm -f $(OUT)/libhardened_malloc.so $(OBJECTS)
+	rm -f $(OUT)/libhardened_malloc.so $(OUT)/libhardened_malloc.a $(OBJECTS)
 	$(MAKE) -C test/ clean
 
 test: $(OUT)/libhardened_malloc$(SUFFIX).so
