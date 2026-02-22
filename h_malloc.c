@@ -1530,7 +1530,8 @@ EXPORT void *h_realloc(void *old, size_t size) {
     old = untag_pointer(old);
 
     size_t old_size;
-    if (old < get_slab_region_end() && old >= ro.slab_region_start) {
+    bool old_in_slab_region = old < get_slab_region_end() && old >= ro.slab_region_start;
+    if (old_in_slab_region) {
         old_size = slab_usable_size(old);
         if (size <= max_slab_size_class && get_size_info(size).size == old_size) {
             return old_orig;
@@ -1647,7 +1648,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
         copy_size -= canary_size;
     }
     memcpy(new, old_orig, copy_size);
-    if (old_size <= max_slab_size_class) {
+    if (old_in_slab_region) {
         deallocate_small(old, NULL);
     } else {
         deallocate_large(old, NULL);
