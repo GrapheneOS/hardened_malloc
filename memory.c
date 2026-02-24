@@ -1,6 +1,8 @@
 #include <errno.h>
+#include <unistd.h>
 
 #include <sys/mman.h>
+#include <sys/syscall.h>
 
 #ifdef LABEL_MEMORY
 #include <sys/prctl.h>
@@ -89,6 +91,22 @@ bool memory_protect_rw(void *ptr, size_t size) {
 
 bool memory_protect_rw_metadata(void *ptr, size_t size) {
     return memory_protect_prot(ptr, size, PROT_READ|PROT_WRITE, get_metadata_key());
+}
+
+COLD bool memory_protect_seal(void *ptr, size_t size) {
+#if defined(__linux__) && defined(__NR_mseal)
+    /* supported since Linux 6.10 */
+    int ret = syscall(__NR_mseal, ptr, size, 0);
+    if (ret == 0)
+        return false;
+    if (unlikely(errno == ENOMEM))
+        return true;
+    if (errno == ENOSYS)
+        return memory_protect_ro(ptr, size);
+    fatal_error("non-ENOMEM and non-ENOSYS mseal failure");
+#else
+    return memory_protect_ro(ptr, size);
+#endif
 }
 
 #ifdef HAVE_COMPATIBLE_MREMAP
