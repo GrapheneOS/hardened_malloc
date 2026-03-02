@@ -414,7 +414,7 @@ was a bit less important and if a core goal was finding latent bugs.
       randomly sized guard regions around it
     * Protection via Memory Protection Keys (MPK) on x86\_64 (disabled by
       default due to low benefit-cost ratio on top of baseline protections)
-    * [future] Protection via MTE on ARMv8.5+
+    * Protection via MTE on ARMv8.5+
 * Deterministic detection of any invalid free (unallocated, unaligned, etc.)
     * Validation of the size passed for C++14 sized deallocation by `delete`
       even for code compiled with earlier standards (detects type confusion if
