@@ -67,7 +67,10 @@ EXECUTABLES := \
     invalid_malloc_object_size_small \
     invalid_malloc_object_size_small_quarantine \
     impossibly_large_malloc \
-    realloc_init
+    realloc_init \
+    realloc_c23_undefined_behaviour \
+    realloc_c23_undefined_behaviour_double_free \
+    realloc_c23_undefined_behaviour_use_after_free
 
 all: $(EXECUTABLES)
 
