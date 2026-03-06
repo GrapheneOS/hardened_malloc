@@ -2199,3 +2199,18 @@ COLD EXPORT void h_malloc_disable_memory_tagging(void) {
 #endif
 }
 #endif
+
+#if CONFIG_UNSET_RTLD_DEEPBIND
+
+#if defined(__GLIBC__)
+#include <dlfcn.h>
+
+EXPORT void *dlopen(const char *filename, int flags)
+{
+    void * (*original_dlopen)(const char *, int) = dlsym(RTLD_NEXT, "dlopen");
+    flags &= ~RTLD_DEEPBIND;
+    return original_dlopen(filename, flags);
+}
+#endif
+
+#endif // CONFIG_UNSET_RTLD_DEEPBIND
