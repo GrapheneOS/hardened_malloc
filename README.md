@@ -279,6 +279,13 @@ The following boolean configuration options are available:
   hardware, which may become drastically lower in the future. Whether or not
   this feature is enabled, the metadata is all contained within an isolated
   memory region with high entropy random guard regions around it.
+* `CONFIG_UNSET_RTLD_DEEPBIND`: `true` or `false` (default) to control whether a
+  `dlopen` wrapper is included to improve compatibility on glibc-based systems.
+  When enabled, the wrapper unsets the `RTLD_DEEPBIND` flag to ensure libraries
+  loaded via `dlopen` see the preloaded `libhardened_malloc.so` symbols,
+  preventing allocator mixing and related crashes or partial security bypasses.
+  That's useful for PHP extensions, browser plugins, and other modular software.
+  This option has no effect on non-glibc systems (e.g., musl, Bionic).
 
 The following integer configuration options are available:
 
