@@ -864,7 +864,10 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
 
     void *queue_substitute = c->quarantine_queue[c->quarantine_queue_index];
     c->quarantine_queue[c->quarantine_queue_index] = p;
-    c->quarantine_queue_index = (c->quarantine_queue_index + 1) % slab_quarantine_queue_length;
+
+    // Modulo here is costly so we're using an increment and an if instead.
+    size_t next_queue_index = c->quarantine_queue_index + 1;
+    c->quarantine_queue_index = next_queue_index < slab_quarantine_queue_length ? next_queue_index : 0;
 
     if (queue_substitute == NULL) {
         mutex_unlock(&c->lock);
