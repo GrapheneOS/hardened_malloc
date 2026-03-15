@@ -269,6 +269,9 @@ struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
     struct slab_metadata *slab_info;
     struct libdivide_u32_t size_divisor;
     struct libdivide_u64_t slab_size_divisor;
+    u32 size;
+    u16 slots;
+    u32 slab_size;
 
 #if SLAB_QUARANTINE_RANDOM_LENGTH > 0
     void *quarantine_random[SLAB_QUARANTINE_RANDOM_LENGTH << (MAX_SLAB_SIZE_CLASS_SHIFT - MIN_SLAB_SIZE_CLASS_SHIFT)];
@@ -618,8 +621,8 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
     size_t size = likely(info.size) ? info.size : 16;
 
     struct size_class *c = &ro.size_class_metadata[arena][info.class];
-    size_t slots = get_slots(info.class);
-    size_t slab_size = get_slab_size(slots, size);
+    size_t slots = c->slots;
+    size_t slab_size = c->slab_size;
 
     mutex_lock(&c->lock);
 
@@ -791,16 +794,13 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     size_t class = size_class_info.class;
 
     struct size_class *c = &ro.size_class_metadata[size_class_info.arena][class];
-    size_t size = size_classes[class];
+    size_t size = c->size;
     if (expected_size && unlikely(size != *expected_size)) {
         fatal_error("sized deallocation mismatch (small)");
     }
     bool is_zero_size = size == 0;
-    if (unlikely(is_zero_size)) {
-        size = 16;
-    }
-    size_t slots = get_slots(class);
-    size_t slab_size = get_slab_size(slots, size);
+    size_t slots = c->slots;
+    size_t slab_size = c->slab_size;
 
     mutex_lock(&c->lock);
 
@@ -1284,9 +1284,11 @@ COLD static void init_slow_path(void) {
             if (size == 0) {
                 size = 16;
             }
+            c->size = size;
+            c->slots = get_slots(class);
+            c->slab_size = get_slab_size(c->slots, size);
             c->size_divisor = libdivide_u32_gen(size);
-            size_t slab_size = get_slab_size(get_slots(class), size);
-            c->slab_size_divisor = libdivide_u64_gen(slab_size);
+            c->slab_size_divisor = libdivide_u64_gen(c->slab_size);
             c->slab_info = allocator_state->slab_info_mapping[arena][class].slab_info;
         }
     }
@@ -1734,12 +1736,9 @@ static inline void memory_corruption_check_small(const void *p) {
     struct slab_size_class_info size_class_info = slab_size_class(p);
     size_t class = size_class_info.class;
     struct size_class *c = &ro.size_class_metadata[size_class_info.arena][class];
-    size_t size = size_classes[class];
+    size_t size = c->size;
     bool is_zero_size = size == 0;
-    if (unlikely(is_zero_size)) {
-        size = 16;
-    }
-    size_t slab_size = get_slab_size(get_slots(class), size);
+    size_t slab_size = c->slab_size;
 
     mutex_lock(&c->lock);
 
@@ -1811,14 +1810,13 @@ EXPORT size_t h_malloc_object_size(const void *p) {
 
         struct slab_size_class_info size_class_info = slab_size_class(p);
         size_t class = size_class_info.class;
-        size_t size_class = size_classes[class];
         struct size_class *c = &ro.size_class_metadata[size_class_info.arena][class];
+        size_t size_class = c->size;
 
         mutex_lock(&c->lock);
 
         const struct slab_metadata *metadata = get_metadata(c, p);
-        size_t slab_size = get_slab_size(get_slots(class), size_class);
-        void *slab = get_slab(c, slab_size, metadata);
+        void *slab = get_slab(c, c->slab_size, metadata);
         size_t slot = libdivide_u32_do((const char *)p - (const char *)slab, &c->size_divisor);
 
         if (unlikely(!is_used_slot(metadata, slot))) {
@@ -1898,8 +1896,7 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
         // skip zero byte size class since there's nothing to change
         for (unsigned class = 1; class < N_SIZE_CLASSES; class++) {
             struct size_class *c = &ro.size_class_metadata[arena][class];
-            size_t size = size_classes[class];
-            size_t slab_size = get_slab_size(get_slots(class), size);
+            size_t slab_size = c->slab_size;
 
             mutex_lock(&c->lock);
 
@@ -1923,6 +1920,7 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
             c->empty_slabs = iterator;
 
 #if SLAB_QUARANTINE && CONFIG_EXTENDED_SIZE_CLASSES
+            size_t size = c->size;
             if (size >= min_extended_size_class) {
                 size_t quarantine_shift = clz64(size) - (63 - MAX_SLAB_SIZE_CLASS_SHIFT);
 
