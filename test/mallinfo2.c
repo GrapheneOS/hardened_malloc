@@ -7,6 +7,8 @@
 
 #include "test_util.h"
 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 static void print_mallinfo2(void) {
 #if defined(__GLIBC__)
     struct mallinfo2 info = mallinfo2();

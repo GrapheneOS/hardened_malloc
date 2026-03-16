@@ -2,6 +2,8 @@
 
 #include "test_util.h"
 
+#pragma GCC diagnostic ignored "-Wfree-nonheap-object"
+
 OPTNONE int main(void) {
     char *p = malloc(256 * 1024);
     if (!p) {
