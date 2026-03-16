@@ -178,6 +178,22 @@ static const u32 size_classes[] = {
 };
 
 static const u16 size_class_slots[] = {
+#if CONFIG_PAGE_SIZE == 16384
+    /* 0 */ 256,
+    /* 16 */ 256, 256, 256, 256, 204, 170, 146, 256,
+    /* 32 */ 204, 256, 219, 256,
+    /* 64 */ 256, 256, 256, 256,
+    /* 128 */ 256, 256, 256, 256,
+    /* 256 */ 192, 160, 128, 128,
+    /* 512 */ 96, 80, 64, 64,
+    /* 1024 */ 48, 40, 32, 32,
+    /* 2048 */ 24, 20, 16, 16,
+#if CONFIG_EXTENDED_SIZE_CLASSES
+    /* 4096 */ 12, 10, 8, 8,
+    /* 8192 */ 6, 5, 4, 4,
+    /* 16384 */ 3, 2, 2, 2,
+#endif
+#else /* 4k pages */
     /* 0 */ 256,
     /* 16 */ 256, 128, 85, 64, 51, 42, 36, 64,
     /* 32 */ 51, 64, 54, 64,
@@ -191,6 +207,7 @@ static const u16 size_class_slots[] = {
     /* 4096 */ 1, 1, 1, 1,
     /* 8192 */ 1, 1, 1, 1,
     /* 16384 */ 1, 1, 1, 1,
+#endif
 #endif
 };
 
@@ -314,7 +331,8 @@ struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
 #define REAL_CLASS_REGION_SIZE (CLASS_REGION_SIZE * 2)
 #define ARENA_SIZE (REAL_CLASS_REGION_SIZE * N_SIZE_CLASSES)
 static const size_t slab_region_size = ARENA_SIZE * N_ARENA;
-static_assert(PAGE_SIZE == 4096, "bitmap handling will need adjustment for other page sizes");
+static_assert(PAGE_SIZE == 4096 || PAGE_SIZE == 16384,
+    "page size must be 4096 or 16384");
 
 static void *get_slab(const struct size_class *c, size_t slab_size, const struct slab_metadata *metadata) {
     size_t index = metadata - c->slab_info;
