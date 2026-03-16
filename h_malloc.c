@@ -249,7 +249,11 @@ static inline struct size_info get_size_info(size_t size) {
 
 // alignment must be a power of 2 <= PAGE_SIZE since slabs are only page aligned
 static inline struct size_info get_size_info_align(size_t size, size_t alignment) {
-    for (unsigned class = 1; class < N_SIZE_CLASSES; class++) {
+    unsigned start = get_size_info(size).class;
+    if (unlikely(!start)) {
+        start = 1;
+    }
+    for (unsigned class = start; class < N_SIZE_CLASSES; class++) {
         size_t real_size = size_classes[class];
         if (size <= real_size && !(real_size & (alignment - 1))) {
             return (struct size_info){real_size, class};
