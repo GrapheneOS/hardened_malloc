@@ -55,6 +55,7 @@ void get_random_bytes(struct random_state *state, void *buf, size_t size) {
     // avoid needless copying to and from the cache as an optimization
     if (size > RANDOM_CACHE_SIZE / 2) {
         chacha_keystream_bytes(&state->ctx, buf, size);
+        state->reseed += size;
         return;
     }
 
