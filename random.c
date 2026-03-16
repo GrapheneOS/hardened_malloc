@@ -59,7 +59,7 @@ void get_random_bytes(struct random_state *state, void *buf, size_t size) {
     }
 
     while (size) {
-        if (state->index == RANDOM_CACHE_SIZE) {
+        if (unlikely(state->index == RANDOM_CACHE_SIZE)) {
             refill(state);
         }
 
@@ -76,7 +76,7 @@ void get_random_bytes(struct random_state *state, void *buf, size_t size) {
 u16 get_random_u16(struct random_state *state) {
     u16 value;
     unsigned remaining = RANDOM_CACHE_SIZE - state->index;
-    if (remaining < sizeof(value)) {
+    if (unlikely(remaining < sizeof(value))) {
         refill(state);
     }
     memcpy(&value, state->cache + state->index, sizeof(value));
@@ -103,7 +103,7 @@ u16 get_random_u16_uniform(struct random_state *state, u16 bound) {
 u64 get_random_u64(struct random_state *state) {
     u64 value;
     unsigned remaining = RANDOM_CACHE_SIZE - state->index;
-    if (remaining < sizeof(value)) {
+    if (unlikely(remaining < sizeof(value))) {
         refill(state);
     }
     memcpy(&value, state->cache + state->index, sizeof(value));
