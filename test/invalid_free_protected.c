@@ -4,6 +4,8 @@
 
 #include "test_util.h"
 
+#pragma GCC diagnostic ignored "-Wfree-nonheap-object"
+
 OPTNONE int main(void) {
     free(malloc(16));
     char *p = mmap(NULL, 4096 * 16, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
