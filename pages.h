@@ -7,7 +7,14 @@
 
 #include "util.h"
 
+#ifndef PAGE_SHIFT
+#if CONFIG_PAGE_SIZE == 16384
+#define PAGE_SHIFT 14
+#else
 #define PAGE_SHIFT 12
+#endif
+#endif
+
 #ifndef PAGE_SIZE
 #define PAGE_SIZE ((size_t)1 << PAGE_SHIFT)
 #endif
