@@ -180,10 +180,9 @@ large number of guard pages created by hardened\_malloc. As an example, in
 This is unnecessary if you set `CONFIG_GUARD_SLABS_INTERVAL` to a very large
 value in the build configuration.
 
-On arm64, make sure your kernel is configured to use 4k pages since we haven't
-yet added support for 16k and 64k pages. The kernel also has to be configured
-to use 4 level page tables for the full 48 bit address space instead of only
-having a 39 bit address space for the default hardened\_malloc configuration.
+On arm64, the kernel also has to be configured to use 4 level page tables for
+the full 48 bit address space instead of only having a 39 bit address space
+for the default hardened\_malloc configuration.
 It's possible to reduce the class region size substantially to make a 39 bit
 address space workable but the defaults won't work.
 
@@ -333,6 +332,14 @@ The following integer configuration options are available:
   allocations use the slab allocation size class scheme instead of page size
   granularity. See the [section on size classes](#size-classes) below for
   details.
+
+* `CONFIG_PAGE_SIZE`: `4096` (default) to set the page size used by the
+  allocator. Supported values are `4096` and `16384`. This must match the page
+  size of the kernel the library will run on. On arm64, kernels may be
+  configured for 4k or 16k pages. The allocator verifies at runtime that the
+  compile-time page size matches the kernel page size and will abort if they
+  differ. The slab slot counts are tuned per page size to minimize internal
+  fragmentation for slabs.
 
 There will be more control over enabled features in the future along with
 control over fairly arbitrarily chosen values like the size of empty slab
@@ -537,11 +544,11 @@ classes for each doubling in size.
 
 The slot counts tied to the size classes are specific to this allocator rather
 than being taken from jemalloc. Slabs are always a span of pages so the slot
-count needs to be tuned to minimize waste due to rounding to the page size. For
-now, this allocator is set up only for 4096 byte pages as a small page size is
-desirable for finer-grained memory protection and randomization. It could be
-ported to larger page sizes in the future. The current slot counts are only a
-preliminary set of values.
+count needs to be tuned to minimize waste due to rounding to the page size.
+Tuned slot counts are provided for 4096 and 16384 byte page sizes, selectable
+via `CONFIG_PAGE_SIZE`. A smaller page size is desirable for
+finer-grained memory protection and randomization. The tables below show the
+default slot counts for 4096 byte pages.
 
 | size class | worst case internal fragmentation | slab slots | slab size | internal fragmentation for slabs |
 | - | - | - | - | - |
@@ -584,7 +591,7 @@ preliminary set of values.
 
 The slab allocation size classes end at 16384 since that's the final size for
 2048 byte spacing and the next spacing class matches the page size of 4096
-bytes on the target platforms. This is the minimum set of small size classes
+bytes when using 4k pages. This is the minimum set of small size classes
 required to avoid substantial waste from rounding.
 
 The `CONFIG_EXTENDED_SIZE_CLASSES` option extends the size classes up to
@@ -620,8 +627,8 @@ the same size class scheme providing 4 size classes for every doubling of size.
 It increases virtual memory consumption but drastically improves performance
 where realloc is used without proper growth factors, which is fairly common and
 destroys performance in some commonly used programs. If large size classes are
-disabled, the granularity is instead the page size, which is currently always
-4096 bytes on supported platforms.
+disabled, the granularity is instead the page size (4096 or 16384 bytes
+depending on `CONFIG_PAGE_SIZE`).
 
 ## Scalability
 
