@@ -799,10 +799,10 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
 
     struct size_class *c = &ro.size_class_metadata[size_class_info.arena][class];
     size_t size = c->size;
-    if (expected_size && unlikely(size != *expected_size)) {
+    bool is_zero_size = class == 0;
+    if (expected_size && unlikely((is_zero_size ? 0 : size) != *expected_size)) {
         fatal_error("sized deallocation mismatch (small)");
     }
-    bool is_zero_size = size == 0;
     size_t slots = c->slots;
     size_t slab_size = c->slab_size;
 
@@ -1744,7 +1744,7 @@ static inline void memory_corruption_check_small(const void *p) {
     size_t class = size_class_info.class;
     struct size_class *c = &ro.size_class_metadata[size_class_info.arena][class];
     size_t size = c->size;
-    bool is_zero_size = size == 0;
+    bool is_zero_size = class == 0;
     size_t slab_size = c->slab_size;
 
     mutex_lock(&c->lock);
