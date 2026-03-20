@@ -7,6 +7,8 @@
 
 #include "test_util.h"
 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 static void print_mallinfo(void) {
 #if defined(__GLIBC__) || defined(__ANDROID__)
     struct mallinfo info = mallinfo();
