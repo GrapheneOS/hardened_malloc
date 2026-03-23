@@ -115,7 +115,11 @@ static bool memory_map_fixed_tagged(void *ptr, size_t size) {
 #define SLAB_METADATA_COUNT
 
 struct slab_metadata {
+#if CONFIG_PAGE_SIZE == 16384
+    u64 bitmap[8];
+#else
     u64 bitmap[4];
+#endif
     struct slab_metadata *next;
     struct slab_metadata *prev;
 #if SLAB_CANARY
@@ -125,8 +129,12 @@ struct slab_metadata {
     u16 count;
 #endif
 #if SLAB_QUARANTINE
+#if CONFIG_PAGE_SIZE == 16384
+    u64 quarantine_bitmap[8];
+#else
     u64 quarantine_bitmap[4];
-#endif
+#endif /* CONFIG_PAGE_SIZE */
+    #endif
 #ifdef HAS_ARM_MTE
     // arm_mte_tags is used as a u4 array (MTE tags are 4-bit wide)
     //
@@ -467,20 +475,14 @@ static bool has_free_slots(size_t slots, const struct slab_metadata *metadata) {
 #ifdef SLAB_METADATA_COUNT
     return metadata->count < slots;
 #else
-    if (slots <= U64_WIDTH) {
-        u64 masked = metadata->bitmap[0] | get_mask(slots);
-        return masked != ~0UL;
+    size_t last = (slots - 1) / U64_WIDTH;
+    for (size_t i = 0; i < last; i++) {
+        if (metadata->bitmap[i] != ~0UL) {
+            return true;
+        }
     }
-    if (slots <= U64_WIDTH * 2) {
-        u64 masked = metadata->bitmap[1] | get_mask(slots - U64_WIDTH);
-        return metadata->bitmap[0] != ~0UL || masked != ~0UL;
-    }
-    if (slots <= U64_WIDTH * 3) {
-        u64 masked = metadata->bitmap[2] | get_mask(slots - U64_WIDTH * 2);
-        return metadata->bitmap[0] != ~0UL || metadata->bitmap[1] != ~0UL || masked != ~0UL;
-    }
-    u64 masked = metadata->bitmap[3] | get_mask(slots - U64_WIDTH * 3);
-    return metadata->bitmap[0] != ~0UL || metadata->bitmap[1] != ~0UL || metadata->bitmap[2] != ~0UL || masked != ~0UL;
+    u64 masked = metadata->bitmap[last] | get_mask(slots - last * U64_WIDTH);
+    return masked != ~0UL;
 #endif
 }
 
@@ -489,7 +491,12 @@ static bool is_free_slab(const struct slab_metadata *metadata) {
     return !metadata->count;
 #else
     return !metadata->bitmap[0] && !metadata->bitmap[1] && !metadata->bitmap[2] &&
-        !metadata->bitmap[3];
+        !metadata->bitmap[3]
+#if CONFIG_PAGE_SIZE == 16384
+        && !metadata->bitmap[4] && !metadata->bitmap[5] && !metadata->bitmap[6]
+        && !metadata->bitmap[7]
+#endif
+        ;
 #endif
 }
 

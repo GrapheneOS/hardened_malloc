@@ -97,13 +97,13 @@ for size, slots, fragmentation in zip(size_classes, size_class_slots, fragmentat
         end=" |\n",
     )
 
-max_bits = 256
+max_bits = 512
 max_page_span = 16
 
 print()
 
 print("maximum bitmap size is {}-bit".format(max_bits))
-print( "maximum page span size is {} ({})".format(max_page_span, max_page_span * page_size))
+print("maximum page span size is {} ({})".format(max_page_span, max_page_span * page_size))
 
 for size_class in size_classes:
     choices = []
