@@ -500,10 +500,12 @@ static void write_after_free_check(const char *p, size_t size) {
     }
 #endif
 
+    u64 accum = 0;
     for (size_t i = 0; i < size; i += sizeof(u64)) {
-        if (unlikely(*(const u64 *)(const void *)(p + i))) {
-            fatal_error("detected write after free");
-        }
+        accum |= *(const u64 *)(const void *)(p + i);
+    }
+    if (unlikely(accum)) {
+        fatal_error("detected write after free");
     }
 }
 
