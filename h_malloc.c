@@ -277,15 +277,6 @@ struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
     u16 slots;
     u32 slab_size;
 
-#if SLAB_QUARANTINE_RANDOM_LENGTH > 0
-    void *quarantine_random[SLAB_QUARANTINE_RANDOM_LENGTH << (MAX_SLAB_SIZE_CLASS_SHIFT - MIN_SLAB_SIZE_CLASS_SHIFT)];
-#endif
-
-#if SLAB_QUARANTINE_QUEUE_LENGTH > 0
-    void *quarantine_queue[SLAB_QUARANTINE_QUEUE_LENGTH << (MAX_SLAB_SIZE_CLASS_SHIFT - MIN_SLAB_SIZE_CLASS_SHIFT)];
-    size_t quarantine_queue_index;
-#endif
-
     // slabs with at least one allocated slot and at least one free slot
     //
     // LIFO doubly-linked list
@@ -315,6 +306,15 @@ struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
     size_t metadata_allocated;
     size_t metadata_count;
     size_t metadata_count_unguarded;
+
+#if SLAB_QUARANTINE_QUEUE_LENGTH > 0
+    size_t quarantine_queue_index;
+    void *quarantine_queue[SLAB_QUARANTINE_QUEUE_LENGTH << (MAX_SLAB_SIZE_CLASS_SHIFT - MIN_SLAB_SIZE_CLASS_SHIFT)];
+#endif
+
+#if SLAB_QUARANTINE_RANDOM_LENGTH > 0
+    void *quarantine_random[SLAB_QUARANTINE_RANDOM_LENGTH << (MAX_SLAB_SIZE_CLASS_SHIFT - MIN_SLAB_SIZE_CLASS_SHIFT)];
+#endif
 };
 
 #define CLASS_REGION_SIZE (size_t)CONFIG_CLASS_REGION_SIZE
