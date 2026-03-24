@@ -68,7 +68,9 @@ EXECUTABLES := \
     invalid_malloc_object_size_small \
     invalid_malloc_object_size_small_quarantine \
     impossibly_large_malloc \
-    realloc_init
+    realloc_init \
+    malloc_zero_different \
+    malloc_noreuse 
 
 all: $(EXECUTABLES)
 
