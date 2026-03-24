@@ -1067,6 +1067,7 @@ static int regions_grow(void) {
             size_t index = hash_page(q) & mask;
             while (p[index].p != NULL) {
                 index = (index - 1) & mask;
+                __builtin_prefetch(&p[(index - 1) & mask], 0, 1);
             }
             p[index] = ra->regions[i];
         }
@@ -1094,6 +1095,7 @@ static int regions_insert(void *p, size_t size, size_t guard_size) {
     void *q = ra->regions[index].p;
     while (q != NULL) {
         index = (index - 1) & mask;
+        __builtin_prefetch(&ra->regions[(index - 1) & mask], 1, 1);
         q = ra->regions[index].p;
     }
     ra->regions[index].p = p;
@@ -1111,6 +1113,7 @@ static struct region_metadata *regions_find(const void *p) {
     void *r = ra->regions[index].p;
     while (r != p && r != NULL) {
         index = (index - 1) & mask;
+        __builtin_prefetch(&ra->regions[(index - 1) & mask], 0, 1);
         r = ra->regions[index].p;
     }
     return (r == p && r != NULL) ? &ra->regions[index] : NULL;
@@ -1130,6 +1133,7 @@ static void regions_delete(const struct region_metadata *region) {
         size_t j = i;
         for (;;) {
             i = (i - 1) & mask;
+            __builtin_prefetch(&ra->regions[(i - 1) & mask], 0, 1);
             if (ra->regions[i].p == NULL) {
                 return;
             }
