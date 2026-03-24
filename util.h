@@ -1,6 +1,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -47,8 +48,10 @@ typedef unsigned __int128 u128;
 
 #define U64_WIDTH 64
 
-static inline int ffz64(u64 x) {
-    return __builtin_ffsll(~x);
+// parameter must have at least one zero bit
+static inline int ctz(u64 x) {
+    assert(x != ~0UL); // otherwise ctzll's behaviour is undefined
+    return __builtin_ctzll(~x);
 }
 
 // parameter must not be 0

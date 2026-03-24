@@ -423,7 +423,7 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, const struct
             }
 
             if (masked != ~0UL) {
-                return ffz64(masked) - 1 + i * U64_WIDTH;
+                return ctz(masked) + i * U64_WIDTH;
             }
 
             i = i == (slots - 1) / U64_WIDTH ? 0 : i + 1;
@@ -437,7 +437,7 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, const struct
             }
 
             if (masked != ~0UL) {
-                return ffz64(masked) - 1 + i * U64_WIDTH;
+                return ctz(masked) + i * U64_WIDTH;
             }
         }
     }
