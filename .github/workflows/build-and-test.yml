@@ -6,6 +6,13 @@ on:
   schedule:
     - cron: '0 2 * * *'
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-ubuntu-gcc:
     runs-on: ubuntu-latest
@@ -13,43 +20,64 @@ jobs:
       matrix:
         version: [14]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Setting up gcc version
+        env:
+          gcc_version: ${{ matrix.version }}
         run: |
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${{ matrix.version }} 100
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${{ matrix.version }} 100
+          sudo update-alternatives --install /usr/bin/g++ g++ "/usr/bin/g++-${gcc_version}" 100
+          sudo update-alternatives --install /usr/bin/gcc gcc "/usr/bin/gcc-${gcc_version}" 100
       - name: Build
         run: make test
+
   build-ubuntu-clang:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         version: [19, 20]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends clang-19 clang-20
-      - name: Setting up clang version
         run: |
-          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${{ matrix.version }} 100
-          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${{ matrix.version }} 100
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang-19 clang-20
+      - name: Setting up clang version
+        env:
+          clang_version: ${{ matrix.version }}
+        run: |
+          sudo update-alternatives --install /usr/bin/clang++ clang++ "/usr/bin/clang++-${clang_version}" 100
+          sudo update-alternatives --install /usr/bin/clang clang "/usr/bin/clang-${clang_version}" 100
       - name: Build
         run: CC=clang CXX=clang++ make test
+
   build-musl:
     runs-on: ubuntu-latest
     container:
-      image: alpine:latest
+      image: alpine:3
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Install dependencies
-        run: apk update && apk add build-base python3
+        run: |
+          apk update
+          apk add build-base python3
       - name: Build
         run: make test
+
   build-ubuntu-gcc-aarch64:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libgcc-s1-arm64-cross cpp-aarch64-linux-gnu
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libgcc-s1-arm64-cross cpp-aarch64-linux-gnu
       - name: Build
         run: CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-gcc++ make CONFIG_NATIVE=false
