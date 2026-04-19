@@ -1041,11 +1041,11 @@ static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t gua
     }
 }
 
-static int regions_grow(void) {
+static bool regions_grow(void) {
     struct region_allocator *ra = ro.region_allocator;
 
     if (ra->total > SIZE_MAX / sizeof(struct region_metadata) / 2) {
-        return 1;
+        return true;
     }
 
     size_t newtotal = ra->total * 2;
@@ -1053,14 +1053,14 @@ static int regions_grow(void) {
     size_t mask = newtotal - 1;
 
     if (newtotal > MAX_REGION_TABLE_SIZE) {
-        return 1;
+        return true;
     }
 
     struct region_metadata *p = ra->regions == ro.regions[0] ?
         ro.regions[1] : ro.regions[0];
 
     if (memory_protect_rw_metadata(p, newsize)) {
-        return 1;
+        return true;
     }
 
     for (size_t i = 0; i < ra->total; i++) {
@@ -1084,15 +1084,15 @@ static int regions_grow(void) {
     ra->free = ra->free + ra->total;
     ra->total = newtotal;
     ra->regions = p;
-    return 0;
+    return false;
 }
 
-static int regions_insert(void *p, size_t size, size_t guard_size) {
+static bool regions_insert(void *p, size_t size, size_t guard_size) {
     struct region_allocator *ra = ro.region_allocator;
 
     if (ra->free * 4 < ra->total) {
         if (regions_grow()) {
-            return 1;
+            return true;
         }
     }
 
@@ -1107,7 +1107,7 @@ static int regions_insert(void *p, size_t size, size_t guard_size) {
     ra->regions[index].size = size;
     ra->regions[index].guard_size = guard_size;
     ra->free--;
-    return 0;
+    return false;
 }
 
 static struct region_metadata *regions_find(const void *p) {
