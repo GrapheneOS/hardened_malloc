@@ -1074,8 +1074,13 @@ static int regions_grow(void) {
         }
     }
 
-    memory_map_fixed(ra->regions, ra->total * sizeof(struct region_metadata));
-    memory_set_name(ra->regions, ra->total * sizeof(struct region_metadata), "malloc allocator_state");
+    if (memory_map_fixed(ra->regions, ra->total * sizeof(struct region_metadata))) {
+        if (memory_purge(ra->regions, ra->total * sizeof(struct region_metadata))) {
+            memset(ra->regions, 0, ra->total * sizeof(struct region_metadata));
+        }
+    } else {
+        memory_set_name(ra->regions, ra->total * sizeof(struct region_metadata), "malloc allocator_state");
+    }
     ra->free = ra->free + ra->total;
     ra->total = newtotal;
     ra->regions = p;
