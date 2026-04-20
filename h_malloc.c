@@ -2146,7 +2146,7 @@ EXPORT struct mallinfo h_mallinfo_bin_info(UNUSED size_t arena, UNUSED size_t bi
     }
 
     if (arena < N_ARENA && bin < N_SIZE_CLASSES) {
-        thread_seal_metadata();
+        thread_unseal_metadata();
 
         struct size_class *c = &ro.size_class_metadata[arena][bin];
 
@@ -2156,7 +2156,7 @@ EXPORT struct mallinfo h_mallinfo_bin_info(UNUSED size_t arena, UNUSED size_t bi
         info.fordblks = c->ndalloc;
         mutex_unlock(&c->lock);
 
-        thread_unseal_metadata();
+        thread_seal_metadata();
     }
 #endif
 
