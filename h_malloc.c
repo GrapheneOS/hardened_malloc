@@ -293,7 +293,9 @@ struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
     // FIFO singly-linked list
     struct slab_metadata *free_slabs_head;
     struct slab_metadata *free_slabs_tail;
+#if FREE_SLABS_QUARANTINE_RANDOM_LENGTH
     struct slab_metadata *free_slabs_quarantine[FREE_SLABS_QUARANTINE_RANDOM_LENGTH];
+#endif
 
 #if CONFIG_STATS
     u64 nmalloc; // may wrap (per jemalloc API)
@@ -777,6 +779,7 @@ static size_t slab_usable_size(const void *p) {
 static void enqueue_free_slab(struct size_class *c, struct slab_metadata *metadata) {
     metadata->next = NULL;
 
+#if FREE_SLABS_QUARANTINE_RANDOM_LENGTH
     static_assert(FREE_SLABS_QUARANTINE_RANDOM_LENGTH < (u16)-1, "free slabs quarantine too large");
     size_t index = get_random_u16_uniform(&c->rng, FREE_SLABS_QUARANTINE_RANDOM_LENGTH);
     struct slab_metadata *substitute = c->free_slabs_quarantine[index];
@@ -785,6 +788,9 @@ static void enqueue_free_slab(struct size_class *c, struct slab_metadata *metada
     if (substitute == NULL) {
         return;
     }
+#else
+    struct slab_metadata *substitute = metadata;
+#endif
 
     if (c->free_slabs_tail != NULL) {
         c->free_slabs_tail->next = substitute;
