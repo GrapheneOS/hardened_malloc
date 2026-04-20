@@ -1852,7 +1852,13 @@ EXPORT size_t h_malloc_object_size(const void *p) {
         thread_seal_metadata();
 
         size_t size = slab_usable_size(p);
-        return size ? size - canary_size - offset : 0;
+        size_t usable = size ? size - canary_size : 0;
+
+        if (unlikely(offset > usable)) {
+            fatal_error("invalid malloc_object_size (canary)");
+        }
+
+        return usable - offset;
     }
 
     if (unlikely(slab_region_end == NULL)) {
