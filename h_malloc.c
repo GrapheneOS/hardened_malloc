@@ -40,7 +40,7 @@ static_assert(REGION_QUARANTINE_RANDOM_LENGTH >= 0 && REGION_QUARANTINE_RANDOM_L
     "invalid region quarantine random length");
 static_assert(REGION_QUARANTINE_QUEUE_LENGTH >= 0 && REGION_QUARANTINE_QUEUE_LENGTH <= 65536,
     "invalid region quarantine queue length");
-static_assert(FREE_SLABS_QUARANTINE_RANDOM_LENGTH >= 0 && FREE_SLABS_QUARANTINE_RANDOM_LENGTH <= 65536,
+static_assert(FREE_SLABS_QUARANTINE_RANDOM_LENGTH > 0 && FREE_SLABS_QUARANTINE_RANDOM_LENGTH <= 65536,
     "invalid free slabs quarantine random length");
 
 static_assert(GUARD_SLABS_INTERVAL >= 1, "invalid guard slabs interval (minimum 1)");
