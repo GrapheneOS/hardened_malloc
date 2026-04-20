@@ -1472,6 +1472,7 @@ static int allocate_aligned(unsigned arena, void **memptr, size_t alignment, siz
         deallocate_pages(p, size, guard_size);
         return ENOMEM;
     }
+    stats_large_allocate(ra, size);
     mutex_unlock(&ra->lock);
 
     *memptr = p;
