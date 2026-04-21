@@ -22,6 +22,35 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
         self.assertEqual(stderr.decode(
             "utf-8"), "fatal allocator error: sized deallocation mismatch (small)\n")
 
+    def test_aligned_sized_delete_small(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "aligned_sized_delete_small")
+        self.assertEqual(returncode, 0)
+
+    def test_aligned_sized_delete_small_min_align(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "aligned_sized_delete_small_min_align")
+        self.assertEqual(returncode, 0)
+
+    def test_invalid_aligned_sized_delete_small(self):
+        _stdout, stderr, returncode = self.run_test(
+            "invalid_aligned_sized_delete_small")
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode(
+            "utf-8"), "fatal allocator error: sized deallocation mismatch (small)\n")
+
+    def test_aligned_sized_delete_large(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "aligned_sized_delete_large")
+        self.assertEqual(returncode, 0)
+
+    def test_invalid_aligned_sized_delete_large(self):
+        _stdout, stderr, returncode = self.run_test(
+            "invalid_aligned_sized_delete_large")
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode(
+            "utf-8"), "fatal allocator error: sized deallocation mismatch (large)\n")
+
     def test_double_free_large_delayed(self):
         _stdout, stderr, returncode = self.run_test(
             "double_free_large_delayed")

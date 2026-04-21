@@ -1755,6 +1755,41 @@ EXPORT void h_free_sized(void *p, size_t expected_size) {
     thread_seal_metadata();
 }
 
+EXPORT void h_free_aligned_sized(void *p, size_t alignment, size_t expected_size) {
+    if (p == NULL) {
+        return;
+    }
+
+    p = untag_pointer(p);
+
+    expected_size = adjust_size_for_canary(expected_size);
+
+    if (p < get_slab_region_end() && p >= ro.slab_region_start) {
+        if (unlikely((alignment - 1) & alignment || alignment > PAGE_SIZE)) {
+            fatal_error("invalid sized deallocation alignment (small)");
+        }
+
+        if (unlikely(expected_size > max_slab_size_class)) {
+            fatal_error("sized deallocation mismatch (small)");
+        }
+
+        if (alignment > min_align) {
+            expected_size = get_size_info_align(expected_size, alignment).size;
+        } else {
+            expected_size = get_size_info(expected_size).size;
+        }
+
+        thread_unseal_metadata();
+        deallocate_small(p, &expected_size);
+        thread_seal_metadata();
+        return;
+    }
+
+    deallocate_large(p, &expected_size);
+
+    thread_seal_metadata();
+}
+
 static inline void memory_corruption_check_small(const void *p) {
     struct slab_size_class_info size_class_info = slab_size_class(p);
     size_t class = size_class_info.class;

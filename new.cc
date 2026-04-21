@@ -146,10 +146,10 @@ EXPORT void operator delete[](void *ptr, std::align_val_t, const std::nothrow_t 
     h_free(ptr);
 }
 
-EXPORT void operator delete(void *ptr, size_t size, std::align_val_t) noexcept {
-    h_free_sized(ptr, size);
+EXPORT void operator delete(void *ptr, size_t size, std::align_val_t alignment) noexcept {
+    h_free_aligned_sized(ptr, static_cast<size_t>(alignment), size);
 }
 
-EXPORT void operator delete[](void *ptr, size_t size, std::align_val_t) noexcept {
-    h_free_sized(ptr, size);
+EXPORT void operator delete[](void *ptr, size_t size, std::align_val_t alignment) noexcept {
+    h_free_aligned_sized(ptr, static_cast<size_t>(alignment), size);
 }
