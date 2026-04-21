@@ -59,6 +59,11 @@ EXECUTABLES := \
     overflow_small_8_byte \
     string_overflow \
     delete_type_size_mismatch \
+    aligned_sized_delete_small \
+    aligned_sized_delete_small_min_align \
+    invalid_aligned_sized_delete_small \
+    aligned_sized_delete_large \
+    invalid_aligned_sized_delete_large \
     unaligned_malloc_usable_size_small \
     invalid_malloc_usable_size_small \
     invalid_malloc_usable_size_small_quarantine \

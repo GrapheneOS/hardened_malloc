@@ -45,6 +45,7 @@ extern "C" {
 #define h_malloc_object_size malloc_object_size
 #define h_malloc_object_size_fast malloc_object_size_fast
 #define h_free_sized free_sized
+#define h_free_aligned_sized free_aligned_sized
 #endif
 
 // C standard
@@ -124,6 +125,7 @@ size_t h_malloc_object_size_fast(const void *ptr);
 // allocator implementation uses it to improve security by checking that the
 // passed size matches the allocated size.
 void h_free_sized(void *ptr, size_t expected_size);
+void h_free_aligned_sized(void *p, size_t alignment, size_t expected_size);
 
 #ifdef __cplusplus
 }
