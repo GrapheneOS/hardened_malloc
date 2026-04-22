@@ -50,6 +50,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libgcc-s1-arm64-cross cpp-aarch64-linux-gnu
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc-14-aarch64-linux-gnu g++-14-aarch64-linux-gnu cpp-14-aarch64-linux-gnu
       - name: Build
-        run: CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-gcc++ make CONFIG_NATIVE=false
+        run: CC=aarch64-linux-gnu-gcc-14 CXX=aarch64-linux-gnu-g++-14 make CONFIG_NATIVE=false
