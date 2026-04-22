@@ -1828,7 +1828,7 @@ EXPORT size_t h_malloc_object_size(const void *p) {
     }
 
     p = untag_const_pointer(p);
-    
+
     const void *slab_region_end = get_slab_region_end();
     if (p < slab_region_end && p >= ro.slab_region_start) {
         thread_unseal_metadata();
@@ -1892,7 +1892,7 @@ EXPORT size_t h_malloc_object_size_fast(const void *p) {
     }
 
     p = untag_const_pointer(p);
-    
+
     const void *slab_region_end = get_slab_region_end();
     if (p < slab_region_end && p >= ro.slab_region_start) {
         size_t size = slab_usable_size(p);
