@@ -2049,20 +2049,21 @@ EXPORT int h_malloc_info(int options, FILE *fp) {
 
 #if CONFIG_STATS
     if (likely(is_init())) {
-        thread_unseal_metadata();
-
         for (unsigned arena = 0; arena < N_ARENA; arena++) {
             fprintf(fp, "<heap nr=\"%u\">", arena);
 
             for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
-                struct size_class *c = &ro.size_class_metadata[arena][class];
+                thread_unseal_metadata();
 
+                struct size_class *c = &ro.size_class_metadata[arena][class];
                 mutex_lock(&c->lock);
                 u64 nmalloc = c->nmalloc;
                 u64 ndalloc = c->ndalloc;
                 size_t slab_allocated = c->slab_allocated;
                 size_t allocated = c->allocated;
                 mutex_unlock(&c->lock);
+
+                thread_seal_metadata();
 
                 if (nmalloc || ndalloc || slab_allocated || allocated) {
                     fprintf(fp, "<bin nr=\"%u\" size=\"%" PRIu32 "\">"
@@ -2078,16 +2079,18 @@ EXPORT int h_malloc_info(int options, FILE *fp) {
             fputs("</heap>", fp);
         }
 
+        thread_unseal_metadata();
+
         struct region_allocator *ra = ro.region_allocator;
         mutex_lock(&ra->lock);
         size_t region_allocated = ra->allocated;
         mutex_unlock(&ra->lock);
 
+        thread_seal_metadata();
+
         fprintf(fp, "<heap nr=\"%u\">"
                 "<allocated_large>%zu</allocated_large>"
                 "</heap>", N_ARENA, region_allocated);
-
-        thread_seal_metadata();
     }
 #endif
 
