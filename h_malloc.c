@@ -1397,6 +1397,7 @@ static void *allocate_large(size_t size) {
     if (unlikely(regions_insert(p, size, guard_size))) {
         mutex_unlock(&ra->lock);
         deallocate_pages(p, size, guard_size);
+        errno = ENOMEM;
         return NULL;
     }
     stats_large_allocate(ra, size);
