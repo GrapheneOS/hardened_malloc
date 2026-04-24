@@ -2214,7 +2214,12 @@ COLD EXPORT int h_malloc_set_state(UNUSED void *state) {
 #ifdef __ANDROID__
 COLD EXPORT void h_malloc_disable_memory_tagging(void) {
 #ifdef HAS_ARM_MTE
-    mutex_lock(&init_lock);
+    bool need_init_lock = !is_init();
+
+    if (need_init_lock) {
+        mutex_lock(&init_lock);
+    }
+
     if (!ro.is_memtag_disabled) {
         if (is_init()) {
             if (unlikely(memory_protect_rw(&ro, sizeof(ro)))) {
@@ -2229,7 +2234,10 @@ COLD EXPORT void h_malloc_disable_memory_tagging(void) {
             ro.is_memtag_disabled = true;
         }
     }
-    mutex_unlock(&init_lock);
+
+    if (need_init_lock) {
+        mutex_unlock(&init_lock);
+    }
 #endif
 }
 #endif
