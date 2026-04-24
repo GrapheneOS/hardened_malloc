@@ -2220,8 +2220,9 @@ COLD EXPORT void h_malloc_disable_memory_tagging(void) {
         mutex_lock(&init_lock);
     }
 
-    if (!ro.is_memtag_disabled) {
-        if (is_init()) {
+    if (is_init()) {
+        full_lock();
+        if (!ro.is_memtag_disabled) {
             if (unlikely(memory_protect_rw(&ro, sizeof(ro)))) {
                 fatal_error("failed to unprotect allocator data");
             }
@@ -2229,10 +2230,11 @@ COLD EXPORT void h_malloc_disable_memory_tagging(void) {
             if (unlikely(memory_protect_ro(&ro, sizeof(ro)))) {
                 fatal_error("failed to protect allocator data");
             }
-        } else {
-            // bionic calls this function very early in some cases
-            ro.is_memtag_disabled = true;
         }
+        full_unlock();
+    } else {
+        // bionic calls this function very early in some cases
+        ro.is_memtag_disabled = true;
     }
 
     if (need_init_lock) {
