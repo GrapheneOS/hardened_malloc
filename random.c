@@ -90,7 +90,8 @@ u16 get_random_u16_uniform(struct random_state *state, u16 bound) {
     u32 multiresult = random * bound;
     u16 leftover = multiresult;
     if (leftover < bound) {
-        u16 threshold = -bound % bound;
+        // Cast to u16 is required due to integer promotion of u16 to int.
+        u16 threshold = (u16)-bound % bound;
         while (leftover < threshold) {
             random = get_random_u16(state);
             multiresult = random * bound;
