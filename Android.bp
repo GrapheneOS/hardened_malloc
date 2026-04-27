@@ -69,7 +69,7 @@ cc_library {
     },
     product_variables: {
         debuggable: {
-            cflags: ["-DLABEL_MEMORY"],
+            cflags: ["-DCONFIG_LABEL_MEMORY=true"],
         },
         device_has_arm_mte: {
             cflags: ["-DHAS_ARM_MTE", "-march=armv8-a+dotprod+memtag"]

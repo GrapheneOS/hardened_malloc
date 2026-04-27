@@ -2,9 +2,7 @@
 
 #include <sys/mman.h>
 
-#ifdef LABEL_MEMORY
 #include <sys/prctl.h>
-#endif
 
 #ifndef PR_SET_VMA
 #define PR_SET_VMA 0x53564d41
@@ -120,9 +118,8 @@ bool memory_purge(void *ptr, size_t size) {
 }
 
 bool memory_set_name(UNUSED void *ptr, UNUSED size_t size, UNUSED const char *name) {
-#ifdef LABEL_MEMORY
-    return prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, ptr, size, name);
-#else
+    if (CONFIG_LABEL_MEMORY) {
+        return prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, ptr, size, name);
+    }
     return false;
-#endif
 }

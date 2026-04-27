@@ -8,6 +8,10 @@
 #define HAVE_COMPATIBLE_MREMAP
 #endif
 
+#ifndef CONFIG_LABEL_MEMORY
+#define CONFIG_LABEL_MEMORY false
+#endif
+
 int get_metadata_key(void);
 
 void *memory_map(size_t size);
