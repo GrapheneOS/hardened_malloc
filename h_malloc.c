@@ -928,6 +928,10 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
                 stats_slab_deallocate(c, slab_size);
                 enqueue_free_slab(c, metadata);
                 mutex_unlock(&c->lock);
+                if (CONFIG_LABEL_MEMORY) {
+                    // label_slab -> prctl(PR_SET_VMA_ANON_NAME) can clobber errno
+                    errno = saved_errno;
+                }
                 return;
             }
             memory_purge(slab, slab_size);
@@ -1751,7 +1755,9 @@ EXPORT void h_free_sized(void *p, size_t expected_size) {
         return;
     }
 
+    int saved_errno = errno;
     deallocate_large(p, &expected_size);
+    errno = saved_errno;
 
     thread_seal_metadata();
 }

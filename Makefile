@@ -89,6 +89,10 @@ ifeq (,$(filter $(CONFIG_SELF_INIT),true false))
     $(error CONFIG_SELF_INIT must be true or false)
 endif
 
+ifeq (,$(filter $(CONFIG_LABEL_MEMORY),true false))
+    $(error CONFIG_LABEL_MEMORY must be true or false)
+endif
+
 CPPFLAGS += \
     -DCONFIG_SEAL_METADATA=$(CONFIG_SEAL_METADATA) \
     -DZERO_ON_FREE=$(CONFIG_ZERO_ON_FREE) \
@@ -108,7 +112,8 @@ CPPFLAGS += \
     -DCONFIG_CLASS_REGION_SIZE=$(CONFIG_CLASS_REGION_SIZE) \
     -DN_ARENA=$(CONFIG_N_ARENA) \
     -DCONFIG_STATS=$(CONFIG_STATS) \
-    -DCONFIG_SELF_INIT=$(CONFIG_SELF_INIT)
+    -DCONFIG_SELF_INIT=$(CONFIG_SELF_INIT) \
+    -DCONFIG_LABEL_MEMORY=$(CONFIG_LABEL_MEMORY)
 
 $(OUT)/libhardened_malloc$(SUFFIX).so: $(OBJECTS) | $(OUT)
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared $^ $(LDLIBS) -o $@
