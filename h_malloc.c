@@ -115,7 +115,11 @@ static bool memory_map_fixed_tagged(void *ptr, size_t size) {
 #define SLAB_METADATA_COUNT
 
 struct slab_metadata {
+#if CONFIG_PAGE_SIZE == 16384
+    u64 bitmap[8];
+#else
     u64 bitmap[4];
+#endif
     struct slab_metadata *next;
     struct slab_metadata *prev;
 #if SLAB_CANARY
@@ -125,8 +129,12 @@ struct slab_metadata {
     u16 count;
 #endif
 #if SLAB_QUARANTINE
+#if CONFIG_PAGE_SIZE == 16384
+    u64 quarantine_bitmap[8];
+#else
     u64 quarantine_bitmap[4];
-#endif
+#endif /* CONFIG_PAGE_SIZE */
+    #endif
 #ifdef HAS_ARM_MTE
     // arm_mte_tags is used as a u4 array (MTE tags are 4-bit wide)
     //
@@ -178,6 +186,22 @@ static const u32 size_classes[] = {
 };
 
 static const u16 size_class_slots[] = {
+#if CONFIG_PAGE_SIZE == 16384
+    /* 0 */ 256,
+    /* 16 */ 256, 256, 256, 256, 204, 170, 146, 256,
+    /* 32 */ 204, 256, 219, 256,
+    /* 64 */ 256, 256, 256, 256,
+    /* 128 */ 256, 256, 256, 256,
+    /* 256 */ 192, 160, 128, 128,
+    /* 512 */ 96, 80, 64, 64,
+    /* 1024 */ 48, 40, 32, 32,
+    /* 2048 */ 24, 20, 16, 16,
+#if CONFIG_EXTENDED_SIZE_CLASSES
+    /* 4096 */ 12, 10, 8, 8,
+    /* 8192 */ 6, 5, 4, 4,
+    /* 16384 */ 3, 2, 2, 2,
+#endif
+#else /* 4k pages */
     /* 0 */ 256,
     /* 16 */ 256, 128, 85, 64, 51, 42, 36, 64,
     /* 32 */ 51, 64, 54, 64,
@@ -191,6 +215,7 @@ static const u16 size_class_slots[] = {
     /* 4096 */ 1, 1, 1, 1,
     /* 8192 */ 1, 1, 1, 1,
     /* 16384 */ 1, 1, 1, 1,
+#endif
 #endif
 };
 
@@ -323,7 +348,8 @@ struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
 #define REAL_CLASS_REGION_SIZE (CLASS_REGION_SIZE * 2)
 #define ARENA_SIZE (REAL_CLASS_REGION_SIZE * N_SIZE_CLASSES)
 static const size_t slab_region_size = ARENA_SIZE * N_ARENA;
-static_assert(PAGE_SIZE == 4096, "bitmap handling will need adjustment for other page sizes");
+static_assert(PAGE_SIZE == 4096 || PAGE_SIZE == 16384,
+    "page size must be 4096 or 16384");
 
 static void *get_slab(const struct size_class *c, size_t slab_size, const struct slab_metadata *metadata) {
     size_t index = metadata - c->slab_info;
@@ -451,20 +477,14 @@ static bool has_free_slots(size_t slots, const struct slab_metadata *metadata) {
 #ifdef SLAB_METADATA_COUNT
     return metadata->count < slots;
 #else
-    if (slots <= U64_WIDTH) {
-        u64 masked = metadata->bitmap[0] | get_mask(slots);
-        return masked != ~0UL;
+    size_t last = (slots - 1) / U64_WIDTH;
+    for (size_t i = 0; i < last; i++) {
+        if (metadata->bitmap[i] != ~0UL) {
+            return true;
+        }
     }
-    if (slots <= U64_WIDTH * 2) {
-        u64 masked = metadata->bitmap[1] | get_mask(slots - U64_WIDTH);
-        return metadata->bitmap[0] != ~0UL || masked != ~0UL;
-    }
-    if (slots <= U64_WIDTH * 3) {
-        u64 masked = metadata->bitmap[2] | get_mask(slots - U64_WIDTH * 2);
-        return metadata->bitmap[0] != ~0UL || metadata->bitmap[1] != ~0UL || masked != ~0UL;
-    }
-    u64 masked = metadata->bitmap[3] | get_mask(slots - U64_WIDTH * 3);
-    return metadata->bitmap[0] != ~0UL || metadata->bitmap[1] != ~0UL || metadata->bitmap[2] != ~0UL || masked != ~0UL;
+    u64 masked = metadata->bitmap[last] | get_mask(slots - last * U64_WIDTH);
+    return masked != ~0UL;
 #endif
 }
 
@@ -473,7 +493,12 @@ static bool is_free_slab(const struct slab_metadata *metadata) {
     return !metadata->count;
 #else
     return !metadata->bitmap[0] && !metadata->bitmap[1] && !metadata->bitmap[2] &&
-        !metadata->bitmap[3];
+        !metadata->bitmap[3]
+#if CONFIG_PAGE_SIZE == 16384
+        && !metadata->bitmap[4] && !metadata->bitmap[5] && !metadata->bitmap[6]
+        && !metadata->bitmap[7]
+#endif
+        ;
 #endif
 }
 
