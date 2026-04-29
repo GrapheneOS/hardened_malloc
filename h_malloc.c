@@ -22,6 +22,23 @@
 
 #if CONFIG_BLOCK_OPS_CHECK_SIZE && !defined(HAS_ARM_MTE)
 #include "musl.h"
+#include <dlfcn.h>
+
+static void *(*real_memcpy)(void *restrict, const void *restrict, size_t) = musl_memcpy;
+static void *(*real_memmove)(void *, const void *, size_t) = musl_memmove;
+static void *(*real_memset)(void *, int, size_t) = musl_memset;
+
+// allocators own priority is 101, so we just i++;
+__attribute__((constructor(102)))
+static void resolve_block_ops(void) {
+    void *sym;
+    sym = dlsym(RTLD_NEXT, "memcpy");
+    if (sym && sym != memcpy) real_memcpy = sym;
+    sym = dlsym(RTLD_NEXT, "memmove");
+    if (sym && sym != memmove) real_memmove = sym;
+    sym = dlsym(RTLD_NEXT, "memset");
+    if (sym && sym != memset) real_memset = sym;
+}
 #endif
 
 #ifdef USE_PKEY
@@ -1931,7 +1948,7 @@ EXPORT void *memcpy(void *restrict dst, const void *restrict src, size_t len) {
     if (unlikely(len > malloc_object_size(dst))) {
         fatal_error("memcpy buffer overflow");
     }
-    return musl_memcpy(dst, src, len);
+    return real_memcpy(dst, src, len);
 }
 
 EXPORT void *memccpy(void *restrict dst, const void *restrict src, int value, size_t len) {
@@ -1960,7 +1977,7 @@ EXPORT void *memmove(void *dst, const void *src, size_t len) {
     if (unlikely(len > malloc_object_size(dst))) {
         fatal_error("memmove buffer overflow");
     }
-    return musl_memmove(dst, src, len);
+    return real_memmove(dst, src, len);
 }
 
 EXPORT void *mempcpy(void *restrict dst, const void *restrict src, size_t len) {
@@ -1974,7 +1991,7 @@ EXPORT void *memset(void *dst, int value, size_t len) {
     if (unlikely(len > malloc_object_size(dst))) {
         fatal_error("memset buffer overflow");
     }
-    return musl_memset(dst, value, len);
+    return real_memset(dst, value, len);
 }
 
 EXPORT void bcopy(const void *src, void *dst, size_t len) {
@@ -2012,7 +2029,7 @@ EXPORT wchar_t *wmemcpy(wchar_t *restrict dst, const wchar_t *restrict src, size
     if (unlikely(lenAdj > malloc_object_size(dst))) {
         fatal_error("wmemcpy buffer overflow");
     }
-    return (wchar_t *)musl_memcpy((char *)dst, (const char *)src, lenAdj);
+    return (wchar_t *)real_memcpy((char *)dst, (const char *)src, lenAdj);
 }
 
 EXPORT wchar_t *wmemmove(wchar_t *dst, const wchar_t *src, size_t len) {
@@ -2026,7 +2043,7 @@ EXPORT wchar_t *wmemmove(wchar_t *dst, const wchar_t *src, size_t len) {
     if (unlikely(lenAdj > malloc_object_size(dst))) {
         fatal_error("wmemmove buffer overflow");
     }
-    return (wchar_t *)musl_memmove((char *)dst, (const char *)src, lenAdj);
+    return (wchar_t *)real_memmove((char *)dst, (const char *)src, lenAdj);
 }
 
 EXPORT wchar_t *wmempcpy(wchar_t *restrict dst, const wchar_t *restrict src, size_t len) {
