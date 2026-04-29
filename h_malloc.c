@@ -20,6 +20,27 @@
 #include "random.h"
 #include "util.h"
 
+#if CONFIG_BLOCK_OPS_CHECK_SIZE && !defined(HAS_ARM_MTE)
+#include "musl.h"
+#include <dlfcn.h>
+
+static void *(*real_memcpy)(void *restrict, const void *restrict, size_t) = musl_memcpy;
+static void *(*real_memmove)(void *, const void *, size_t) = musl_memmove;
+static void *(*real_memset)(void *, int, size_t) = musl_memset;
+
+// allocators own priority is 101, so we just i++;
+__attribute__((constructor(102)))
+static void resolve_block_ops(void) {
+    void *sym;
+    sym = dlsym(RTLD_NEXT, "memcpy");
+    if (sym && sym != memcpy) real_memcpy = sym;
+    sym = dlsym(RTLD_NEXT, "memmove");
+    if (sym && sym != memmove) real_memmove = sym;
+    sym = dlsym(RTLD_NEXT, "memset");
+    if (sym && sym != memset) real_memset = sym;
+}
+#endif
+
 #ifdef USE_PKEY
 #include <sys/mman.h>
 #endif
@@ -539,7 +560,7 @@ static void set_canary(UNUSED const struct slab_metadata *metadata, UNUSED void 
     }
 #endif
 
-    memcpy((char *)p + size - canary_size, &metadata->canary_value, canary_size);
+    h_memcpy_internal((char *)p + size - canary_size, &metadata->canary_value, canary_size);
 #endif
 }
 
@@ -552,7 +573,7 @@ static void check_canary(UNUSED const struct slab_metadata *metadata, UNUSED con
 #endif
 
     u64 canary_value;
-    memcpy(&canary_value, (const char *)p + size - canary_size, canary_size);
+    h_memcpy_internal(&canary_value, (const char *)p + size - canary_size, canary_size);
 
 #ifdef HAS_ARM_MTE
     if (unlikely(canary_value == 0)) {
@@ -843,7 +864,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
 #endif
 
         if (ZERO_ON_FREE && !skip_zero) {
-            memset(p, 0, size - canary_size);
+            h_memset_internal(p, 0, size - canary_size);
         }
     }
 
@@ -1532,7 +1553,7 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
     total_size = adjust_size_for_canary(total_size);
     void *p = alloc(total_size);
     if (!ZERO_ON_FREE && likely(p != NULL) && total_size && total_size <= max_slab_size_class) {
-        memset(p, 0, total_size - canary_size);
+        h_memset_internal(p, 0, total_size - canary_size);
     }
 #ifdef HAS_ARM_MTE
     // use an assert instead of adding a conditional to memset() above (freed memory is always
@@ -1655,7 +1676,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
                 mutex_unlock(&ra->lock);
 
                 if (memory_remap_fixed(old, old_size, new, size)) {
-                    memcpy(new, old, copy_size);
+                    h_memcpy_internal(new, old, copy_size);
                     deallocate_pages(old, old_size, old_guard_size);
                 } else {
                     memory_unmap((char *)old - old_guard_size, old_guard_size);
@@ -1677,7 +1698,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
     if (copy_size > 0 && copy_size <= max_slab_size_class) {
         copy_size -= canary_size;
     }
-    memcpy(new, old_orig, copy_size);
+    h_memcpy_internal(new, old_orig, copy_size);
     if (old_in_slab_region) {
         deallocate_small(old, NULL);
     } else {
@@ -1912,6 +1933,133 @@ EXPORT size_t h_malloc_object_size_fast(const void *p) {
 
     return SIZE_MAX;
 }
+
+#if CONFIG_BLOCK_OPS_CHECK_SIZE && !defined(HAS_ARM_MTE)
+EXPORT void *memcpy(void *restrict dst, const void *restrict src, size_t len) {
+    if (unlikely(dst == src || len == 0)) {
+        return dst;
+    }
+    if (unlikely(dst < (src + len) && (dst + len) > src)) {
+        fatal_error("memcpy overlap");
+    }
+    if (unlikely(len > malloc_object_size(src))) {
+        fatal_error("memcpy read overflow");
+    }
+    if (unlikely(len > malloc_object_size(dst))) {
+        fatal_error("memcpy buffer overflow");
+    }
+    return real_memcpy(dst, src, len);
+}
+
+EXPORT void *memccpy(void *restrict dst, const void *restrict src, int value, size_t len) {
+    if (unlikely(dst == src || len == 0)) {
+        return dst;
+    }
+    if (unlikely(dst < (src + len) && (dst + len) > src)) {
+        fatal_error("memccpy overlap");
+    }
+    if (unlikely(len > malloc_object_size(src) && value != 0)) {
+        fatal_error("memccpy read overflow");
+    }
+    if (unlikely(len > malloc_object_size(dst))) {
+        fatal_error("memccpy buffer overflow");
+    }
+    return musl_memccpy(dst, src, value, len);
+}
+
+EXPORT void *memmove(void *dst, const void *src, size_t len) {
+    if (unlikely(dst == src || len == 0)) {
+        return dst;
+    }
+    if (unlikely(len > malloc_object_size(src))) {
+        fatal_error("memmove read overflow");
+    }
+    if (unlikely(len > malloc_object_size(dst))) {
+        fatal_error("memmove buffer overflow");
+    }
+    return real_memmove(dst, src, len);
+}
+
+EXPORT void *mempcpy(void *restrict dst, const void *restrict src, size_t len) {
+    return memcpy(dst, src, len) + len;
+}
+
+EXPORT void *memset(void *dst, int value, size_t len) {
+    if (unlikely(len == 0)) {
+        return dst;
+    }
+    if (unlikely(len > malloc_object_size(dst))) {
+        fatal_error("memset buffer overflow");
+    }
+    return real_memset(dst, value, len);
+}
+
+EXPORT void bcopy(const void *src, void *dst, size_t len) {
+    memmove(dst, src, len);
+}
+
+EXPORT void swab(const void *restrict src, void *restrict dst, ssize_t len) {
+    if (unlikely(len <= 0)) {
+        return;
+    }
+    size_t length = len;
+    if (unlikely(dst < (src + length) && (dst + length) > src)) {
+        fatal_error("swab overlap");
+    }
+    if (unlikely(length > malloc_object_size(src))) {
+        fatal_error("swab read overflow");
+    }
+    if (unlikely(length > malloc_object_size(dst))) {
+        fatal_error("swab buffer overflow");
+    }
+    return musl_swab(src, dst, len);
+}
+
+EXPORT wchar_t *wmemcpy(wchar_t *restrict dst, const wchar_t *restrict src, size_t len) {
+    if (unlikely(dst == src || len == 0)) {
+        return dst;
+    }
+    if (unlikely(dst < (src + len) && (dst + len) > src)) {
+        fatal_error("wmemcpy overlap");
+    }
+    size_t lenAdj = len * sizeof(wchar_t);
+    if (unlikely(lenAdj > malloc_object_size(src))) {
+        fatal_error("wmemcpy read overflow");
+    }
+    if (unlikely(lenAdj > malloc_object_size(dst))) {
+        fatal_error("wmemcpy buffer overflow");
+    }
+    return (wchar_t *)real_memcpy((char *)dst, (const char *)src, lenAdj);
+}
+
+EXPORT wchar_t *wmemmove(wchar_t *dst, const wchar_t *src, size_t len) {
+    if (unlikely(dst == src || len == 0)) {
+        return dst;
+    }
+    size_t lenAdj = len * sizeof(wchar_t);
+    if (unlikely(lenAdj > malloc_object_size(src))) {
+        fatal_error("wmemmove read overflow");
+    }
+    if (unlikely(lenAdj > malloc_object_size(dst))) {
+        fatal_error("wmemmove buffer overflow");
+    }
+    return (wchar_t *)real_memmove((char *)dst, (const char *)src, lenAdj);
+}
+
+EXPORT wchar_t *wmempcpy(wchar_t *restrict dst, const wchar_t *restrict src, size_t len) {
+    return wmemcpy(dst, src, len) + len;
+}
+
+EXPORT wchar_t *wmemset(wchar_t *dst, wchar_t value, size_t len) {
+    if (unlikely(len == 0)) {
+        return dst;
+    }
+    if (unlikely((len * sizeof(wchar_t)) > malloc_object_size(dst))) {
+        fatal_error("wmemset buffer overflow");
+    }
+    return musl_wmemset(dst, value, len);
+}
+#endif /* CONFIG_BLOCK_OPS_CHECK_SIZE && !defined(HAS_ARM_MTE) */
 
 EXPORT int h_mallopt(UNUSED int param, UNUSED int value) {
 #ifdef __ANDROID__
