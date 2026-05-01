@@ -238,5 +238,25 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
             "realloc_init")
         self.assertEqual(returncode, 0)
 
+    def test_large_array_growth(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "large_array_growth")
+        self.assertEqual(returncode, 0)
+
+    def test_malloc_object_size_zero(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "malloc_object_size_zero")
+        self.assertEqual(returncode, 0)
+
+    def test_malloc_zero_different(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "malloc_zero_different")
+        self.assertEqual(returncode, 0)
+
+    def test_malloc_noreuse(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "malloc_noreuse")
+        self.assertEqual(returncode, 0)
+
 if __name__ == '__main__':
     unittest.main()
