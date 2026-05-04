@@ -35,7 +35,7 @@ ifeq ($(CONFIG_UBSAN),true)
     SHARED_FLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined
 endif
 
-CFLAGS := $(CFLAGS) -std=c17 $(SHARED_FLAGS) -Wmissing-prototypes -Wstrict-prototypes
+CFLAGS := $(CFLAGS) -std=c23 $(SHARED_FLAGS) -Wmissing-prototypes -Wstrict-prototypes
 CXXFLAGS := $(CXXFLAGS) -std=c++17 -fsized-deallocation $(SHARED_FLAGS)
 LDFLAGS := $(LDFLAGS) -Wl,-O1,--as-needed,-z,defs,-z,relro,-z,now,-z,nodlopen,-z,text
 
@@ -139,7 +139,7 @@ $(OUT)/util.o: util.c util.h $(CONFIG_FILE) | $(OUT)
 check: tidy
 
 tidy:
-	clang-tidy --extra-arg=-std=c17 $(filter %.c,$(SOURCES)) -- $(CPPFLAGS)
+	clang-tidy --extra-arg=-std=c23 $(filter %.c,$(SOURCES)) -- $(CPPFLAGS)
 	clang-tidy --extra-arg=-std=c++17 $(filter %.cc,$(SOURCES)) -- $(CPPFLAGS)
 
 clean:
