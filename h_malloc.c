@@ -1367,7 +1367,7 @@ static size_t get_large_size_class(size_t size) {
         // Continue small size class growth pattern of power of 2 spacing classes:
         //
         // 4 KiB [20 KiB, 24 KiB, 28 KiB, 32 KiB]
-        // 8 KiB [40 KiB, 48 KiB, 54 KiB, 64 KiB]
+        // 8 KiB [40 KiB, 48 KiB, 56 KiB, 64 KiB]
         // 16 KiB [80 KiB, 96 KiB, 112 KiB, 128 KiB]
         // 32 KiB [160 KiB, 192 KiB, 224 KiB, 256 KiB]
         // 512 KiB [2560 KiB, 3 MiB, 3584 KiB, 4 MiB]
