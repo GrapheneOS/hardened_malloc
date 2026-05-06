@@ -775,6 +775,11 @@ sized deallocation sanity checks for C. A performance-oriented allocator could
 use the same API as an optimization to avoid a potential cache miss from
 reading the size from metadata.
 
+The `void free_aligned_sized(void *ptr, size_t alignment, size_t expected_size)`
+function is the aligned counterpart to `free_sized`, checking both the size and
+alignment passed at allocation time. It is used to implement C++17 sized
+`operator delete` for over-aligned types.
+
 The `size_t malloc_object_size(void *ptr)` function returns an *upper bound* on
 the accessible size of the relevant object (if any) by querying the malloc
 implementation. It's similar to the `__builtin_object_size` intrinsic used by
