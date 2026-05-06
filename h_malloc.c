@@ -1799,7 +1799,9 @@ EXPORT void h_free_aligned_sized(void *p, size_t alignment, size_t expected_size
         return;
     }
 
+    int saved_errno = errno;
     deallocate_large(p, &expected_size);
+    errno = saved_errno;
 
     thread_seal_metadata();
 }
