@@ -101,6 +101,33 @@ u16 get_random_u16_uniform(struct random_state *state, u16 bound) {
     return multiresult >> 16;
 }
 
+u32 get_random_u32(struct random_state *state) {
+    u32 value;
+    unsigned remaining = RANDOM_CACHE_SIZE - state->index;
+    if (unlikely(remaining < sizeof(value))) {
+        refill(state);
+    }
+    memcpy(&value, state->cache + state->index, sizeof(value));
+    state->index += sizeof(value);
+    return value;
+}
+
+// See Fast Random Integer Generation in an Interval by Daniel Lemire
+u32 get_random_u32_uniform(struct random_state *state, u32 bound) {
+    u64 random = get_random_u32(state);
+    u64 multiresult = random * bound;
+    u32 leftover = multiresult;
+    if (leftover < bound) {
+        u32 threshold = -bound % bound;
+        while (leftover < threshold) {
+            random = get_random_u32(state);
+            multiresult = random * bound;
+            leftover = multiresult;
+        }
+    }
+    return multiresult >> 32;
+}
+
 u64 get_random_u64(struct random_state *state) {
     u64 value;
     unsigned remaining = RANDOM_CACHE_SIZE - state->index;
