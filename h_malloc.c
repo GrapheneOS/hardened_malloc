@@ -1352,9 +1352,8 @@ static inline unsigned init(void) {
 
 #if CONFIG_SELF_INIT
 // trigger early initialization to set up pthread_atfork and protect state as soon as possible
-COLD __attribute__((constructor(101))) static void trigger_early_init(void) {
-    // avoid calling init directly to skip it if this isn't the malloc implementation
-    h_free(h_malloc(16));
+COLD __attribute__((constructor(101), used)) static void trigger_early_init(void) {
+    init();
 }
 #endif
 
