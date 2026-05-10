@@ -45,7 +45,7 @@ static_assert(FREE_SLABS_QUARANTINE_RANDOM_LENGTH >= 0 && FREE_SLABS_QUARANTINE_
 
 static_assert(GUARD_SLABS_INTERVAL >= 1, "invalid guard slabs interval (minimum 1)");
 static_assert(GUARD_SIZE_DIVISOR >= 1, "invalid guard size divisor (minimum 1)");
-static_assert(CONFIG_CLASS_REGION_SIZE >= 1048576, "invalid class region size (minimum 1048576)");
+static_assert(CONFIG_CLASS_REGION_SIZE >= 33554432, "invalid class region size (minimum 33554432)");
 static_assert(CONFIG_CLASS_REGION_SIZE <= 1099511627776, "invalid class region size (maximum 1099511627776)");
 static_assert(REGION_QUARANTINE_SKIP_THRESHOLD >= 0,
     "invalid region quarantine skip threshold (minimum 0)");
@@ -960,6 +960,8 @@ struct quarantine_info {
 
 #define INITIAL_REGION_TABLE_SIZE 128
 #define MAX_REGION_TABLE_SIZE (CLASS_REGION_SIZE / PAGE_SIZE / sizeof(struct region_metadata))
+static_assert(MAX_REGION_TABLE_SIZE >= INITIAL_REGION_TABLE_SIZE,
+    "max region table smaller than initial region table");
 
 struct region_allocator {
     struct mutex lock;
