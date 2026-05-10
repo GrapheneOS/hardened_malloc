@@ -859,7 +859,11 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
 #if SLAB_QUARANTINE_RANDOM_LENGTH > 0
     size_t slab_quarantine_random_length = SLAB_QUARANTINE_RANDOM_LENGTH << quarantine_shift;
 
+#if (SLAB_QUARANTINE_RANDOM_LENGTH << (MAX_SLAB_SIZE_CLASS_SHIFT - MIN_SLAB_SIZE_CLASS_SHIFT)) <= UINT16_MAX
     size_t random_index = get_random_u16_uniform(&c->rng, slab_quarantine_random_length);
+#else
+    size_t random_index = get_random_u32_uniform(&c->rng, slab_quarantine_random_length);
+#endif
     void *random_substitute = c->quarantine_random[random_index];
     c->quarantine_random[random_index] = p;
 
