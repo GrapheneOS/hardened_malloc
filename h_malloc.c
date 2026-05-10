@@ -1017,6 +1017,8 @@ static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t gua
         if (unlikely(memory_purge(p, size))) {
             memset(p, 0, size);
         }
+
+        memory_protect_none(p, size);
     } else {
         memory_set_name(p, size, "malloc large quarantine");
     }

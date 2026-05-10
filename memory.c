@@ -77,6 +77,10 @@ static bool memory_protect_prot(void *ptr, size_t size, int prot, UNUSED int pke
     return ret;
 }
 
+bool memory_protect_none(void *ptr, size_t size) {
+    return memory_protect_prot(ptr, size, PROT_NONE, -1);
+}
+
 bool memory_protect_ro(void *ptr, size_t size) {
     return memory_protect_prot(ptr, size, PROT_READ, -1);
 }
