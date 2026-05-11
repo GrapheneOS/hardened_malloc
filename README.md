@@ -54,7 +54,7 @@ address space. There are lots of smaller differences in the implementation
 approach. It incorporates the previous extensions made to OpenBSD malloc
 including adding padding to allocations for canaries (distinct from the current
 OpenBSD malloc canaries), write-after-free detection tied to the existing
-clearing on free, queues alongside the existing randomized arrays for
+clearing on free, unified randomized quarantine arrays for
 quarantining allocations and proper double-free detection for quarantined
 allocations. The per-size-class memory regions with their own random bases were
 loosely inspired by the size and type-based partitioning in PartitionAlloc. The
@@ -282,20 +282,13 @@ The following boolean configuration options are available:
 
 The following integer configuration options are available:
 
-* `CONFIG_SLAB_QUARANTINE_RANDOM_LENGTH`: `1` (default) to control the number
-  of slots in the random array used to randomize reuse for small memory
+* `CONFIG_SLAB_QUARANTINE_LENGTH`: `2` (default) to control the number of
+  slots in the quarantine used to randomize and delay reuse for small memory
   allocations. This sets the length for the largest size class (either 16kiB
   or 128kiB based on `CONFIG_EXTENDED_SIZE_CLASSES`) and the quarantine length
   for smaller size classes is scaled to match the total memory of the
-  quarantined allocations (1 becomes 1024 for 16 byte allocations with 16kiB
-  as the largest size class, or 8192 with 128kiB as the largest).
-* `CONFIG_SLAB_QUARANTINE_QUEUE_LENGTH`: `1` (default) to control the number of
-  slots in the queue used to delay reuse for small memory allocations. This
-  sets the length for the largest size class (either 16kiB or 128kiB based on
-  `CONFIG_EXTENDED_SIZE_CLASSES`) and the quarantine length for smaller size
-  classes is scaled to match the total memory of the quarantined allocations (1
-  becomes 1024 for 16 byte allocations with 16kiB as the largest size class, or
-  8192 with 128kiB as the largest).
+  quarantined allocations (2 becomes 2048 for 16 byte allocations with 16kiB
+  as the largest size class, or 16384 with 128kiB as the largest).
 * `CONFIG_GUARD_SLABS_INTERVAL`: `1` (default) to control the number of slabs
   before a slab is skipped and left as an unused memory protected guard slab.
   The default of `1` leaves a guard slab between every slab. This feature does
@@ -445,7 +438,7 @@ was a bit less important and if a core goal was finding latent bugs.
 * Slab allocations are zeroed on free
 * Detection of write-after-free for slab allocations by verifying zero filling
   is intact at allocation time
-* Delayed free via a combination of FIFO and randomization for slab allocations
+* Delayed free via randomized quarantine arrays for slab allocations
 * Large allocations are purged and memory protected on free with the memory
   mapping kept reserved in a quarantine to detect use-after-free
     * The quarantine is primarily based on a FIFO ring buffer, with the oldest
@@ -741,8 +734,8 @@ This ensures the following properties:
 
 - Linear overflows are deterministically detected.
 - Use-after-free are deterministically detected until the freed slot goes through
-  both the random and FIFO quarantines, gets allocated again, goes through both
-  quarantines again and then finally gets allocated again for a 2nd time.
+  the quarantine, gets allocated again, goes through the quarantine again and
+  then finally gets allocated again for a 2nd time.
 - Since the default `0` tag is reserved, untagged pointers can't access slab
   allocations and vice versa.
 

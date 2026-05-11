@@ -24,7 +24,7 @@
 #include <sys/mman.h>
 #endif
 
-#define SLAB_QUARANTINE (SLAB_QUARANTINE_RANDOM_LENGTH > 0 || SLAB_QUARANTINE_QUEUE_LENGTH > 0)
+#define SLAB_QUARANTINE (SLAB_QUARANTINE_LENGTH > 0)
 #define REGION_QUARANTINE (REGION_QUARANTINE_RANDOM_LENGTH > 0 || REGION_QUARANTINE_QUEUE_LENGTH > 0)
 #define MREMAP_MOVE_THRESHOLD ((size_t)32 * 1024 * 1024)
 
@@ -32,10 +32,8 @@ static_assert(sizeof(void *) == 8, "64-bit only");
 
 static_assert(!WRITE_AFTER_FREE_CHECK || ZERO_ON_FREE, "WRITE_AFTER_FREE_CHECK depends on ZERO_ON_FREE");
 
-static_assert(SLAB_QUARANTINE_RANDOM_LENGTH >= 0 && SLAB_QUARANTINE_RANDOM_LENGTH <= 65536,
-    "invalid slab quarantine random length");
-static_assert(SLAB_QUARANTINE_QUEUE_LENGTH >= 0 && SLAB_QUARANTINE_QUEUE_LENGTH <= 65536,
-    "invalid slab quarantine queue length");
+static_assert(SLAB_QUARANTINE_LENGTH >= 0 && SLAB_QUARANTINE_LENGTH <= 65536,
+    "invalid slab quarantine length");
 static_assert(REGION_QUARANTINE_RANDOM_LENGTH >= 0 && REGION_QUARANTINE_RANDOM_LENGTH <= 65536,
     "invalid region quarantine random length");
 static_assert(REGION_QUARANTINE_QUEUE_LENGTH >= 0 && REGION_QUARANTINE_QUEUE_LENGTH <= 65536,
@@ -309,13 +307,8 @@ struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
     size_t metadata_count;
     size_t metadata_count_unguarded;
 
-#if SLAB_QUARANTINE_QUEUE_LENGTH > 0
-    size_t quarantine_queue_index;
-    void *quarantine_queue[SLAB_QUARANTINE_QUEUE_LENGTH << (MAX_SLAB_SIZE_CLASS_SHIFT - MIN_SLAB_SIZE_CLASS_SHIFT)];
-#endif
-
-#if SLAB_QUARANTINE_RANDOM_LENGTH > 0
-    void *quarantine_random[SLAB_QUARANTINE_RANDOM_LENGTH << (MAX_SLAB_SIZE_CLASS_SHIFT - MIN_SLAB_SIZE_CLASS_SHIFT)];
+#if SLAB_QUARANTINE_LENGTH > 0
+    void *quarantine[SLAB_QUARANTINE_LENGTH << (MAX_SLAB_SIZE_CLASS_SHIFT - MIN_SLAB_SIZE_CLASS_SHIFT)];
 #endif
 };
 
@@ -856,12 +849,12 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
 
     size_t quarantine_shift = clz64(size) - (63 - MAX_SLAB_SIZE_CLASS_SHIFT);
 
-#if SLAB_QUARANTINE_RANDOM_LENGTH > 0
-    size_t slab_quarantine_random_length = SLAB_QUARANTINE_RANDOM_LENGTH << quarantine_shift;
+#if SLAB_QUARANTINE_LENGTH > 0
+    size_t slab_quarantine_length = SLAB_QUARANTINE_LENGTH << quarantine_shift;
 
-    size_t random_index = get_random_u16_uniform(&c->rng, slab_quarantine_random_length);
-    void *random_substitute = c->quarantine_random[random_index];
-    c->quarantine_random[random_index] = p;
+    size_t random_index = get_random_u16_uniform(&c->rng, slab_quarantine_length);
+    void *random_substitute = c->quarantine[random_index];
+    c->quarantine[random_index] = p;
 
     if (random_substitute == NULL) {
         mutex_unlock(&c->lock);
@@ -869,24 +862,6 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     }
 
     p = random_substitute;
-#endif
-
-#if SLAB_QUARANTINE_QUEUE_LENGTH > 0
-    size_t slab_quarantine_queue_length = SLAB_QUARANTINE_QUEUE_LENGTH << quarantine_shift;
-
-    void *queue_substitute = c->quarantine_queue[c->quarantine_queue_index];
-    c->quarantine_queue[c->quarantine_queue_index] = p;
-
-    // Modulo here is costly so we're using an increment and an if instead.
-    size_t next_queue_index = c->quarantine_queue_index + 1;
-    c->quarantine_queue_index = next_queue_index < slab_quarantine_queue_length ? next_queue_index : 0;
-
-    if (queue_substitute == NULL) {
-        mutex_unlock(&c->lock);
-        return;
-    }
-
-    p = queue_substitute;
 #endif
 
     metadata = get_metadata(c, p);
@@ -2002,20 +1977,10 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
             if (size >= min_extended_size_class) {
                 size_t quarantine_shift = clz64(size) - (63 - MAX_SLAB_SIZE_CLASS_SHIFT);
 
-#if SLAB_QUARANTINE_RANDOM_LENGTH > 0
-                size_t slab_quarantine_random_length = SLAB_QUARANTINE_RANDOM_LENGTH << quarantine_shift;
-                for (size_t i = 0; i < slab_quarantine_random_length; i++) {
-                    void *p = c->quarantine_random[i];
-                    if (p != NULL) {
-                        memory_purge(p, size);
-                    }
-                }
-#endif
-
-#if SLAB_QUARANTINE_QUEUE_LENGTH > 0
-                size_t slab_quarantine_queue_length = SLAB_QUARANTINE_QUEUE_LENGTH << quarantine_shift;
-                for (size_t i = 0; i < slab_quarantine_queue_length; i++) {
-                    void *p = c->quarantine_queue[i];
+#if SLAB_QUARANTINE_LENGTH > 0
+                size_t slab_quarantine_length = SLAB_QUARANTINE_LENGTH << quarantine_shift;
+                for (size_t i = 0; i < slab_quarantine_length; i++) {
+                    void *p = c->quarantine[i];
                     if (p != NULL) {
                         memory_purge(p, size);
                     }
