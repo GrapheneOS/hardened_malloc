@@ -287,5 +287,43 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
             "malloc_noreuse")
         self.assertEqual(returncode, 0)
 
+    def test_quarantine_double_free_extended(self):
+        _stdout, stderr, returncode = self.run_test(
+            "quarantine_double_free_extended")
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode("utf-8"),
+                         "fatal allocator error: double free (quarantine)\n")
+
+    def test_quarantine_double_free_extended_delayed(self):
+        _stdout, stderr, returncode = self.run_test(
+            "quarantine_double_free_extended_delayed")
+        self.assertEqual(returncode, -6)
+        # with quarantine length 4 for 65536 bytes (default L=2, shift=1), freeing 100 allocations
+        # almost certainly displaces the first pointer from quarantine
+        self.assertIn(stderr.decode("utf-8"),
+                      ["fatal allocator error: double free\n",
+                       "fatal allocator error: double free (quarantine)\n"])
+
+    def test_quarantine_invalid_malloc_usable_size_extended(self):
+        _stdout, stderr, returncode = self.run_test(
+            "quarantine_invalid_malloc_usable_size_extended")
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode("utf-8"),
+                         "fatal allocator error: invalid malloc_usable_size (quarantine)\n")
+
+    def test_quarantine_invalid_malloc_object_size_extended(self):
+        _stdout, stderr, returncode = self.run_test(
+            "quarantine_invalid_malloc_object_size_extended")
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode("utf-8"),
+                         "fatal allocator error: invalid malloc_object_size (quarantine)\n")
+
+    def test_quarantine_write_after_free_extended_reuse(self):
+        _stdout, stderr, returncode = self.run_test(
+            "quarantine_write_after_free_extended_reuse")
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode("utf-8"),
+                         "fatal allocator error: detected write after free\n")
+
 if __name__ == '__main__':
     unittest.main()

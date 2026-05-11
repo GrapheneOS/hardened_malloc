@@ -75,7 +75,12 @@ EXECUTABLES := \
     impossibly_large_malloc \
     realloc_init \
     malloc_zero_different \
-    malloc_noreuse
+    malloc_noreuse \
+    quarantine_double_free_extended \
+    quarantine_double_free_extended_delayed \
+    quarantine_invalid_malloc_usable_size_extended \
+    quarantine_invalid_malloc_object_size_extended \
+    quarantine_write_after_free_extended_reuse
 
 all: $(EXECUTABLES)
 
