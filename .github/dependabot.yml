@@ -5,3 +5,5 @@ updates:
     schedule:
       interval: daily
     target-branch: main
+    cooldown:
+      default-days: 7
