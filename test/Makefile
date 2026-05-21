@@ -18,7 +18,7 @@ CPPFLAGS := \
 
 SHARED_FLAGS := -O3
 
-CFLAGS := -std=c17 $(SHARED_FLAGS) -Wmissing-prototypes
+CFLAGS := -std=c23 $(SHARED_FLAGS) -Wmissing-prototypes
 CXXFLAGS := -std=c++17 -fsized-deallocation $(SHARED_FLAGS)
 LDFLAGS := -Wl,-L$(dir)../out,-R,$(dir)../out
 
