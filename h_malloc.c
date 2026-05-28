@@ -599,7 +599,7 @@ static void *tag_and_clear_slab_slot(struct slab_metadata *metadata, void *slot_
     // It stores the most recent tag for each slab slot, or 0 if the slot was never used.
     // Slab indices in arm_mte_tags array are shifted to the right by 1, and size of this array
     // is (MAX_SLAB_SLOT_COUNT + 2). This means that first and last values of arm_mte_tags array
-    // are always 0, which allows to handle edge slots in a branchless way when tag exclusion mask
+    // are always 0, which allows handling edge slots in a branchless way when tag exclusion mask
     // is constructed.
     u8 *slot_tags = metadata->arm_mte_tags;
 
