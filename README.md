@@ -337,7 +337,7 @@ The following integer configuration options are available:
 There will be more control over enabled features in the future along with
 control over fairly arbitrarily chosen values like the size of empty slab
 caches (making them smaller improves security and reduces memory usage while
-larger caches can substantially improves performance).
+larger caches can substantially improve performance).
 
 ## Core design
 
@@ -753,7 +753,7 @@ different uses of the same address space is not applicable.
 Large allocations beyond the largest slab allocation size class (128k by
 default) are guaranteed to have randomly sized guard regions to the left and
 right. Random and FIFO address space quarantines provide use-after-free
-detection. We need to test whether the cost of random tags is acceptable to enabled them by default,
+detection. We need to test whether the cost of random tags is acceptable to enable them by default,
 since they would be useful for:
 
 - probabilistic detection of overflows
@@ -792,7 +792,7 @@ to use from signal handlers already.
 
 ## Stats
 
-If stats are enabled, hardened\_malloc keeps tracks allocator statistics in
+If stats are enabled, hardened\_malloc keeps track of allocator statistics in
 order to provide implementations of `mallinfo` and `malloc_info`.
 
 On Android, `mallinfo` is used for [mallinfo-based garbage collection
