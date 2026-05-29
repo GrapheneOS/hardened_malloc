@@ -75,7 +75,7 @@ void tag_distinctness() {
         { .size = 20480, .slot_cnt = 1,   },
     };
 
-    int tag_usage[max_tag + 1];
+    int tag_usage[max_tag + 1] = {};
 
     for (size_t sc_idx = 0; sc_idx < sizeof(size_classes) / sizeof(SizeClass); ++sc_idx) {
         SizeClass &sc = size_classes[sc_idx];
