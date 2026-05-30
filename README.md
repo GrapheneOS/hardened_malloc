@@ -780,8 +780,8 @@ implementation. It's a valid implementation of the API already, but it will
 become fully accurate once it's finished. This function is **not** currently
 safe to call from signal handlers, but another API will be provided to make
 that possible with a compile-time configuration option to avoid the necessary
-overhead if the functionality isn't being used (in a way that doesn't change
-break API compatibility based on the configuration).
+overhead if the functionality isn't being used (in a way that doesn't break
+API compatibility based on the configuration).
 
 The `size_t malloc_object_size_fast(void *ptr)` is comparable, but avoids
 expensive operations like locking or even atomics. It provides significantly
