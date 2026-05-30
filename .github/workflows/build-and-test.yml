@@ -20,6 +20,8 @@ jobs:
       - uses: actions/checkout@v6
       - name: Build
         run: CC=gcc-${{ matrix.version }} CXX=g++-${{ matrix.version }} make test
+      - name: Build with MADV_GUARD_INSTALL guard pages
+        run: make clean && CC=gcc-${{ matrix.version }} CXX=g++-${{ matrix.version }} make test CONFIG_GUARD_PAGES_USE_MADVISE=true
   build-ubuntu-clang:
     runs-on: ubuntu-latest
     strategy:
@@ -35,6 +37,8 @@ jobs:
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${{ matrix.version }} 100
       - name: Build
         run: CC=clang CXX=clang++ make test
+      - name: Build with MADV_GUARD_INSTALL guard pages
+        run: make clean && CC=clang CXX=clang++ make test CONFIG_GUARD_PAGES_USE_MADVISE=true
   build-musl:
     runs-on: ubuntu-latest
     container:
@@ -45,6 +49,8 @@ jobs:
         run: apk update && apk add build-base python3
       - name: Build
         run: make test
+      - name: Build with MADV_GUARD_INSTALL guard pages
+        run: make clean && make test CONFIG_GUARD_PAGES_USE_MADVISE=true
   build-ubuntu-gcc-aarch64:
     runs-on: ubuntu-latest
     container:

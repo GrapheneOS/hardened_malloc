@@ -55,8 +55,13 @@ EXECUTABLES := \
     uninitialized_malloc_usable_size \
     overflow_large_1_byte \
     overflow_large_8_byte \
+    overflow_large_aligned \
+    overflow_realloc_shrink_large \
     overflow_small_1_byte \
     overflow_small_8_byte \
+    underflow_large_1_byte \
+    underflow_large_aligned \
+    read_after_realloc_shrink_large \
     string_overflow \
     delete_type_size_mismatch \
     aligned_sized_delete_small \
