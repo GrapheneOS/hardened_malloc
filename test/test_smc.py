@@ -51,6 +51,14 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
         self.assertEqual(stderr.decode(
             "utf-8"), "fatal allocator error: sized deallocation mismatch (large)\n")
 
+    def test_free_sized_small(self):
+        _stdout, _stderr, returncode = self.run_test("free_sized_small")
+        self.assertEqual(returncode, 0)
+
+    def test_free_sized_large(self):
+        _stdout, _stderr, returncode = self.run_test("free_sized_large")
+        self.assertEqual(returncode, 0)
+
     def test_double_free_large_delayed(self):
         _stdout, stderr, returncode = self.run_test(
             "double_free_large_delayed")

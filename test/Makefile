@@ -64,6 +64,8 @@ EXECUTABLES := \
     invalid_aligned_sized_delete_small \
     aligned_sized_delete_large \
     invalid_aligned_sized_delete_large \
+    free_sized_small \
+    free_sized_large \
     unaligned_malloc_usable_size_small \
     invalid_malloc_usable_size_small \
     invalid_malloc_usable_size_small_quarantine \
