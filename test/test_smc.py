@@ -277,6 +277,16 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
             "malloc_object_size_zero")
         self.assertEqual(returncode, 0)
 
+    def test_calloc_overflow(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "calloc_overflow")
+        self.assertEqual(returncode, 0)
+
+    def test_calloc_zeroed(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "calloc_zeroed")
+        self.assertEqual(returncode, 0)
+
     def test_malloc_zero_different(self):
         _stdout, _stderr, returncode = self.run_test(
             "malloc_zero_different")
