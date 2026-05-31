@@ -110,7 +110,7 @@ bool memory_remap_fixed(void *old, size_t old_size, void *new, size_t new_size) 
 #endif
 
 bool memory_purge(void *ptr, size_t size) {
-    int ret = madvise(ptr, size, MADV_DONTNEED);
+    bool ret = madvise(ptr, size, MADV_DONTNEED);
     if (unlikely(ret) && errno != ENOMEM) {
         fatal_error("non-ENOMEM MADV_DONTNEED madvise failure");
     }
