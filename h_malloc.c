@@ -88,6 +88,11 @@ static inline void *get_slab_region_end(void) {
     return atomic_load_explicit(&ro.slab_region_end, memory_order_acquire);
 }
 
+static inline bool address_in_range(const void *p, const void *start, const void *end) {
+    uintptr_t addr = (uintptr_t)p;
+    return addr >= (uintptr_t)start && addr < (uintptr_t)end;
+}
+
 #ifdef MEMTAG
 static inline bool is_memtag_enabled(void) {
     return !ro.is_memtag_disabled;
@@ -1565,7 +1570,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
     old = untag_pointer(old);
 
     size_t old_size;
-    bool old_in_slab_region = old < get_slab_region_end() && old >= ro.slab_region_start;
+    bool old_in_slab_region = address_in_range(old, ro.slab_region_start, get_slab_region_end());
     if (old_in_slab_region) {
         old_size = slab_usable_size(old);
         if (size <= max_slab_size_class && get_size_info(size).size == old_size) {
@@ -1725,7 +1730,7 @@ EXPORT void h_free(void *p) {
 
     p = untag_pointer(p);
 
-    if (p < get_slab_region_end() && p >= ro.slab_region_start) {
+    if (address_in_range(p, ro.slab_region_start, get_slab_region_end())) {
         thread_unseal_metadata();
         deallocate_small(p, NULL);
         thread_seal_metadata();
@@ -1752,7 +1757,7 @@ EXPORT void h_free_sized(void *p, size_t expected_size) {
 
     expected_size = adjust_size_for_canary(expected_size);
 
-    if (p < get_slab_region_end() && p >= ro.slab_region_start) {
+    if (address_in_range(p, ro.slab_region_start, get_slab_region_end())) {
         if (unlikely(expected_size > max_slab_size_class)) {
             fatal_error("sized deallocation mismatch (small)");
         }
@@ -1780,7 +1785,7 @@ EXPORT void h_free_aligned_sized(void *p, size_t alignment, size_t expected_size
 
     expected_size = adjust_size_for_canary(expected_size);
 
-    if (p < get_slab_region_end() && p >= ro.slab_region_start) {
+    if (address_in_range(p, ro.slab_region_start, get_slab_region_end())) {
         if (unlikely((alignment - 1) & alignment || alignment > PAGE_SIZE)) {
             fatal_error("invalid sized deallocation alignment (small)");
         }
@@ -1850,7 +1855,7 @@ EXPORT size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *arg) {
 
     const void *p = untag_const_pointer(arg);
 
-    if (p < get_slab_region_end() && p >= ro.slab_region_start) {
+    if (address_in_range(p, ro.slab_region_start, get_slab_region_end())) {
         thread_unseal_metadata();
         memory_corruption_check_small(p);
         thread_seal_metadata();
@@ -1883,7 +1888,7 @@ EXPORT size_t h_malloc_object_size(const void *p) {
     p = untag_const_pointer(p);
 
     const void *slab_region_end = get_slab_region_end();
-    if (p < slab_region_end && p >= ro.slab_region_start) {
+    if (address_in_range(p, ro.slab_region_start, slab_region_end)) {
         thread_unseal_metadata();
 
         struct slab_size_class_info size_class_info = slab_size_class(p);
@@ -1947,7 +1952,7 @@ EXPORT size_t h_malloc_object_size_fast(const void *p) {
     p = untag_const_pointer(p);
 
     const void *slab_region_end = get_slab_region_end();
-    if (p < slab_region_end && p >= ro.slab_region_start) {
+    if (address_in_range(p, ro.slab_region_start, slab_region_end)) {
         size_t size = slab_usable_size(p);
         return size ? size - canary_size : 0;
     }
