@@ -67,7 +67,7 @@ EXECUTABLES := \
     free_sized_small \
     free_sized_large \
     unaligned_malloc_usable_size_small \
-    invalid_malloc_usable_size_small \
+    invalid_malloc_usable_size_small_unused \
     invalid_malloc_usable_size_small_quarantine \
     malloc_object_size \
     malloc_object_size_offset \
