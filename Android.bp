@@ -52,6 +52,7 @@ cc_library {
     ramdisk_available: true,
     vendor_ramdisk_available: true,
     recovery_available: true,
+    native_bridge_supported: true,
     defaults: ["hardened_malloc_defaults"],
     srcs: lib_src_files,
     export_include_dirs: ["include"],
