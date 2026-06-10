@@ -279,6 +279,21 @@ The following boolean configuration options are available:
   hardware, which may become drastically lower in the future. Whether or not
   this feature is enabled, the metadata is all contained within an isolated
   memory region with high entropy random guard regions around it.
+* `CONFIG_GUARD_PAGES_USE_MADVISE`: `true` or `false` (default) to control
+  whether the guard regions for large allocations are created with
+  `MADV_GUARD_INSTALL` (Linux 6.13+) inside a single read-write mapping instead
+  of as separate `PROT_NONE` mappings. This keeps each large allocation to a
+  single VMA instead of three, which substantially reduces VMA pressure from
+  large allocations and from the region quarantine. Kernel support is probed at
+  runtime and the allocator falls back to the `PROT_NONE` scheme when it is
+  unavailable or when a guard cannot be installed (e.g. on locked mappings);
+  the probe trusts the `madvise` return value, so the feature must be validated
+  on a real kernel (qemu-user, for example, silently ignores the advice). It is
+  off by default because the guard bytes and quarantined regions are then
+  accounted as committed memory (resident memory and the total address space
+  are unchanged, since the pages are never backed or are freed by the guard
+  installation), which can be a problem under strict overcommit
+  (`vm.overcommit_memory=2`).
 
 The following integer configuration options are available:
 
