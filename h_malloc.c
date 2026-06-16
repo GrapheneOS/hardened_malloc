@@ -1692,6 +1692,15 @@ EXPORT void *h_realloc(void *old, size_t size) {
     return new;
 }
 
+EXPORT void *h_reallocarray(void *ptr, size_t nmemb, size_t size) {
+    size_t total_size;
+    if (unlikely(__builtin_mul_overflow(nmemb, size, &total_size))) {
+        errno = ENOMEM;
+        return NULL;
+    }
+    return h_realloc(ptr, total_size);
+}
+
 EXPORT int h_posix_memalign(void **memptr, size_t alignment, size_t size) {
     return alloc_aligned(memptr, alignment, size, sizeof(void *));
 }
