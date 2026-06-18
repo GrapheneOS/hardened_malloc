@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Install dependencies
         run: apt-get update && apt-get install -y --no-install-recommends ca-certificates git make python3 gcc-${{ matrix.version }} g++-${{ matrix.version }}
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Build
         run: CC=gcc-${{ matrix.version }} CXX=g++-${{ matrix.version }} make test
   build-ubuntu-clang:
@@ -26,7 +26,7 @@ jobs:
       matrix:
         version: [19, 20]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends clang-19 clang-20
       - name: Setting up clang version
@@ -40,7 +40,7 @@ jobs:
     container:
       image: alpine:latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Install dependencies
         run: apk update && apk add build-base python3
       - name: Build
@@ -55,6 +55,6 @@ jobs:
     steps:
       - name: Install dependencies
         run: apt-get update && apt-get install -y --no-install-recommends ca-certificates git make gcc-${{ matrix.version }}-aarch64-linux-gnu g++-${{ matrix.version }}-aarch64-linux-gnu cpp-${{ matrix.version }}-aarch64-linux-gnu
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Build
         run: CC=aarch64-linux-gnu-gcc-${{ matrix.version }} CXX=aarch64-linux-gnu-g++-${{ matrix.version }} make CONFIG_NATIVE=false
