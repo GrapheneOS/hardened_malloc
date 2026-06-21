@@ -75,7 +75,7 @@ void h_malloc_stats(void);
 #if defined(__GLIBC__) || defined(__ANDROID__)
 struct mallinfo h_mallinfo(void);
 #endif
-#if defined(__GLIBC__)
+#ifdef __GLIBC__
 struct mallinfo2 h_mallinfo2(void);
 #endif
 #ifndef __ANDROID__

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if defined(__GLIBC__)
+#ifdef __GLIBC__
 #include <malloc.h>
 #endif
 
@@ -10,7 +10,7 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 static void print_mallinfo2(void) {
-#if defined(__GLIBC__)
+#ifdef __GLIBC__
     struct mallinfo2 info = mallinfo2();
     printf("mallinfo2:\n");
     printf("arena: %zu\n", (size_t)info.arena);

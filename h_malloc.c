@@ -2054,7 +2054,7 @@ EXPORT void h_malloc_stats(void) {}
 
 #if defined(__GLIBC__) || defined(__ANDROID__)
 // glibc mallinfo is broken and replaced with mallinfo2
-#if defined(__GLIBC__)
+#ifdef __GLIBC__
 EXPORT struct mallinfo h_mallinfo(void) {
     return (struct mallinfo){0};
 }
