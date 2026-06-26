@@ -796,7 +796,7 @@ If stats are enabled, hardened\_malloc keeps track of allocator statistics in
 order to provide implementations of `mallinfo` and `malloc_info`.
 
 On Android, `mallinfo` is used for [mallinfo-based garbage collection
-triggering](https://developer.android.com/preview/features#mallinfo) so
+triggering](https://developer.android.com/about/versions/10/features#mallinfo) so
 hardened\_malloc enables `CONFIG_STATS` by default. The `malloc_info`
 implementation on Android is the standard one in Bionic, with the information
 provided to Bionic via Android's internal extended `mallinfo` API with support
