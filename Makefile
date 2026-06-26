@@ -13,8 +13,10 @@ endif
 
 OUT := out$(SUFFIX)
 
+CC_IS_CLANG := $(filter 1,$(shell printf '__clang__\n' | $(CC) -E -P -x c - 2>/dev/null))
+
 define safe_flag
-$(shell $(CC) $(if $(filter clang%,$(CC)),-Werror=unknown-warning-option) -E $1 - </dev/null >/dev/null 2>&1 && echo $1 || echo $2)
+$(shell $(CC) $(if $(CC_IS_CLANG),-Werror=unknown-warning-option) -E $1 - </dev/null >/dev/null 2>&1 && echo $1 || echo $2)
 endef
 
 CPPFLAGS := $(CPPFLAGS) -D_GNU_SOURCE -I include
