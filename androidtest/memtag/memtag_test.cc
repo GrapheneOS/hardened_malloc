@@ -1,4 +1,4 @@
-// needed to uncondionally enable assertions
+// needed to unconditionally enable assertions
 #undef NDEBUG
 #include <assert.h>
 #include <malloc.h>
@@ -61,7 +61,7 @@ void tag_distinctness() {
         { .size = 16,    .slot_cnt = 256, },
         { .size = 32,    .slot_cnt = 128, },
         // this size class is used by allocations that are made by the addr_tag_map, which breaks
-        // tag distinctess checks
+        // tag distinctness checks
         // { .size = 48,    .slot_cnt = 85,  },
         { .size = 64,    .slot_cnt = 64,  },
         { .size = 80,    .slot_cnt = 51,  },

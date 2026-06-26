@@ -325,7 +325,7 @@ The following integer configuration options are available:
   deallocation count and active allocations are tracked. See the [section on
   stats](#stats) for more details.
 * `CONFIG_EXTENDED_SIZE_CLASSES`: `true` (default) to control whether small
-  size class go up to 128kiB instead of the minimum requirement for avoiding
+  size classes go up to 128kiB instead of the minimum requirement for avoiding
   memory waste of 16kiB. The option to extend it even further will be offered
   in the future when better support for larger slab allocations is added. See
   the [section on size classes](#size-classes) below for details.
