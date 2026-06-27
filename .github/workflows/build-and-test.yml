@@ -58,3 +58,16 @@ jobs:
       - uses: actions/checkout@v7
       - name: Build
         run: CC=aarch64-linux-gnu-gcc-${{ matrix.version }} CXX=aarch64-linux-gnu-g++-${{ matrix.version }} make CONFIG_NATIVE=false
+  build-ubuntu-gcc-arm64:
+    runs-on: ubuntu-24.04-arm
+    container:
+      image: debian:testing-slim
+    strategy:
+      matrix:
+        version: [14, 15, 16]
+    steps:
+      - name: Install dependencies
+        run: apt-get update && apt-get install -y --no-install-recommends ca-certificates git make python3 gcc-${{ matrix.version }} g++-${{ matrix.version }}
+      - uses: actions/checkout@v7
+      - name: Build and test
+        run: CC=gcc-${{ matrix.version }} CXX=g++-${{ matrix.version }} make test
