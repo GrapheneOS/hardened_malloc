@@ -79,7 +79,10 @@ EXECUTABLES := \
     calloc_overflow \
     calloc_zeroed \
     malloc_zero_different \
-    malloc_noreuse
+    malloc_noreuse \
+    realloc_c23_undefined_behaviour \
+    realloc_c23_undefined_behaviour_double_free \
+    realloc_c23_undefined_behaviour_use_after_free
 
 all: $(EXECUTABLES)
 
