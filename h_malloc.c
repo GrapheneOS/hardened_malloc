@@ -81,8 +81,8 @@ static union {
         bool is_memtag_disabled;
 #endif
     };
-    char padding[PAGE_SIZE];
-} ro __attribute__((aligned(PAGE_SIZE)));
+    alignas(PAGE_SIZE) char padding[PAGE_SIZE];
+} ro;
 
 static inline void *get_slab_region_end(void) {
     return atomic_load_explicit(&ro.slab_region_end, memory_order_acquire);
@@ -266,8 +266,8 @@ static size_t get_slab_size(size_t slots, size_t size) {
     return page_align(slots * size);
 }
 
-struct __attribute__((aligned(CACHELINE_SIZE))) size_class {
-    struct mutex lock;
+struct size_class {
+    alignas(CACHELINE_SIZE) struct mutex lock;
 
     void *class_region_start;
     struct slab_metadata *slab_info;
@@ -997,17 +997,17 @@ static inline void stats_large_deallocate(UNUSED struct region_allocator *ra, UN
 #endif
 }
 
-struct __attribute__((aligned(PAGE_SIZE))) slab_info_mapping {
-    struct slab_metadata slab_info[MAX_METADATA_MAX];
+struct slab_info_mapping {
+    alignas(PAGE_SIZE) struct slab_metadata slab_info[MAX_METADATA_MAX];
 };
 
-struct __attribute__((aligned(PAGE_SIZE))) allocator_state {
-    struct size_class size_class_metadata[N_ARENA][N_SIZE_CLASSES];
+struct allocator_state {
+    alignas(PAGE_SIZE) struct size_class size_class_metadata[N_ARENA][N_SIZE_CLASSES];
     struct region_allocator region_allocator;
     // padding until next page boundary for mprotect
-    struct region_metadata regions_a[MAX_REGION_TABLE_SIZE] __attribute__((aligned(PAGE_SIZE)));
+    alignas(PAGE_SIZE) struct region_metadata regions_a[MAX_REGION_TABLE_SIZE];
     // padding until next page boundary for mprotect
-    struct region_metadata regions_b[MAX_REGION_TABLE_SIZE] __attribute__((aligned(PAGE_SIZE)));
+    alignas(PAGE_SIZE) struct region_metadata regions_b[MAX_REGION_TABLE_SIZE];
     // padding until next page boundary for mprotect
     struct slab_info_mapping slab_info_mapping[N_ARENA][N_SIZE_CLASSES];
     // padding until next page boundary for mprotect
