@@ -1,8 +1,13 @@
 #include <errno.h>
+#include <stdatomic.h>
 
 #include <sys/mman.h>
 
 #include <sys/prctl.h>
+
+#ifndef MADV_GUARD_INSTALL
+#define MADV_GUARD_INSTALL 102
+#endif
 
 #ifndef PR_SET_VMA
 #define PR_SET_VMA 0x53564d41
@@ -13,6 +18,7 @@
 #endif
 
 #include "memory.h"
+#include "pages.h"
 #include "util.h"
 
 static void *memory_map_prot(size_t size, int prot) {
@@ -28,6 +34,10 @@ static void *memory_map_prot(size_t size, int prot) {
 
 void *memory_map(size_t size) {
     return memory_map_prot(size, PROT_NONE);
+}
+
+void *memory_map_rw(size_t size) {
+    return memory_map_prot(size, PROT_READ|PROT_WRITE);
 }
 
 #ifdef HAS_ARM_MTE
@@ -115,6 +125,56 @@ bool memory_purge(void *ptr, size_t size) {
         fatal_error("non-ENOMEM MADV_DONTNEED madvise failure");
     }
     return ret;
+}
+
+// 0 = unknown, 1 = supported, -1 = unsupported/disabled
+static atomic_int guard_install_state;
+
+// EINVAL means the mapping is locked, so reset the state to trigger a re-probe
+bool memory_guard_install(void *ptr, size_t size) {
+    int saved_errno = errno;
+    if (likely(madvise(ptr, size, MADV_GUARD_INSTALL) == 0)) {
+        return false;
+    }
+    if (errno == EINVAL) {
+        int expected = 1;
+        atomic_compare_exchange_strong_explicit(&guard_install_state, &expected, 0,
+            memory_order_relaxed, memory_order_relaxed);
+    }
+    errno = saved_errno;
+    return true;
+}
+
+bool memory_guard_install_supported(void) {
+    int s = atomic_load_explicit(&guard_install_state, memory_order_relaxed);
+    if (likely(s)) {
+        return s > 0;
+    }
+    int saved_errno = errno;
+    void *p = mmap(NULL, PAGE_SIZE, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+    if (p == MAP_FAILED) {
+        errno = saved_errno;
+        return false;
+    }
+    // EINVAL on a fresh mapping means no kernel support or mlockall(MCL_FUTURE)
+    s = madvise(p, PAGE_SIZE, MADV_GUARD_INSTALL) == 0 ? 1 : (errno == EINVAL ? -1 : 0);
+    munmap(p, PAGE_SIZE);
+    errno = saved_errno;
+    if (s) {
+        int expected = 0;
+        if (!atomic_compare_exchange_strong_explicit(&guard_install_state, &expected, s,
+                memory_order_relaxed, memory_order_relaxed)) {
+            s = expected;
+        }
+    }
+    return s > 0;
+}
+
+bool memory_guard_or_protnone(void *ptr, size_t size) {
+    if (GUARD_PAGES_USE_MADVISE && memory_guard_install_supported()) {
+        return memory_guard_install(ptr, size) && memory_map_fixed(ptr, size);
+    }
+    return memory_map_fixed(ptr, size);
 }
 
 bool memory_set_name(UNUSED void *ptr, UNUSED size_t size, UNUSED const char *name) {
