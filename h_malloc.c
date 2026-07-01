@@ -2150,7 +2150,7 @@ EXPORT int h_malloc_info(int options, FILE *fp) {
 
         thread_seal_metadata();
 
-        fprintf(fp, "<heap nr=\"%u\">"
+        fprintf(fp, "<heap nr=\"%d\">"
                 "<allocated_large>%zu</allocated_large>"
                 "</heap>", N_ARENA, region_allocated);
     }
