@@ -429,7 +429,10 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, const struct
             }
 
             i = i == (slots - 1) / U64_WIDTH ? 0 : i + 1;
-            masked = metadata->bitmap[i];
+            // false positive: i is bounded by the bitmap length since slots is limited to
+            // MAX_SLAB_SLOT_COUNT (256) and random_index is bounded by slots, but the
+            // analyzer can't see either bound across translation units
+            masked = metadata->bitmap[i]; // NOLINT(clang-analyzer-security.ArrayBound)
         }
     } else {
         for (size_t i = 0; i <= (slots - 1) / U64_WIDTH; i++) {
