@@ -22,7 +22,10 @@ COLD static void *handle_out_of_memory(size_t size, bool nothrow) {
         try {
             handler();
         } catch (const std::bad_alloc &) {
-            break;
+            if (nothrow) {
+                return nullptr;
+            }
+            throw;
         }
 
         ptr = h_malloc(size);
@@ -94,7 +97,10 @@ COLD static void *handle_out_of_memory(size_t size, size_t alignment, bool nothr
         try {
             handler();
         } catch (const std::bad_alloc &) {
-            break;
+            if (nothrow) {
+                return nullptr;
+            }
+            throw;
         }
 
         ptr = h_aligned_alloc(alignment, size);
