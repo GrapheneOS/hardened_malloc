@@ -1717,6 +1717,9 @@ EXPORT void *h_valloc(size_t size) {
 }
 
 EXPORT void *h_pvalloc(size_t size) {
+    if (!size) {
+        return alloc_aligned_simple(PAGE_SIZE, 0);
+    }
     size = page_align(size);
     if (unlikely(!size)) {
         errno = ENOMEM;
