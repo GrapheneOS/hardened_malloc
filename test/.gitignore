@@ -44,4 +44,13 @@ uninitialized_read_small
 realloc_init
 malloc_zero_different
 malloc_noreuse
+aligned_sized_delete_large
+aligned_sized_delete_small
+aligned_sized_delete_small_min_align
+calloc_overflow
+calloc_zeroed
+free_sized_large
+free_sized_small
+invalid_aligned_sized_delete_large
+invalid_aligned_sized_delete_small
 __pycache__/
