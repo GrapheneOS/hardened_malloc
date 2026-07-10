@@ -228,7 +228,7 @@ the size of the empty slab caches and quarantines, saving a lot of memory,
 since those are currently based on the size of the largest size class):
 
     make \
-    N_ARENA=1 \
+    CONFIG_N_ARENA=1 \
     CONFIG_EXTENDED_SIZE_CLASSES=false
 
 The following boolean configuration options are available:
