@@ -51,6 +51,13 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
         self.assertEqual(stderr.decode(
             "utf-8"), "fatal allocator error: sized deallocation mismatch (large)\n")
 
+    def test_invalid_free_aligned_sized_small(self):
+        _stdout, stderr, returncode = self.run_test(
+            "invalid_free_aligned_sized_small")
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode(
+            "utf-8"), "fatal allocator error: invalid sized deallocation alignment (small)\n")
+
     def test_free_sized_small(self):
         _stdout, _stderr, returncode = self.run_test("free_sized_small")
         self.assertEqual(returncode, 0)
@@ -254,6 +261,13 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
         self.assertEqual(returncode, -6)
         self.assertEqual(stderr.decode(
             "utf-8"), "fatal allocator error: invalid malloc_object_size (quarantine)\n")
+
+    def test_invalid_malloc_object_size_small_canary(self):
+        _stdout, stderr, returncode = self.run_test(
+            "invalid_malloc_object_size_small_canary")
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode(
+            "utf-8"), "fatal allocator error: invalid malloc_object_size (canary)\n")
 
     def test_impossibly_large_malloc(self):
         _stdout, stderr, returncode = self.run_test(

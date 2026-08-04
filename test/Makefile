@@ -64,6 +64,7 @@ EXECUTABLES := \
     invalid_aligned_sized_delete_small \
     aligned_sized_delete_large \
     invalid_aligned_sized_delete_large \
+    invalid_free_aligned_sized_small \
     free_sized_small \
     free_sized_large \
     unaligned_malloc_usable_size_small \
@@ -74,6 +75,7 @@ EXECUTABLES := \
     malloc_object_size_zero \
     invalid_malloc_object_size_small \
     invalid_malloc_object_size_small_quarantine \
+    invalid_malloc_object_size_small_canary \
     impossibly_large_malloc \
     realloc_init \
     calloc_overflow \
