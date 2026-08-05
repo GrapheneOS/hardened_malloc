@@ -483,7 +483,7 @@ was a bit less important and if a core goal was finding latent bugs.
       against accessing freed memory
     * guarantee distinct tags for adjacent memory allocations by incrementing
       past matching values for deterministic detection of linear overflows
-    * [future] store previous random tag and increment it to get the next tag
+    * store the previous tag for each slot and increment it to get the next tag
       for that slot to provide deterministic use-after-free detection through
       multiple cycles of memory reuse
 
@@ -727,12 +727,18 @@ freeing as there would be if the kernel supported these features directly.
 
 ## Memory tagging
 
-Random tags are set for all slab allocations when allocated, with 4 excluded values:
+The first time a slab slot is used, a random tag is set for the allocation, with
+4 excluded values:
 
 1. the reserved `0` tag
 2. the previous tag used for the slot
 3. the current (or previous) tag used for the slot to the left
 4. the current (or previous) tag used for the slot to the right
+
+On each subsequent reuse of the slot, the tag is instead derived deterministically
+by incrementing the previous tag for the slot, skipping past the same 4 excluded
+values. This makes each slot cycle through all of the usable tags before any tag
+is repeated.
 
 When a slab allocation is freed, the reserved `0` tag is set for the slot.
 Slab allocation slots are cleared before reuse when memory tagging is enabled.
@@ -740,9 +746,10 @@ Slab allocation slots are cleared before reuse when memory tagging is enabled.
 This ensures the following properties:
 
 - Linear overflows are deterministically detected.
-- Use-after-free are deterministically detected until the freed slot goes through
-  both the random and FIFO quarantines, gets allocated again, goes through both
-  quarantines again and then finally gets allocated again for a 2nd time.
+- Use-after-free accesses are deterministically detected until the slot has been
+  reused enough times for the incrementing tag to wrap around to the stale
+  pointer's tag, i.e. through a full cycle of the usable tags rather than being
+  probabilistically reused after a single reallocation.
 - Since the default `0` tag is reserved, untagged pointers can't access slab
   allocations and vice versa.
 
