@@ -240,17 +240,15 @@ static inline struct size_info get_size_info(size_t size) {
 
 // alignment must be a power of 2 <= PAGE_SIZE since slabs are only page aligned
 static inline struct size_info get_size_info_align(size_t size, size_t alignment) {
-    unsigned start = get_size_info(size).class;
-    if (unlikely(!start)) {
-        start = 1;
+    // Rounding up to a multiple of the (power of 2) alignment and then to a size class always
+    // lands on a class whose size is a multiple of the alignment: get_size_info rounds up to a
+    // power-of-2 spacing, which preserves divisibility by the alignment. This is the smallest
+    // such class, matching a linear scan over the size classes without the O(N) cost.
+    size_t aligned_size = align(size, alignment);
+    if (unlikely(aligned_size == 0)) {
+        aligned_size = alignment;
     }
-    for (unsigned class = start; class < N_SIZE_CLASSES; class++) {
-        size_t real_size = size_classes[class];
-        if (size <= real_size && !(real_size & (alignment - 1))) {
-            return (struct size_info){real_size, class};
-        }
-    }
-    fatal_error("invalid size for slabs");
+    return get_size_info(aligned_size);
 }
 
 static size_t get_slab_size(size_t slots, size_t size) {
