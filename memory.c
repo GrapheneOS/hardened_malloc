@@ -41,26 +41,6 @@ void *memory_map_mte(size_t size) {
 }
 #endif
 
-static bool memory_map_fixed_prot(void *ptr, size_t size, int prot) {
-    void *p = mmap(ptr, size, prot, MAP_ANONYMOUS|MAP_PRIVATE|MAP_FIXED, -1, 0);
-    bool ret = p == MAP_FAILED;
-    if (unlikely(ret) && errno != ENOMEM) {
-        fatal_error("non-ENOMEM MAP_FIXED mmap failure");
-    }
-    return ret;
-}
-
-bool memory_map_fixed(void *ptr, size_t size) {
-    return memory_map_fixed_prot(ptr, size, PROT_NONE);
-}
-
-#ifdef HAS_ARM_MTE
-// Note that PROT_MTE can't be cleared via mprotect
-bool memory_map_fixed_mte(void *ptr, size_t size) {
-    return memory_map_fixed_prot(ptr, size, PROT_MTE);
-}
-#endif
-
 bool memory_unmap(void *ptr, size_t size) {
     bool ret = munmap(ptr, size);
     if (unlikely(ret) && errno != ENOMEM) {
@@ -79,6 +59,10 @@ static bool memory_protect_prot(void *ptr, size_t size, int prot, UNUSED int pke
         fatal_error("non-ENOMEM mprotect failure");
     }
     return ret;
+}
+
+bool memory_protect(void *ptr, size_t size) {
+    return memory_protect_prot(ptr, size, PROT_NONE, -1);
 }
 
 bool memory_protect_ro(void *ptr, size_t size) {

@@ -649,17 +649,16 @@ other. Static assignment can also reduce memory usage since threads may have
 varying usage of size classes.
 
 When there's substantial allocation or deallocation pressure, the allocator
-does end up calling into the kernel to purge/protect unused slabs by
-replacing them with fresh `PROT_NONE` regions along with unprotecting slabs
-when partially filled and cached empty slabs are depleted. There will be
-configuration over the amount of cached empty slabs, but it's not entirely a
-performance vs. memory trade-off since memory protecting unused slabs is a nice
-opportunistic boost to security. However, it's not really part of the core
-security model or features so it's quite reasonable to use much larger empty
-slab caches when the memory usage is acceptable. It would also be reasonable to
-attempt to use heuristics for dynamically tuning the size, but there's not a
-great one size fits all approach so it isn't currently part of this allocator
-implementation.
+does end up calling into the kernel to unprotect slabs when partially filled
+and cached empty slabs are depleted or to purge/protect unused slabs. There
+will be configuration over the amount of cached empty slabs, but it's not
+entirely a performance vs. memory trade-off since memory protecting unused
+slabs is a nice opportunistic boost to security. However, it's not really part
+of the core security model or features so it's quite reasonable to use much
+larger empty slab caches when the memory usage is acceptable. It would also be
+reasonable to attempt to use heuristics for dynamically tuning the size, but
+there's not a great one size fits all approach so it isn't currently part of
+this allocator implementation.
 
 #### Thread caching (or lack thereof)
 
@@ -718,12 +717,12 @@ allocating and unmap memory when freeing. However, this is a hardened allocator
 and the security features require extra system calls due to lack of direct
 support for this kind of hardening in the kernel. Randomly sized guard regions
 are placed around each allocation which requires mapping a `PROT_NONE` region
-including the guard regions and then unprotecting the usable area between them.
-The quarantine implementation requires clobbering the mapping with a fresh
-`PROT_NONE` mapping using `MAP_FIXED` on free to hold onto the region while
-it's in the quarantine, until it's eventually unmapped when it's pushed out of
-the quarantine. This means there are 2x as many system calls for allocating and
-freeing as there would be if the kernel supported these features directly.
+including the guard regions and then unprotecting the usable area between
+them. The quarantine protects and purges the allocation on free to hold onto
+the region while it's in the quarantine. It's eventually unmapped when it's
+pushed out of the quarantine. This means there are 2x as many system calls for
+allocating and 3x as many for freeing than there would be if the kernel
+supported these features directly.
 
 ## Memory tagging
 
@@ -978,7 +977,7 @@ System calls used by all build configurations:
 * `futex(uaddr, FUTEX_WAKE_PRIVATE, val)` (via `pthread_mutex_unlock`)
 * `getrandom(buf, buflen, 0)` (to seed and regularly reseed the CSPRNG)
 * `mmap(NULL, size, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0)`
-* `mmap(ptr, size, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_FIXED, -1, 0)`
+* `mprotect(ptr, size, PROT_NONE)`
 * `mprotect(ptr, size, PROT_READ)`
 * `mprotect(ptr, size, PROT_READ|PROT_WRITE)`
 * `mremap(old, old_size, new_size, 0)`
