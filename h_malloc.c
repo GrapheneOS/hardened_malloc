@@ -103,15 +103,6 @@ static void *memory_map_tagged(size_t size) {
     return memory_map(size);
 }
 
-static bool memory_map_fixed_tagged(void *ptr, size_t size) {
-#ifdef HAS_ARM_MTE
-    if (likely51(is_memtag_enabled())) {
-        return memory_map_fixed_mte(ptr, size);
-    }
-#endif
-    return memory_map_fixed(ptr, size);
-}
-
 #define SLAB_METADATA_COUNT
 
 struct slab_metadata {
@@ -927,15 +918,12 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
 
         if (c->empty_slabs_total + slab_size > max_empty_slabs_total) {
             int saved_errno = errno;
-            if (!memory_map_fixed_tagged(slab, slab_size)) {
-                label_slab(slab, slab_size, class);
+            if (!memory_protect(slab, slab_size)) {
+                memory_purge(slab, slab_size);
                 stats_slab_deallocate(c, slab_size);
                 enqueue_free_slab(c, metadata);
                 mutex_unlock(&c->lock);
-                if (CONFIG_LABEL_MEMORY) {
-                    // label_slab -> prctl(PR_SET_VMA_ANON_NAME) can clobber errno
-                    errno = saved_errno;
-                }
+                errno = saved_errno;
                 return;
             }
             memory_purge(slab, slab_size);
@@ -1016,16 +1004,13 @@ struct allocator_state {
 static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t purge_size, size_t guard_size) {
     if (!REGION_QUARANTINE || size >= REGION_QUARANTINE_SKIP_THRESHOLD) {
         if (unlikely(memory_unmap((char *)p - guard_size, size + guard_size * 2))) {
-            if (unlikely(memory_purge(p, purge_size))) {
-                memset(p, 0, purge_size);
-            }
+            memory_purge(p, purge_size);
         }
         return;
     }
 
-    if (unlikely(memory_map_fixed(p, purge_size))) {
-        memory_purge(p, purge_size);
-    }
+    memory_protect(p, purge_size);
+    memory_purge(p, purge_size);
     memory_set_name(p, purge_size, "malloc large quarantine");
 
     struct quarantine_info target =
@@ -1093,11 +1078,8 @@ static bool regions_grow(void) {
         }
     }
 
-    if (unlikely(memory_map_fixed(ra->regions, ra->total * sizeof(struct region_metadata)))) {
-        memory_purge(ra->regions, ra->total * sizeof(struct region_metadata));
-    } else {
-        memory_set_name(ra->regions, ra->total * sizeof(struct region_metadata), "malloc allocator_state");
-    }
+    memory_protect(ra->regions, ra->total * sizeof(struct region_metadata));
+    memory_purge(ra->regions, ra->total * sizeof(struct region_metadata));
     ra->free = ra->free + ra->total;
     ra->total = newtotal;
     ra->regions = p;
@@ -1595,11 +1577,11 @@ EXPORT void *h_realloc(void *old, size_t size) {
             // in-place shrink
             if (size < old_size) {
                 void *new_end = (char *)old + size;
-                if (memory_map_fixed(new_end, old_guard_size)) {
+                if (memory_protect(new_end, old_guard_size)) {
                     thread_seal_metadata();
                     return NULL;
                 }
-                memory_set_name(new_end, old_guard_size, "malloc large");
+                memory_purge(new_end, old_guard_size);
                 char *new_guard_end = (char *)new_end + old_guard_size;
                 char *old_end = (char *)old + old_size;
                 if (new_guard_end < old_end) {
@@ -1654,22 +1636,50 @@ EXPORT void *h_realloc(void *old, size_t size) {
                     return NULL;
                 }
 
+                if (memory_remap_fixed(old, old_size, new, size)) {
+                    // Failure during either unmapping the previous mapping at the destination or
+                    // the source mapping after a successful move is nearly impossible due to the
+                    // guard pages preventing a VMA split being required. It implies an extreme
+                    // kernel out-of-memory situation. It's far less likely than munmap failures so
+                    // handling it by forgetting about the mapping is perfectly reasonable. Failure
+                    // creating the new mapping is somewhat more likely. In every failure case, it's
+                    // safe to delete the metadata and unmap the destination guard regions which
+                    // avoids leaking any mapping in the error case which can happen in practice.
+
+                    mutex_lock(&ra->lock);
+                    struct region_metadata *region = regions_find(new);
+                    if (unlikely(region == NULL)) {
+                        fatal_error("new allocation went missing during memory remap");
+                    }
+                    size_t new_guard_size = region->guard_size;
+                    regions_delete(region);
+                    stats_large_deallocate(ra, size);
+                    mutex_unlock(&ra->lock);
+
+                    memory_unmap((char *)new - new_guard_size, new_guard_size);
+                    memory_unmap((char *)new + size, new_guard_size);
+
+                    thread_seal_metadata();
+                    return NULL;
+                }
+
+                // The kernel has attempted to unmap the source mapping and the space can be reused
+                // by other allocations already. This is only safe due to the guard regions still
+                // being intact. Requiring at least 1 page guards means a new large allocation
+                // filling the space cannot have the same address.
+
                 mutex_lock(&ra->lock);
                 struct region_metadata *region = regions_find(old);
                 if (unlikely(region == NULL)) {
-                    fatal_error("invalid realloc");
+                    fatal_error("old allocation went missing during memory remap");
                 }
                 regions_delete(region);
                 stats_large_deallocate(ra, old_size);
                 mutex_unlock(&ra->lock);
 
-                if (memory_remap_fixed(old, old_size, new, size)) {
-                    memcpy(new, old, copy_size);
-                    deallocate_pages(old, old_size, old_guard_size);
-                } else {
-                    memory_unmap((char *)old - old_guard_size, old_guard_size);
-                    memory_unmap((char *)old + old_size, old_guard_size);
-                }
+                memory_unmap((char *)old - old_guard_size, old_guard_size);
+                memory_unmap((char *)old + old_size, old_guard_size);
+
                 thread_seal_metadata();
                 return new;
             }
@@ -2005,10 +2015,11 @@ EXPORT int h_malloc_trim(UNUSED size_t pad) {
             struct slab_metadata *iterator = c->empty_slabs;
             while (iterator) {
                 void *slab = get_slab(c, slab_size, iterator);
-                if (memory_map_fixed_tagged(slab, slab_size)) {
+                if (memory_protect(slab, slab_size)) {
+                    memory_purge(slab, slab_size);
                     break;
                 }
-                label_slab(slab, slab_size, class);
+                memory_purge(slab, slab_size);
                 stats_slab_deallocate(c, slab_size);
 
                 struct slab_metadata *trimmed = iterator;
