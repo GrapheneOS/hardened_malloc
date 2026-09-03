@@ -1664,7 +1664,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
                     deallocate_pages(old, old_size, old_guard_size);
                 } else {
                     memory_unmap((char *)old - old_guard_size, old_guard_size);
-                    memory_unmap((char *)old + page_align(old_size), old_guard_size);
+                    memory_unmap((char *)old + old_size, old_guard_size);
                 }
                 thread_seal_metadata();
                 return new;
