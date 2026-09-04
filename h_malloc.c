@@ -1013,16 +1013,20 @@ struct allocator_state {
     // padding until next page boundary for mprotect
 };
 
-static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t guard_size) {
+static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t purge_size, size_t guard_size) {
     if (!REGION_QUARANTINE || size >= REGION_QUARANTINE_SKIP_THRESHOLD) {
-        deallocate_pages(p, size, guard_size);
+        if (unlikely(memory_unmap((char *)p - guard_size, size + guard_size * 2))) {
+            if (unlikely(memory_purge(p, purge_size))) {
+                memset(p, 0, purge_size);
+            }
+        }
         return;
     }
 
-    if (unlikely(memory_map_fixed(p, size))) {
-        memory_purge(p, size);
+    if (unlikely(memory_map_fixed(p, purge_size))) {
+        memory_purge(p, purge_size);
     }
-    memory_set_name(p, size, "malloc large quarantine");
+    memory_set_name(p, purge_size, "malloc large quarantine");
 
     struct quarantine_info target =
         (struct quarantine_info){(char *)p - guard_size, size + guard_size * 2};
@@ -1434,7 +1438,7 @@ static void deallocate_large(void *p, const size_t *expected_size) {
     stats_large_deallocate(ra, size);
     mutex_unlock(&ra->lock);
 
-    regions_quarantine_deallocate_pages(p, size, guard_size);
+    regions_quarantine_deallocate_pages(p, size, size, guard_size);
 }
 
 static int allocate_aligned(unsigned arena, void **memptr, size_t alignment, size_t size, size_t min_alignment) {
@@ -1596,8 +1600,13 @@ EXPORT void *h_realloc(void *old, size_t size) {
                     return NULL;
                 }
                 memory_set_name(new_end, old_guard_size, "malloc large");
-                void *new_guard_end = (char *)new_end + old_guard_size;
-                regions_quarantine_deallocate_pages(new_guard_end, old_size - size, 0);
+                char *new_guard_end = (char *)new_end + old_guard_size;
+                char *old_end = (char *)old + old_size;
+                if (new_guard_end < old_end) {
+                    regions_quarantine_deallocate_pages(new_guard_end, old_size - size, old_end - new_guard_end, 0);
+                } else {
+                    memory_unmap(new_guard_end, old_end + old_guard_size - new_guard_end);
+                }
 
                 mutex_lock(&ra->lock);
                 struct region_metadata *region = regions_find(old);
