@@ -1023,9 +1023,8 @@ static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t gua
         if (unlikely(memory_purge(p, size))) {
             memset(p, 0, size);
         }
-    } else {
-        memory_set_name(p, size, "malloc large quarantine");
     }
+    memory_set_name(p, size, "malloc large quarantine");
 
     struct quarantine_info target =
         (struct quarantine_info){(char *)p - guard_size, size + guard_size * 2};
