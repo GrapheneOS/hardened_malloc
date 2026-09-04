@@ -95,6 +95,31 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
             "overflow_large_8_byte")
         self.assertEqual(returncode, -11)
 
+    def test_overflow_large_aligned(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "overflow_large_aligned")
+        self.assertEqual(returncode, -11)
+
+    def test_overflow_realloc_shrink_large(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "overflow_realloc_shrink_large")
+        self.assertEqual(returncode, -11)
+
+    def test_underflow_large_1_byte(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "underflow_large_1_byte")
+        self.assertEqual(returncode, -11)
+
+    def test_underflow_large_aligned(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "underflow_large_aligned")
+        self.assertEqual(returncode, -11)
+
+    def test_read_after_realloc_shrink_large(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "read_after_realloc_shrink_large")
+        self.assertEqual(returncode, -11)
+
     def test_overflow_small_1_byte(self):
         _stdout, stderr, returncode = self.run_test(
             "overflow_small_1_byte")

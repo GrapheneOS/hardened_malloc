@@ -1019,10 +1019,13 @@ static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t gua
         return;
     }
 
-    if (unlikely(memory_map_fixed(p, size))) {
+    if (unlikely(memory_guard_or_protnone(p, size))) {
         if (unlikely(memory_purge(p, size))) {
             memset(p, 0, size);
         }
+    } else if (GUARD_PAGES_USE_MADVISE && memory_guard_install_supported()) {
+        // name the whole region to avoid splitting the single VMA
+        memory_set_name((char *)p - guard_size, size + guard_size * 2, "malloc large quarantine");
     } else {
         memory_set_name(p, size, "malloc large quarantine");
     }
@@ -1596,7 +1599,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
             // in-place shrink
             if (size < old_size) {
                 void *new_end = (char *)old + size;
-                if (memory_map_fixed(new_end, old_guard_size)) {
+                if (memory_guard_or_protnone(new_end, old_guard_size)) {
                     thread_seal_metadata();
                     return NULL;
                 }
@@ -1619,6 +1622,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
 
 #ifdef HAVE_COMPATIBLE_MREMAP
             static const bool vma_merging_reliable = false;
+            // not updated for the madvise guard scheme; revisit guard handling before enabling
             if (vma_merging_reliable) {
                 // in-place growth
                 void *guard_end = (char *)old + old_size + old_guard_size;

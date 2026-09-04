@@ -12,9 +12,17 @@
 #define CONFIG_LABEL_MEMORY false
 #endif
 
+#ifndef GUARD_PAGES_USE_MADVISE
+#define GUARD_PAGES_USE_MADVISE false
+#endif
+
 int get_metadata_key(void);
 
 void *memory_map(size_t size);
+void *memory_map_rw(size_t size);
+bool memory_guard_install(void *ptr, size_t size);
+bool memory_guard_install_supported(void);
+bool memory_guard_or_protnone(void *ptr, size_t size);
 #ifdef HAS_ARM_MTE
 void *memory_map_mte(size_t size);
 #endif
