@@ -650,17 +650,24 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
             set_used_slot(metadata, slot);
             void *p = slot_pointer(size, slab, slot);
             if (requested_size) {
-                write_after_free_check(p, size - canary_size);
-                set_canary(metadata, p, size);
 #ifdef HAS_ARM_MTE
                 if (likely51(is_memtag_enabled())) {
                     p = tag_and_clear_slab_slot(metadata, p, slot, size);
+                    stats_small_allocate(c, size);
+
+                    mutex_unlock(&c->lock);
+                    return p;
                 }
 #endif
             }
             stats_small_allocate(c, size);
 
             mutex_unlock(&c->lock);
+
+            if (requested_size) {
+                write_after_free_check(p, size - canary_size);
+                set_canary(metadata, p, size);
+            }
             return p;
         }
 
@@ -743,17 +750,24 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
     void *slab = get_slab(c, slab_size, metadata);
     void *p = slot_pointer(size, slab, slot);
     if (requested_size) {
-        write_after_free_check(p, size - canary_size);
-        set_canary(metadata, p, size);
 #ifdef HAS_ARM_MTE
         if (likely51(is_memtag_enabled())) {
             p = tag_and_clear_slab_slot(metadata, p, slot, size);
+            stats_small_allocate(c, size);
+
+            mutex_unlock(&c->lock);
+            return p;
         }
 #endif
     }
     stats_small_allocate(c, size);
 
     mutex_unlock(&c->lock);
+
+    if (requested_size) {
+        write_after_free_check(p, size - canary_size);
+        set_canary(metadata, p, size);
+    }
     return p;
 }
 
