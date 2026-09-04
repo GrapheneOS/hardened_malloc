@@ -12,6 +12,10 @@
 #define PR_SET_VMA_ANON_NAME 0
 #endif
 
+#ifndef MADV_DONTNEED_LOCKED
+#define MADV_DONTNEED_LOCKED 24
+#endif
+
 #include "memory.h"
 #include "util.h"
 
@@ -110,9 +114,9 @@ bool memory_remap_fixed(void *old, size_t old_size, void *new, size_t new_size) 
 #endif
 
 bool memory_purge(void *ptr, size_t size) {
-    bool ret = madvise(ptr, size, MADV_DONTNEED);
+    bool ret = madvise(ptr, size, MADV_DONTNEED_LOCKED);
     if (unlikely(ret) && errno != ENOMEM) {
-        fatal_error("non-ENOMEM MADV_DONTNEED madvise failure");
+        fatal_error("non-ENOMEM MADV_DONTNEED_LOCKED madvise failure");
     }
     return ret;
 }
