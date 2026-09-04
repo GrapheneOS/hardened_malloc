@@ -23,6 +23,7 @@ bool memory_map_fixed(void *ptr, size_t size);
 bool memory_map_fixed_mte(void *ptr, size_t size);
 #endif
 bool memory_unmap(void *ptr, size_t size);
+bool memory_protect_none(void *ptr, size_t size);
 bool memory_protect_ro(void *ptr, size_t size);
 bool memory_protect_rw(void *ptr, size_t size);
 bool memory_protect_rw_metadata(void *ptr, size_t size);
