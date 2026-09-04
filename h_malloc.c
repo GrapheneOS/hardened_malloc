@@ -1020,9 +1020,7 @@ static void regions_quarantine_deallocate_pages(void *p, size_t size, size_t gua
     }
 
     if (unlikely(memory_map_fixed(p, size))) {
-        if (unlikely(memory_purge(p, size))) {
-            memset(p, 0, size);
-        }
+        memory_purge(p, size);
     } else {
         memory_set_name(p, size, "malloc large quarantine");
     }
@@ -1093,9 +1091,7 @@ static bool regions_grow(void) {
     }
 
     if (unlikely(memory_map_fixed(ra->regions, ra->total * sizeof(struct region_metadata)))) {
-        if (unlikely(memory_purge(ra->regions, ra->total * sizeof(struct region_metadata)))) {
-            memset(ra->regions, 0, ra->total * sizeof(struct region_metadata));
-        }
+        memory_purge(ra->regions, ra->total * sizeof(struct region_metadata));
     } else {
         memory_set_name(ra->regions, ra->total * sizeof(struct region_metadata), "malloc allocator_state");
     }
