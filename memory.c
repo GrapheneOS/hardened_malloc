@@ -111,8 +111,9 @@ bool memory_remap_fixed(void *old, size_t old_size, void *new, size_t new_size) 
 
 bool memory_purge(void *ptr, size_t size) {
     bool ret = madvise(ptr, size, MADV_DONTNEED);
-    if (unlikely(ret) && errno != ENOMEM) {
-        fatal_error("non-ENOMEM MADV_DONTNEED madvise failure");
+    // EINVAL can occur due to mlockall
+    if (unlikely(ret) && errno != ENOMEM && errno != EINVAL) {
+        fatal_error("non-ENOMEM and non-EINVAL MADV_DONTNEED madvise failure");
     }
     return ret;
 }
