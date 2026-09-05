@@ -600,11 +600,29 @@ static void *tag_and_clear_slab_slot(struct slab_metadata *metadata, void *slot_
     // current or previous tag of left neighbor or 0 if there's no left neighbor or if it was never used
     tem |= (1 << u4_arr_get(slot_tags, slot_idx));
     // previous tag of this slot or 0 if it was never used
-    tem |= (1 << u4_arr_get(slot_tags, slot_idx + 1));
+    u8 prev_tag = u4_arr_get(slot_tags, slot_idx + 1);
+    tem |= (1 << prev_tag);
     // current or previous tag of right neighbor or 0 if there's no right neighbor or if it was never used
     tem |= (1 << u4_arr_get(slot_tags, slot_idx + 2));
 
-    void *tagged_ptr = arm_mte_create_random_tag(slot_ptr, tem);
+    void *tagged_ptr;
+    if (prev_tag == RESERVED_TAG) {
+        // A stored tag of 0 (RESERVED_TAG) means the slot was never used, since a used slot always
+        // stores a tag in [1, 15]. Pick a random tag as the baseline, excluding the reserved tag
+        // and the neighboring slots' tags.
+        tagged_ptr = arm_mte_create_random_tag(slot_ptr, tem);
+    } else {
+        // Derive the next tag by advancing past the previous one, skipping excluded tags and
+        // wrapping around within the tag space. This makes a slot deterministically cycle through
+        // all usable tags before repeating, extending use-after-free detection across multiple
+        // cycles of reuse.
+        const u8 tag_mask = (1 << TAG_WIDTH) - 1;
+        u8 tag = prev_tag;
+        do {
+            tag = (tag + 1) & tag_mask;
+        } while (tem & (1 << tag));
+        tagged_ptr = set_pointer_tag(slot_ptr, tag);
+    }
     // slot addresses and sizes are always aligned by 16
     arm_mte_tag_and_clear_mem(tagged_ptr, slot_size);
 
