@@ -47,8 +47,9 @@ typedef unsigned __int128 u128;
 
 #define U64_WIDTH 64
 
+// parameter must not be all ones
 static inline int ffz64(u64 x) {
-    return __builtin_ffsll(~x);
+    return __builtin_ctzll(~x);
 }
 
 // parameter must not be 0
