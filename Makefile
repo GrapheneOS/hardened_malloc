@@ -95,6 +95,9 @@ ifeq (,$(filter $(CONFIG_LABEL_MEMORY),true false))
     $(error CONFIG_LABEL_MEMORY must be true or false)
 endif
 
+DEPFLAGS = -MMD -MP -MF $(@:.o=.d) -MT $@
+DEPS := $(OBJECTS:.o=.d)
+
 CPPFLAGS += \
     -DCONFIG_SEAL_METADATA=$(CONFIG_SEAL_METADATA) \
     -DZERO_ON_FREE=$(CONFIG_ZERO_ON_FREE) \
@@ -123,20 +126,20 @@ $(OUT)/libhardened_malloc$(SUFFIX).so: $(OBJECTS) | $(OUT)
 $(OUT):
 	mkdir -p $(OUT)
 
-$(OUT)/chacha.o: chacha.c chacha.h util.h $(CONFIG_FILE) | $(OUT)
-	$(COMPILE.c) $(OUTPUT_OPTION) $<
-$(OUT)/h_malloc.o: h_malloc.c include/h_malloc.h mutex.h memory.h pages.h random.h util.h $(CONFIG_FILE) | $(OUT)
-	$(COMPILE.c) $(OUTPUT_OPTION) $<
-$(OUT)/memory.o: memory.c memory.h util.h $(CONFIG_FILE) | $(OUT)
-	$(COMPILE.c) $(OUTPUT_OPTION) $<
-$(OUT)/new.o: new.cc include/h_malloc.h util.h $(CONFIG_FILE) | $(OUT)
-	$(COMPILE.cc) $(OUTPUT_OPTION) $<
-$(OUT)/pages.o: pages.c pages.h memory.h util.h $(CONFIG_FILE) | $(OUT)
-	$(COMPILE.c) $(OUTPUT_OPTION) $<
-$(OUT)/random.o: random.c random.h chacha.h util.h $(CONFIG_FILE) | $(OUT)
-	$(COMPILE.c) $(OUTPUT_OPTION) $<
-$(OUT)/util.o: util.c util.h $(CONFIG_FILE) | $(OUT)
-	$(COMPILE.c) $(OUTPUT_OPTION) $<
+$(OUT)/chacha.o: chacha.c $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.c) $(DEPFLAGS) $(OUTPUT_OPTION) $<
+$(OUT)/h_malloc.o: h_malloc.c $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.c) $(DEPFLAGS) $(OUTPUT_OPTION) $<
+$(OUT)/memory.o: memory.c $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.c) $(DEPFLAGS) $(OUTPUT_OPTION) $<
+$(OUT)/new.o: new.cc $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.cc) $(DEPFLAGS) $(OUTPUT_OPTION) $<
+$(OUT)/pages.o: pages.c $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.c) $(DEPFLAGS) $(OUTPUT_OPTION) $<
+$(OUT)/random.o: random.c $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.c) $(DEPFLAGS) $(OUTPUT_OPTION) $<
+$(OUT)/util.o: util.c $(CONFIG_FILE) | $(OUT)
+	$(COMPILE.c) $(DEPFLAGS) $(OUTPUT_OPTION) $<
 
 check: tidy
 
@@ -145,11 +148,13 @@ tidy:
 	clang-tidy --extra-arg=-std=c++17 $(filter %.cc,$(SOURCES)) -- $(CPPFLAGS)
 
 clean:
-	rm -f $(OUT)/libhardened_malloc.so $(OBJECTS)
+	rm -f $(OUT)/libhardened_malloc.so $(OBJECTS) $(DEPS)
 	$(MAKE) -C test/ clean
 
 test: $(OUT)/libhardened_malloc$(SUFFIX).so
 	$(MAKE) -C test/
 	python3 -m unittest discover --start-directory test/
+
+-include $(DEPS)
 
 .PHONY: check clean tidy test
