@@ -85,7 +85,7 @@ static inline void arm_mte_tag_and_clear_mem(void *tagged_ptr, size_t len) {
 
         : [Cur] "+&r"(Begin), [LineSize] "=&r"(LineSize), [Next] "=&r"(Next), [Tmp] "=&r"(Tmp)
         : [End] "r"(End)
-        : "memory"
+        : "cc", "memory"
     );
 }
 #endif
