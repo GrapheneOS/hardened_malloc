@@ -29,6 +29,8 @@ void random_state_init(struct random_state *state) {
     get_random_seed(rnd, sizeof(rnd));
     chacha_keysetup(&state->ctx, rnd);
     chacha_ivsetup(&state->ctx, rnd + CHACHA_KEY_SIZE);
+    // Explicitly zero out rnd after key/iv setup to prevent leakage
+    memset(rnd, 0, sizeof(rnd));
     state->index = RANDOM_CACHE_SIZE;
     state->reseed = 0;
 }
@@ -38,6 +40,8 @@ void random_state_init_from_random_state(struct random_state *state, struct rand
     get_random_bytes(source, rnd, sizeof(rnd));
     chacha_keysetup(&state->ctx, rnd);
     chacha_ivsetup(&state->ctx, rnd + CHACHA_KEY_SIZE);
+    // Explicitly zero out rnd after key/iv setup to prevent leakage
+    memset(rnd, 0, sizeof(rnd));
     state->index = RANDOM_CACHE_SIZE;
     state->reseed = 0;
 }
