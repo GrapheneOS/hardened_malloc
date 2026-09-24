@@ -30,7 +30,11 @@ void random_state_init(struct random_state *state) {
     chacha_keysetup(&state->ctx, rnd);
     chacha_ivsetup(&state->ctx, rnd + CHACHA_KEY_SIZE);
     // Explicitly zero out rnd after key/iv setup to prevent leakage
+    // Note: memset is secure and not elided by modern compilers for sensitive data
+    // This is standard practice for cryptographic key material clearing
     memset(rnd, 0, sizeof(rnd));
+    // Prevent compiler optimizations from removing the memset
+    __asm__ __volatile__("" : : "r,m"(rnd) : "memory");
     state->index = RANDOM_CACHE_SIZE;
     state->reseed = 0;
 }
