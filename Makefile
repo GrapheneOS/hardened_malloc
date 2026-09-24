@@ -37,8 +37,8 @@ ifeq ($(CONFIG_UBSAN),true)
     SHARED_FLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined
 endif
 
-CFLAGS := $(CFLAGS) -std=c23 $(SHARED_FLAGS) -Wmissing-prototypes -Wstrict-prototypes
-CXXFLAGS := $(CXXFLAGS) -std=c++17 -fsized-deallocation $(SHARED_FLAGS)
+CFLAGS := $(CFLAGS) -std=c23 $(SHARED_FLAGS) -Wmissing-prototypes -Wstrict-prototypes -MMD
+CXXFLAGS := $(CXXFLAGS) -std=c++17 -fsized-deallocation $(SHARED_FLAGS) -MMD
 LDFLAGS := $(LDFLAGS) -Wl,-O1,--as-needed,-z,defs,-z,relro,-z,now,-z,nodlopen,-z,text
 
 SOURCES := chacha.c h_malloc.c memory.c pages.c random.c util.c
