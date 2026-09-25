@@ -328,6 +328,11 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
             "aligned_alloc_einval")
         self.assertEqual(returncode, 0)
 
+    def test_aligned_alloc_zero_size(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "aligned_alloc_zero_size")
+        self.assertEqual(returncode, 0)
+
     def test_malloc_zero_different(self):
         _stdout, _stderr, returncode = self.run_test(
             "malloc_zero_different")

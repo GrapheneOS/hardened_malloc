@@ -84,6 +84,7 @@ EXECUTABLES := \
     pvalloc \
     posix_memalign_einval \
     aligned_alloc_einval \
+    aligned_alloc_zero_size \
     malloc_zero_different \
     malloc_noreuse
 
