@@ -851,9 +851,9 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     size_t slab_quarantine_random_length = SLAB_QUARANTINE_RANDOM_LENGTH << quarantine_shift;
 
 #if (SLAB_QUARANTINE_RANDOM_LENGTH << (MAX_SLAB_SIZE_CLASS_SHIFT - MIN_SLAB_SIZE_CLASS_SHIFT)) <= UINT16_MAX
-    size_t random_index = get_random_u16_uniform(&c->rng, slab_quarantine_random_length);
+    size_t random_index = ((u32)get_random_u16(&c->rng) * slab_quarantine_random_length) >> 16;
 #else
-    size_t random_index = get_random_u32_uniform(&c->rng, slab_quarantine_random_length);
+    size_t random_index = ((u64)get_random_u32(&c->rng) * slab_quarantine_random_length) >> 32;
 #endif
     void *random_substitute = c->quarantine_random[random_index];
     c->quarantine_random[random_index] = p;
@@ -872,9 +872,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     void *queue_substitute = c->quarantine_queue[c->quarantine_queue_index];
     c->quarantine_queue[c->quarantine_queue_index] = p;
 
-    // Modulo here is costly so we're using an increment and an if instead.
-    size_t next_queue_index = c->quarantine_queue_index + 1;
-    c->quarantine_queue_index = next_queue_index < slab_quarantine_queue_length ? next_queue_index : 0;
+    c->quarantine_queue_index = (c->quarantine_queue_index + 1) & (slab_quarantine_queue_length - 1);
 
     if (queue_substitute == NULL) {
         mutex_unlock(&c->lock);

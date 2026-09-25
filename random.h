@@ -20,7 +20,6 @@ void get_random_bytes(struct random_state *state, void *buf, size_t size);
 u16 get_random_u16(struct random_state *state);
 u16 get_random_u16_uniform(struct random_state *state, u16 bound);
 u32 get_random_u32(struct random_state *state);
-u32 get_random_u32_uniform(struct random_state *state, u32 bound);
 u64 get_random_u64(struct random_state *state);
 u64 get_random_u64_uniform(struct random_state *state, u64 bound);
 
