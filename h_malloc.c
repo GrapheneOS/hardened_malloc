@@ -1356,7 +1356,7 @@ static size_t get_large_size_class(size_t size) {
         // etc.
         return get_size_info(max(size, (size_t)PAGE_SIZE)).size;
     }
-    return page_align(size);
+    return page_align(max(size, (size_t)PAGE_SIZE));
 }
 
 static size_t get_guard_size(struct random_state *state, size_t size) {

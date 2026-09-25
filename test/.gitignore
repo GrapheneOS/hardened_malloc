@@ -1,4 +1,5 @@
 aligned_alloc_einval
+aligned_alloc_zero_size
 invalid_free_aligned_sized_small
 invalid_malloc_object_size_small_canary
 posix_memalign_einval
