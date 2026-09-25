@@ -260,11 +260,11 @@ struct size_class {
 
     void *class_region_start;
     struct slab_metadata *slab_info;
+    u32 size;
+    u32 slab_size;
+    u16 slots;
     struct libdivide_u32_t size_divisor;
     struct libdivide_u64_t slab_size_divisor;
-    u32 size;
-    u16 slots;
-    u32 slab_size;
 
     // slabs with at least one allocated slot and at least one free slot
     //
