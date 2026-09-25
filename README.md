@@ -288,14 +288,16 @@ The following integer configuration options are available:
   or 128kiB based on `CONFIG_EXTENDED_SIZE_CLASSES`) and the quarantine length
   for smaller size classes is scaled to match the total memory of the
   quarantined allocations (1 becomes 1024 for 16 byte allocations with 16kiB
-  as the largest size class, or 8192 with 128kiB as the largest).
+  as the largest size class, or 8192 with 128kiB as the largest). The multiplier
+  must be a power of 2 up to 65536, or 0 to disable the random quarantine.
 * `CONFIG_SLAB_QUARANTINE_QUEUE_LENGTH`: `1` (default) to control the number of
   slots in the queue used to delay reuse for small memory allocations. This
   sets the length for the largest size class (either 16kiB or 128kiB based on
   `CONFIG_EXTENDED_SIZE_CLASSES`) and the quarantine length for smaller size
   classes is scaled to match the total memory of the quarantined allocations (1
   becomes 1024 for 16 byte allocations with 16kiB as the largest size class, or
-  8192 with 128kiB as the largest).
+  8192 with 128kiB as the largest). The multiplier must be a power of 2 up to
+  65536, or 0 to disable the queue quarantine.
 * `CONFIG_GUARD_SLABS_INTERVAL`: `1` (default) to control the number of slabs
   before a slab is skipped and left as an unused memory protected guard slab.
   The default of `1` leaves a guard slab between every slab. This feature does

@@ -32,10 +32,12 @@ static_assert(sizeof(void *) == 8, "64-bit only");
 
 static_assert(!WRITE_AFTER_FREE_CHECK || ZERO_ON_FREE, "WRITE_AFTER_FREE_CHECK depends on ZERO_ON_FREE");
 
-static_assert(SLAB_QUARANTINE_RANDOM_LENGTH >= 0 && SLAB_QUARANTINE_RANDOM_LENGTH <= 65536,
-    "invalid slab quarantine random length");
-static_assert(SLAB_QUARANTINE_QUEUE_LENGTH >= 0 && SLAB_QUARANTINE_QUEUE_LENGTH <= 65536,
-    "invalid slab quarantine queue length");
+static_assert(SLAB_QUARANTINE_RANDOM_LENGTH >= 0 && SLAB_QUARANTINE_RANDOM_LENGTH <= 65536 &&
+    (SLAB_QUARANTINE_RANDOM_LENGTH & (SLAB_QUARANTINE_RANDOM_LENGTH - 1)) == 0,
+    "slab quarantine random length multiplier must be 0 or a power of 2 up to 65536");
+static_assert(SLAB_QUARANTINE_QUEUE_LENGTH >= 0 && SLAB_QUARANTINE_QUEUE_LENGTH <= 65536 &&
+    (SLAB_QUARANTINE_QUEUE_LENGTH & (SLAB_QUARANTINE_QUEUE_LENGTH - 1)) == 0,
+    "slab quarantine queue length multiplier must be 0 or a power of 2 up to 65536");
 static_assert(REGION_QUARANTINE_RANDOM_LENGTH >= 0 && REGION_QUARANTINE_RANDOM_LENGTH <= 65536,
     "invalid region quarantine random length");
 static_assert(REGION_QUARANTINE_QUEUE_LENGTH >= 0 && REGION_QUARANTINE_QUEUE_LENGTH <= 65536,
