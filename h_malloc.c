@@ -402,6 +402,8 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, const struct
     if (SLOT_RANDOMIZE) {
         // randomize start location for linear search (uniform random choice is too slow)
         size_t random_index = get_random_u16_uniform(rng, slots);
+        // redundant clamp to make the bitmap indexing below visibly bounded
+        random_index = min(random_index, slots - 1);
         size_t first_bitmap = random_index / U64_WIDTH;
         u64 random_split = ~(~0UL << (random_index - first_bitmap * U64_WIDTH));
 
@@ -414,7 +416,7 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, const struct
             }
 
             if (masked != ~0UL) {
-                return ffz64(masked) - 1 + i * U64_WIDTH;
+                return ffz64(masked) + i * U64_WIDTH;
             }
 
             i = i == (slots - 1) / U64_WIDTH ? 0 : i + 1;
@@ -428,7 +430,7 @@ static size_t get_free_slot(struct random_state *rng, size_t slots, const struct
             }
 
             if (masked != ~0UL) {
-                return ffz64(masked) - 1 + i * U64_WIDTH;
+                return ffz64(masked) + i * U64_WIDTH;
             }
         }
     }
