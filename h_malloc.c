@@ -31,6 +31,8 @@
 static_assert(sizeof(void *) == 8, "64-bit only");
 
 static_assert(!WRITE_AFTER_FREE_CHECK || ZERO_ON_FREE, "WRITE_AFTER_FREE_CHECK depends on ZERO_ON_FREE");
+static_assert(SLAB_RANDOMIZE_COUNT >= 0 && SLAB_RANDOMIZE_COUNT <= 16,
+    "slab randomization count must be between 0 and 16");
 
 static_assert(SLAB_QUARANTINE_RANDOM_LENGTH >= 0 && SLAB_QUARANTINE_RANDOM_LENGTH <= 65536 &&
     (SLAB_QUARANTINE_RANDOM_LENGTH & (SLAB_QUARANTINE_RANDOM_LENGTH - 1)) == 0,
@@ -272,6 +274,7 @@ struct size_class {
     //
     // LIFO doubly-linked list
     struct slab_metadata *partial_slabs;
+    size_t partial_slabs_count;
 
     // slabs without allocated slots that are cached for near-term usage
     //
@@ -615,6 +618,24 @@ static void *tag_and_clear_slab_slot(struct slab_metadata *metadata, void *slot_
 }
 #endif
 
+static struct slab_metadata *get_partial_slab(struct size_class *c) {
+#if SLAB_RANDOMIZE_COUNT > 0
+    size_t bound = c->partial_slabs_count;
+    if (bound > SLAB_RANDOMIZE_COUNT) {
+        bound = SLAB_RANDOMIZE_COUNT;
+    }
+    size_t index = get_random_u16_uniform(&c->rng, bound);
+    struct slab_metadata *metadata = c->partial_slabs;
+    while (index > 0) {
+        metadata = metadata->next;
+        index--;
+    }
+    return metadata;
+#else
+    return c->partial_slabs;
+#endif
+}
+
 static inline void *allocate_small(unsigned arena, size_t requested_size) {
     struct size_info info = get_size_info(requested_size);
     size_t size = likely(info.size) ? info.size : 16;
@@ -635,6 +656,7 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
             metadata->prev = NULL;
 
             c->partial_slabs = slots > 1 ? metadata : NULL;
+            c->partial_slabs_count = slots > 1;
 
             void *slab = get_slab(c, slab_size, metadata);
             size_t slot = get_free_slot(&c->rng, slots, metadata);
@@ -674,6 +696,7 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
             metadata->prev = NULL;
 
             c->partial_slabs = slots > 1 ? metadata : NULL;
+            c->partial_slabs_count = slots > 1;
 
             size_t slot = get_free_slot(&c->rng, slots, metadata);
             set_used_slot(metadata, slot);
@@ -701,6 +724,7 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
         set_slab_canary_value(metadata, &c->rng);
 
         c->partial_slabs = slots > 1 ? metadata : NULL;
+        c->partial_slabs_count = slots > 1;
         void *slab = get_slab(c, slab_size, metadata);
         size_t slot = get_free_slot(&c->rng, slots, metadata);
         set_used_slot(metadata, slot);
@@ -720,15 +744,25 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
         return p;
     }
 
-    struct slab_metadata *metadata = c->partial_slabs;
+    struct slab_metadata *metadata = get_partial_slab(c);
     size_t slot = get_free_slot(&c->rng, slots, metadata);
     set_used_slot(metadata, slot);
 
     if (!has_free_slots(slots, metadata)) {
-        c->partial_slabs = c->partial_slabs->next;
-        if (c->partial_slabs) {
-            c->partial_slabs->prev = NULL;
+        if (metadata->prev != NULL) {
+            metadata->prev->next = metadata->next;
+        } else {
+            c->partial_slabs = metadata->next;
         }
+        if (metadata->next != NULL) {
+            metadata->next->prev = metadata->prev;
+        }
+        if (unlikely(c->partial_slabs_count == 0)) {
+            fatal_error("partial slab count underflow");
+        }
+        c->partial_slabs_count--;
+        metadata->prev = NULL;
+        metadata->next = NULL;
     }
 
     void *slab = get_slab(c, slab_size, metadata);
@@ -898,6 +932,7 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
             c->partial_slabs->prev = metadata;
         }
         c->partial_slabs = metadata;
+        c->partial_slabs_count++;
     }
 
     clear_used_slot(metadata, slot);
@@ -912,6 +947,10 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
             metadata->next->prev = metadata->prev;
         }
 
+        if (unlikely(c->partial_slabs_count == 0)) {
+            fatal_error("partial slab count underflow");
+        }
+        c->partial_slabs_count--;
         metadata->prev = NULL;
 
         if (c->empty_slabs_total + slab_size > max_empty_slabs_total) {
