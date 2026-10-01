@@ -72,16 +72,23 @@ static inline void arm_mte_tag_and_clear_mem(void *tagged_ptr, size_t len) {
         "cmp %[Cur], %[Next] \n\t"
         "b.lt 2b \n\t"
 
-        // STZG until the end of the tagged region. This loop is also used to handle
-        // slow path cases.
-
+        // STZ2G handles two adjacent granules at a time. This loop also handles slow
+        // path cases where DC GZVA is unavailable or cannot cover a full cache line.
         "3: \n\t"
-        "cmp %[Cur], %[End] \n\t"
-        "b.ge 4f \n\t"
-        "stzg %[Cur], [%[Cur]], #16 \n\t"
+        "sub %[Tmp], %[End], %[Cur] \n\t"
+        "cmp %[Tmp], #32 \n\t"
+        "b.lt 4f \n\t"
+        "stz2g %[Cur], [%[Cur]], #32 \n\t"
         "b 3b \n\t"
 
+        // STZG handles the final single granule.
         "4: \n\t"
+        "cmp %[Cur], %[End] \n\t"
+        "b.ge 5f \n\t"
+        "stzg %[Cur], [%[Cur]], #16 \n\t"
+        "b 4b \n\t"
+
+        "5: \n\t"
 
         : [Cur] "+&r"(Begin), [LineSize] "=&r"(LineSize), [Next] "=&r"(Next), [Tmp] "=&r"(Tmp)
         : [End] "r"(End)
