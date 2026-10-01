@@ -485,9 +485,6 @@ was a bit less important and if a core goal was finding latent bugs.
       against accessing freed memory
     * guarantee distinct tags for adjacent memory allocations by incrementing
       past matching values for deterministic detection of linear overflows
-    * [future] store previous random tag and increment it to get the next tag
-      for that slot to provide deterministic use-after-free detection through
-      multiple cycles of memory reuse
 
 ## Randomness
 
