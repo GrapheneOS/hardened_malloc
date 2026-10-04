@@ -343,5 +343,15 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
             "malloc_noreuse")
         self.assertEqual(returncode, 0)
 
+    def test_realloc_split_mapping_large(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "realloc_split_mapping_large")
+        self.assertEqual(returncode, 0)
+
+    def test_impossibly_large_realloc(self):
+        _stdout, _stderr, returncode = self.run_test(
+            "impossibly_large_realloc")
+        self.assertEqual(returncode, 0)
+
 if __name__ == '__main__':
     unittest.main()
