@@ -87,6 +87,20 @@ bool memory_remap(void *old, size_t old_size, size_t new_size) {
     return ret;
 }
 
+// In-place growth fails with ENOMEM due to the guard region but checks the mapping as moving would
+bool memory_remap_movable(void *old, size_t old_size, size_t new_size) {
+    int saved_errno = errno;
+    if (unlikely(mremap(old, old_size, new_size, 0) != MAP_FAILED)) {
+        fatal_error("unexpected in-place mremap growth");
+    }
+    bool movable = errno == ENOMEM;
+    if (unlikely(!movable && errno != EFAULT && errno != EAGAIN)) {
+        fatal_error("unexpected mremap growth failure");
+    }
+    errno = saved_errno;
+    return movable;
+}
+
 bool memory_remap_fixed(void *old, size_t old_size, void *new, size_t new_size) {
     void *ptr = mremap(old, old_size, new_size, MREMAP_MAYMOVE|MREMAP_FIXED, new);
     bool ret = ptr == MAP_FAILED;

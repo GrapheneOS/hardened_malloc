@@ -1363,7 +1363,7 @@ static size_t get_guard_size(struct random_state *state, size_t size) {
     return (get_random_u64_uniform(state, size / PAGE_SIZE / GUARD_SIZE_DIVISOR) + 1) * PAGE_SIZE;
 }
 
-static void *allocate_large(size_t size) {
+static void *allocate_large(size_t size, bool unprotect) {
     size = get_large_size_class(size);
     if (unlikely(!size)) {
         errno = ENOMEM;
@@ -1376,7 +1376,7 @@ static void *allocate_large(size_t size) {
     size_t guard_size = get_guard_size(&ra->rng, size);
     mutex_unlock(&ra->lock);
 
-    void *p = allocate_pages(size, guard_size, true, "malloc large");
+    void *p = allocate_pages(size, guard_size, unprotect, "malloc large");
     if (p == NULL) {
         return NULL;
     }
@@ -1395,7 +1395,7 @@ static void *allocate_large(size_t size) {
 }
 
 static inline void *allocate(unsigned arena, size_t size) {
-    return size <= max_slab_size_class ? allocate_small(arena, size) : allocate_large(size);
+    return size <= max_slab_size_class ? allocate_small(arena, size) : allocate_large(size, true);
 }
 
 static void deallocate_large(void *p, const size_t *expected_size) {
@@ -1628,10 +1628,23 @@ EXPORT void *h_realloc(void *old, size_t size) {
 
             size_t copy_size = min(size, old_size);
             if (copy_size >= MREMAP_MOVE_THRESHOLD) {
-                void *new = allocate_large(size);
+                void *new = allocate_large(size, false);
                 if (new == NULL) {
                     thread_seal_metadata();
                     return NULL;
+                }
+
+                // after allocating since mremap can fail with EINVAL for sizes above TASK_SIZE
+                if (!memory_remap_movable(old, old_size, size)) {
+                    if (memory_protect_rw(new, size)) {
+                        deallocate_large(new, NULL);
+                        thread_seal_metadata();
+                        return NULL;
+                    }
+                    memcpy(new, old, copy_size);
+                    deallocate_large(old, NULL);
+                    thread_seal_metadata();
+                    return new;
                 }
 
                 if (memory_remap_fixed(old, old_size, new, size)) {

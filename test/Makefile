@@ -86,7 +86,9 @@ EXECUTABLES := \
     aligned_alloc_einval \
     aligned_alloc_zero_size \
     malloc_zero_different \
-    malloc_noreuse
+    malloc_noreuse \
+    realloc_split_mapping_large \
+    impossibly_large_realloc
 
 all: $(EXECUTABLES)
 
