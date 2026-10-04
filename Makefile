@@ -149,7 +149,7 @@ clean:
 	$(MAKE) -C test/ clean
 
 test: $(OUT)/libhardened_malloc$(SUFFIX).so
-	$(MAKE) -C test/
+	$(MAKE) -C test/ OUT='$(abspath $(OUT))'
 	python3 -m unittest discover --start-directory test/
 
 .PHONY: check clean tidy test
