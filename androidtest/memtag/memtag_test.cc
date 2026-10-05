@@ -139,7 +139,7 @@ void tag_distinctness() {
                     p[j]++;
                 }
 
-                allocations[i] = addr;
+                allocations[i] = (uptr) p;
             }
 
             // free some of allocations to allow their slots to be reused
