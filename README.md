@@ -279,6 +279,9 @@ The following boolean configuration options are available:
   hardware, which may become drastically lower in the future. Whether or not
   this feature is enabled, the metadata is all contained within an isolated
   memory region with high entropy random guard regions around it.
+* `CONFIG_BLOCK_OPS_CHECK_SIZE`: `true` or `false` (default) to ensure length
+  parameter of the memcpy/memccpy/memmove/memset block operations and their
+  wide variants are within approximate bounds to minimize buffer overflows.
 
 The following integer configuration options are available:
 
