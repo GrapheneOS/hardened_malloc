@@ -302,11 +302,11 @@ struct size_class {
 
 #if SLAB_QUARANTINE_QUEUE_LENGTH > 0
     size_t quarantine_queue_index;
-    void *quarantine_queue[SLAB_QUARANTINE_QUEUE_LENGTH << (MAX_SLAB_SIZE_CLASS_SHIFT - MIN_SLAB_SIZE_CLASS_SHIFT)];
+    void **quarantine_queue;
 #endif
 
 #if SLAB_QUARANTINE_RANDOM_LENGTH > 0
-    void *quarantine_random[SLAB_QUARANTINE_RANDOM_LENGTH << (MAX_SLAB_SIZE_CLASS_SHIFT - MIN_SLAB_SIZE_CLASS_SHIFT)];
+    void **quarantine_random;
 #endif
 };
 
@@ -987,9 +987,69 @@ struct slab_info_mapping {
     alignas(PAGE_SIZE) struct slab_metadata slab_info[MAX_METADATA_MAX];
 };
 
+#if SLAB_QUARANTINE
+// Each entry holds a pair of quarantines for each size class (random and FIFO)
+struct slab_quarantine {
+#if CONFIG_EXTENDED_SIZE_CLASSES
+    struct {
+        alignas(CACHELINE_SIZE) void *entries[8192 * (SLAB_QUARANTINE_RANDOM_LENGTH + SLAB_QUARANTINE_QUEUE_LENGTH)];
+    } length_8192[2];
+    struct {
+        alignas(CACHELINE_SIZE) void *entries[4096 * (SLAB_QUARANTINE_RANDOM_LENGTH + SLAB_QUARANTINE_QUEUE_LENGTH)];
+    } length_4096[2];
+    struct {
+        alignas(CACHELINE_SIZE) void *entries[2048 * (SLAB_QUARANTINE_RANDOM_LENGTH + SLAB_QUARANTINE_QUEUE_LENGTH)];
+    } length_2048[4];
+    struct {
+        alignas(CACHELINE_SIZE) void *entries[1024 * (SLAB_QUARANTINE_RANDOM_LENGTH + SLAB_QUARANTINE_QUEUE_LENGTH)];
+    } length_1024[4];
+    struct {
+        alignas(CACHELINE_SIZE) void *entries[512 * (SLAB_QUARANTINE_RANDOM_LENGTH + SLAB_QUARANTINE_QUEUE_LENGTH)];
+    } length_512[4];
+#else
+    struct {
+        alignas(CACHELINE_SIZE) void *entries[1024 * (SLAB_QUARANTINE_RANDOM_LENGTH + SLAB_QUARANTINE_QUEUE_LENGTH)];
+    } length_1024[2];
+    struct {
+        alignas(CACHELINE_SIZE) void *entries[512 * (SLAB_QUARANTINE_RANDOM_LENGTH + SLAB_QUARANTINE_QUEUE_LENGTH)];
+    } length_512[2];
+#endif
+    struct {
+        alignas(CACHELINE_SIZE) void *entries[256 * (SLAB_QUARANTINE_RANDOM_LENGTH + SLAB_QUARANTINE_QUEUE_LENGTH)];
+    } length_256[4];
+    struct {
+        alignas(CACHELINE_SIZE) void *entries[128 * (SLAB_QUARANTINE_RANDOM_LENGTH + SLAB_QUARANTINE_QUEUE_LENGTH)];
+    } length_128[4];
+    struct {
+        alignas(CACHELINE_SIZE) void *entries[64 * (SLAB_QUARANTINE_RANDOM_LENGTH + SLAB_QUARANTINE_QUEUE_LENGTH)];
+    } length_64[4];
+    struct {
+        alignas(CACHELINE_SIZE) void *entries[32 * (SLAB_QUARANTINE_RANDOM_LENGTH + SLAB_QUARANTINE_QUEUE_LENGTH)];
+    } length_32[4];
+    struct {
+        alignas(CACHELINE_SIZE) void *entries[16 * (SLAB_QUARANTINE_RANDOM_LENGTH + SLAB_QUARANTINE_QUEUE_LENGTH)];
+    } length_16[4];
+    struct {
+        alignas(CACHELINE_SIZE) void *entries[8 * (SLAB_QUARANTINE_RANDOM_LENGTH + SLAB_QUARANTINE_QUEUE_LENGTH)];
+    } length_8[4];
+    struct {
+        alignas(CACHELINE_SIZE) void *entries[4 * (SLAB_QUARANTINE_RANDOM_LENGTH + SLAB_QUARANTINE_QUEUE_LENGTH)];
+    } length_4[4];
+    struct {
+        alignas(CACHELINE_SIZE) void *entries[2 * (SLAB_QUARANTINE_RANDOM_LENGTH + SLAB_QUARANTINE_QUEUE_LENGTH)];
+    } length_2[4];
+    struct {
+        alignas(CACHELINE_SIZE) void *entries[SLAB_QUARANTINE_RANDOM_LENGTH + SLAB_QUARANTINE_QUEUE_LENGTH];
+    } length_1;
+};
+#endif
+
 struct allocator_state {
     alignas(PAGE_SIZE) struct size_class size_class_metadata[N_ARENA][N_SIZE_CLASSES];
     struct region_allocator region_allocator;
+#if SLAB_QUARANTINE
+    struct slab_quarantine quarantine[N_ARENA];
+#endif
     // padding until next page boundary for mprotect
     alignas(PAGE_SIZE) struct region_metadata regions_a[MAX_REGION_TABLE_SIZE];
     // padding until next page boundary for mprotect
@@ -1280,6 +1340,102 @@ COLD static void init_slow_path(void) {
 
     for (unsigned arena = 0; arena < N_ARENA; arena++) {
         ro.size_class_metadata[arena] = allocator_state->size_class_metadata[arena];
+#if SLAB_QUARANTINE
+        struct slab_quarantine *quarantine = &allocator_state->quarantine[arena];
+        void **const quarantine_entries[] = {
+#if CONFIG_EXTENDED_SIZE_CLASSES
+            /* 0 */ quarantine->length_8192[0].entries,
+            /* 16 */ quarantine->length_8192[1].entries,
+            /* 32 */ quarantine->length_4096[0].entries,
+            /* 48 */ quarantine->length_4096[1].entries,
+            /* 64 */ quarantine->length_2048[0].entries,
+            /* 80 */ quarantine->length_2048[1].entries,
+            /* 96 */ quarantine->length_2048[2].entries,
+            /* 112 */ quarantine->length_2048[3].entries,
+            /* 128 */ quarantine->length_1024[0].entries,
+            /* 160 */ quarantine->length_1024[1].entries,
+            /* 192 */ quarantine->length_1024[2].entries,
+            /* 224 */ quarantine->length_1024[3].entries,
+            /* 256 */ quarantine->length_512[0].entries,
+            /* 320 */ quarantine->length_512[1].entries,
+            /* 384 */ quarantine->length_512[2].entries,
+            /* 448 */ quarantine->length_512[3].entries,
+            /* 512 */ quarantine->length_256[0].entries,
+            /* 640 */ quarantine->length_256[1].entries,
+            /* 768 */ quarantine->length_256[2].entries,
+            /* 896 */ quarantine->length_256[3].entries,
+            /* 1024 */ quarantine->length_128[0].entries,
+            /* 1280 */ quarantine->length_128[1].entries,
+            /* 1536 */ quarantine->length_128[2].entries,
+            /* 1792 */ quarantine->length_128[3].entries,
+            /* 2048 */ quarantine->length_64[0].entries,
+            /* 2560 */ quarantine->length_64[1].entries,
+            /* 3072 */ quarantine->length_64[2].entries,
+            /* 3584 */ quarantine->length_64[3].entries,
+            /* 4096 */ quarantine->length_32[0].entries,
+            /* 5120 */ quarantine->length_32[1].entries,
+            /* 6144 */ quarantine->length_32[2].entries,
+            /* 7168 */ quarantine->length_32[3].entries,
+            /* 8192 */ quarantine->length_16[0].entries,
+            /* 10240 */ quarantine->length_16[1].entries,
+            /* 12288 */ quarantine->length_16[2].entries,
+            /* 14336 */ quarantine->length_16[3].entries,
+            /* 16384 */ quarantine->length_8[0].entries,
+            /* 20480 */ quarantine->length_8[1].entries,
+            /* 24576 */ quarantine->length_8[2].entries,
+            /* 28672 */ quarantine->length_8[3].entries,
+            /* 32768 */ quarantine->length_4[0].entries,
+            /* 40960 */ quarantine->length_4[1].entries,
+            /* 49152 */ quarantine->length_4[2].entries,
+            /* 57344 */ quarantine->length_4[3].entries,
+            /* 65536 */ quarantine->length_2[0].entries,
+            /* 81920 */ quarantine->length_2[1].entries,
+            /* 98304 */ quarantine->length_2[2].entries,
+            /* 114688 */ quarantine->length_2[3].entries,
+            /* 131072 */ quarantine->length_1.entries,
+#else
+            /* 0 */ quarantine->length_1024[0].entries,
+            /* 16 */ quarantine->length_1024[1].entries,
+            /* 32 */ quarantine->length_512[0].entries,
+            /* 48 */ quarantine->length_512[1].entries,
+            /* 64 */ quarantine->length_256[0].entries,
+            /* 80 */ quarantine->length_256[1].entries,
+            /* 96 */ quarantine->length_256[2].entries,
+            /* 112 */ quarantine->length_256[3].entries,
+            /* 128 */ quarantine->length_128[0].entries,
+            /* 160 */ quarantine->length_128[1].entries,
+            /* 192 */ quarantine->length_128[2].entries,
+            /* 224 */ quarantine->length_128[3].entries,
+            /* 256 */ quarantine->length_64[0].entries,
+            /* 320 */ quarantine->length_64[1].entries,
+            /* 384 */ quarantine->length_64[2].entries,
+            /* 448 */ quarantine->length_64[3].entries,
+            /* 512 */ quarantine->length_32[0].entries,
+            /* 640 */ quarantine->length_32[1].entries,
+            /* 768 */ quarantine->length_32[2].entries,
+            /* 896 */ quarantine->length_32[3].entries,
+            /* 1024 */ quarantine->length_16[0].entries,
+            /* 1280 */ quarantine->length_16[1].entries,
+            /* 1536 */ quarantine->length_16[2].entries,
+            /* 1792 */ quarantine->length_16[3].entries,
+            /* 2048 */ quarantine->length_8[0].entries,
+            /* 2560 */ quarantine->length_8[1].entries,
+            /* 3072 */ quarantine->length_8[2].entries,
+            /* 3584 */ quarantine->length_8[3].entries,
+            /* 4096 */ quarantine->length_4[0].entries,
+            /* 5120 */ quarantine->length_4[1].entries,
+            /* 6144 */ quarantine->length_4[2].entries,
+            /* 7168 */ quarantine->length_4[3].entries,
+            /* 8192 */ quarantine->length_2[0].entries,
+            /* 10240 */ quarantine->length_2[1].entries,
+            /* 12288 */ quarantine->length_2[2].entries,
+            /* 14336 */ quarantine->length_2[3].entries,
+            /* 16384 */ quarantine->length_1.entries,
+#endif
+        };
+        static_assert(sizeof(quarantine_entries) / sizeof(quarantine_entries[0]) == N_SIZE_CLASSES,
+            "quarantine table must match size classes");
+#endif
         for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
             struct size_class *c = &ro.size_class_metadata[arena][class];
 
@@ -1301,6 +1457,14 @@ COLD static void init_slow_path(void) {
             c->size_divisor = libdivide_u32_gen(size);
             c->slab_size_divisor = libdivide_u64_gen(c->slab_size);
             c->slab_info = allocator_state->slab_info_mapping[arena][class].slab_info;
+#if SLAB_QUARANTINE_RANDOM_LENGTH > 0
+            c->quarantine_random = quarantine_entries[class];
+#endif
+#if SLAB_QUARANTINE_QUEUE_LENGTH > 0
+            size_t quarantine_shift = clz64(size) - (63 - MAX_SLAB_SIZE_CLASS_SHIFT);
+            c->quarantine_queue = quarantine_entries[class] +
+                (SLAB_QUARANTINE_RANDOM_LENGTH << quarantine_shift);
+#endif
         }
     }
 
