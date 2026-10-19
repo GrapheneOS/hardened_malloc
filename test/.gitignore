@@ -49,6 +49,8 @@ overflow_small_8_byte
 uninitialized_read_large
 uninitialized_read_small
 realloc_init
+realloc_split_mapping_large
+impossibly_large_realloc
 malloc_zero_different
 malloc_noreuse
 aligned_sized_delete_large
