@@ -298,6 +298,11 @@ The following integer configuration options are available:
   becomes 1024 for 16 byte allocations with 16kiB as the largest size class, or
   8192 with 128kiB as the largest). The multiplier must be a power of 2 up to
   65536, or 0 to disable the queue quarantine.
+* `CONFIG_SLAB_RANDOMIZE_COUNT`: `4` (default) to select a slab uniformly from
+  up to this many partial slabs at the head of the size class's partial-slab
+  list. Selection is bounded and does not scan the full list. Set to 0 to use
+  the list head without random selection; the light configuration disables
+  this feature.
 * `CONFIG_GUARD_SLABS_INTERVAL`: `1` (default) to control the number of slabs
   before a slab is skipped and left as an unused memory protected guard slab.
   The default of `1` leaves a guard slab between every slab. This feature does
@@ -442,7 +447,7 @@ was a bit less important and if a core goal was finding latent bugs.
     * Random slot selection within slabs
     * Randomized delayed free for small and large allocations along with slabs
       themselves
-    * [in-progress] Randomized choice of slabs
+    * Randomized choice among a bounded set of partial slabs
     * [in-progress] Randomized allocation of slabs
 * Slab allocations are zeroed on free
 * Detection of write-after-free for slab allocations by verifying zero filling

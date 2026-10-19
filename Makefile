@@ -101,6 +101,7 @@ CPPFLAGS += \
     -DWRITE_AFTER_FREE_CHECK=$(CONFIG_WRITE_AFTER_FREE_CHECK) \
     -DSLOT_RANDOMIZE=$(CONFIG_SLOT_RANDOMIZE) \
     -DSLAB_CANARY=$(CONFIG_SLAB_CANARY) \
+    -DSLAB_RANDOMIZE_COUNT=$(CONFIG_SLAB_RANDOMIZE_COUNT) \
     -DSLAB_QUARANTINE_RANDOM_LENGTH=$(CONFIG_SLAB_QUARANTINE_RANDOM_LENGTH) \
     -DSLAB_QUARANTINE_QUEUE_LENGTH=$(CONFIG_SLAB_QUARANTINE_QUEUE_LENGTH) \
     -DCONFIG_EXTENDED_SIZE_CLASSES=$(CONFIG_EXTENDED_SIZE_CLASSES) \
@@ -125,7 +126,7 @@ $(OUT):
 
 $(OUT)/chacha.o: chacha.c chacha.h util.h $(CONFIG_FILE) | $(OUT)
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
-$(OUT)/h_malloc.o: h_malloc.c include/h_malloc.h mutex.h memory.h pages.h random.h util.h $(CONFIG_FILE) | $(OUT)
+$(OUT)/h_malloc.o: h_malloc.c include/h_malloc.h mutex.h memory.h memtag.h arm_mte.h pages.h random.h util.h $(CONFIG_FILE) | $(OUT)
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
 $(OUT)/memory.o: memory.c memory.h util.h $(CONFIG_FILE) | $(OUT)
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
