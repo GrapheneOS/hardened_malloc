@@ -1690,6 +1690,42 @@ EXPORT void *h_calloc(size_t nmemb, size_t size) {
     return p;
 }
 
+static inline void memory_corruption_check_small(const void *p, const char *unaligned_error,
+        const char *unused_error, UNUSED const char *quarantine_error) {
+    struct slab_size_class_info size_class_info = slab_size_class(p);
+    size_t class = size_class_info.class;
+    struct size_class *c = &ro.size_class_metadata[size_class_info.arena][class];
+    size_t size = c->size;
+    bool is_zero_size = class == 0;
+    size_t slab_size = c->slab_size;
+
+    mutex_lock(&c->lock);
+
+    const struct slab_metadata *metadata = get_metadata(c, p);
+    void *slab = get_slab(c, slab_size, metadata);
+    size_t slot = libdivide_u32_do((const char *)p - (const char *)slab, &c->size_divisor);
+
+    if (unlikely(slot_pointer(size, slab, slot) != p)) {
+        fatal_error(unaligned_error);
+    }
+
+    if (unlikely(!is_used_slot(metadata, slot))) {
+        fatal_error(unused_error);
+    }
+
+    if (likely(!is_zero_size)) {
+        check_canary(metadata, p, size);
+    }
+
+#if SLAB_QUARANTINE
+    if (unlikely(is_quarantine_slot(metadata, slot))) {
+        fatal_error(quarantine_error);
+    }
+#endif
+
+    mutex_unlock(&c->lock);
+}
+
 EXPORT void *h_realloc(void *old, size_t size) {
     size = adjust_size_for_canary(size);
     if (old == NULL) {
@@ -1710,11 +1746,15 @@ EXPORT void *h_realloc(void *old, size_t size) {
     size_t old_size;
     bool old_in_slab_region = old < get_slab_region_end() && old >= ro.slab_region_start;
     if (old_in_slab_region) {
+        thread_unseal_metadata();
+        // validate before the in-place return and before memcpy reads from old
+        memory_corruption_check_small(old, "invalid unaligned realloc", "invalid realloc",
+            "invalid realloc (quarantine)");
         old_size = slab_usable_size(old);
         if (size <= max_slab_size_class && get_size_info(size).size == old_size) {
+            thread_seal_metadata();
             return old_orig;
         }
-        thread_unseal_metadata();
     } else {
         enforce_init();
         thread_unseal_metadata();
@@ -1996,41 +2036,6 @@ EXPORT void h_free_aligned_sized(void *p, size_t alignment, size_t expected_size
     thread_seal_metadata();
 }
 
-static inline void memory_corruption_check_small(const void *p) {
-    struct slab_size_class_info size_class_info = slab_size_class(p);
-    size_t class = size_class_info.class;
-    struct size_class *c = &ro.size_class_metadata[size_class_info.arena][class];
-    size_t size = c->size;
-    bool is_zero_size = class == 0;
-    size_t slab_size = c->slab_size;
-
-    mutex_lock(&c->lock);
-
-    const struct slab_metadata *metadata = get_metadata(c, p);
-    void *slab = get_slab(c, slab_size, metadata);
-    size_t slot = libdivide_u32_do((const char *)p - (const char *)slab, &c->size_divisor);
-
-    if (unlikely(slot_pointer(size, slab, slot) != p)) {
-        fatal_error("invalid unaligned malloc_usable_size");
-    }
-
-    if (unlikely(!is_used_slot(metadata, slot))) {
-        fatal_error("invalid malloc_usable_size");
-    }
-
-    if (likely(!is_zero_size)) {
-        check_canary(metadata, p, size);
-    }
-
-#if SLAB_QUARANTINE
-    if (unlikely(is_quarantine_slot(metadata, slot))) {
-        fatal_error("invalid malloc_usable_size (quarantine)");
-    }
-#endif
-
-    mutex_unlock(&c->lock);
-}
-
 EXPORT size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *arg) {
     if (arg == NULL) {
         return 0;
@@ -2040,7 +2045,8 @@ EXPORT size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *arg) {
 
     if (p < get_slab_region_end() && p >= ro.slab_region_start) {
         thread_unseal_metadata();
-        memory_corruption_check_small(p);
+        memory_corruption_check_small(p, "invalid unaligned malloc_usable_size",
+            "invalid malloc_usable_size", "invalid malloc_usable_size (quarantine)");
         thread_seal_metadata();
 
         size_t size = slab_usable_size(p);

@@ -52,6 +52,9 @@ EXECUTABLES := \
     uninitialized_read_large \
     uninitialized_free \
     uninitialized_realloc \
+    realloc_freed_small_quarantine \
+    realloc_unaligned_small \
+    realloc_invalid_small \
     uninitialized_malloc_usable_size \
     overflow_large_1_byte \
     overflow_large_8_byte \

@@ -28,6 +28,9 @@ unaligned_free_small
 uninitialized_free
 uninitialized_malloc_usable_size
 uninitialized_realloc
+realloc_freed_small_quarantine
+realloc_unaligned_small
+realloc_invalid_small
 write_after_free_large
 write_after_free_large_reuse
 write_after_free_small
