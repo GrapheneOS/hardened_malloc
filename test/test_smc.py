@@ -213,6 +213,25 @@ class TestSimpleMemoryCorruption(unittest.TestCase):
         self.assertEqual(stderr.decode("utf-8"),
                          "fatal allocator error: invalid realloc\n")
 
+    def test_realloc_freed_small_quarantine(self):
+        _stdout, stderr, returncode = self.run_test(
+            "realloc_freed_small_quarantine")
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode("utf-8"),
+                         "fatal allocator error: invalid realloc (quarantine)\n")
+
+    def test_realloc_unaligned_small(self):
+        _stdout, stderr, returncode = self.run_test("realloc_unaligned_small")
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode("utf-8"),
+                         "fatal allocator error: invalid unaligned realloc\n")
+
+    def test_realloc_invalid_small(self):
+        _stdout, stderr, returncode = self.run_test("realloc_invalid_small")
+        self.assertEqual(returncode, -6)
+        self.assertEqual(stderr.decode("utf-8"),
+                         "fatal allocator error: invalid realloc\n")
+
     def test_write_after_free_large_reuse(self):
         _stdout, _stderr, returncode = self.run_test(
             "write_after_free_large_reuse")
