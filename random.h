@@ -23,4 +23,10 @@ u32 get_random_u32(struct random_state *state);
 u64 get_random_u64(struct random_state *state);
 u64 get_random_u64_uniform(struct random_state *state, u64 bound);
 
+#if CONFIG_BLOCK_OPS_CHECK_SIZE && !defined(HAS_ARM_MTE)
+#define h_memcpy_internal musl_memcpy
+#else
+#define h_memcpy_internal memcpy
+#endif
+
 #endif
