@@ -82,6 +82,9 @@ static union {
 #ifdef MEMTAG
         bool is_memtag_disabled;
 #endif
+#ifdef HAS_ARM_MTE
+        bool had_mte_allocations;
+#endif
     };
     alignas(PAGE_SIZE) char padding[PAGE_SIZE];
 } ro;
@@ -546,7 +549,7 @@ static void check_canary(UNUSED const struct slab_metadata *metadata, UNUSED con
     memcpy(&canary_value, (const char *)p + size - canary_size, canary_size);
 
 #ifdef HAS_ARM_MTE
-    if (unlikely(canary_value == 0)) {
+    if (unlikely(ro.had_mte_allocations && canary_value == 0)) {
         return;
     }
 #endif
@@ -2469,6 +2472,7 @@ COLD EXPORT void h_malloc_disable_memory_tagging(void) {
                 fatal_error("failed to unprotect allocator data");
             }
             ro.is_memtag_disabled = true;
+            ro.had_mte_allocations = true;
             if (unlikely(memory_protect_ro(&ro, sizeof(ro)))) {
                 fatal_error("failed to protect allocator data");
             }
