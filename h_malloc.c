@@ -613,6 +613,12 @@ static void *tag_and_clear_slab_slot(struct slab_metadata *metadata, void *slot_
 
     return tagged_ptr;
 }
+
+static inline void verify_pointer_tag(const void *orig_p, const struct slab_metadata *metadata, size_t slot) {
+    if (unlikely(!is_pointer_tag_valid(orig_p, u4_arr_get(metadata->arm_mte_tags, slot + 1)))) {
+        fatal_error("invalid pointer tag");
+    }
+}
 #endif
 
 static inline void *allocate_small(unsigned arena, size_t requested_size) {
@@ -767,6 +773,32 @@ static size_t slab_usable_size(const void *p) {
     return size_classes[slab_size_class(p).class];
 }
 
+#ifdef HAS_ARM_MTE
+static inline void verify_small_pointer_tag(const void *orig_p, const void *p) {
+    struct slab_size_class_info size_class_info = slab_size_class(p);
+    size_t class = size_class_info.class;
+    if (unlikely(class == 0)) {
+        return;
+    }
+
+    struct size_class *c = &ro.size_class_metadata[size_class_info.arena][class];
+    mutex_lock(&c->lock);
+
+    const struct slab_metadata *metadata = get_metadata(c, p);
+    void *slab = get_slab(c, c->slab_size, metadata);
+    size_t slot = libdivide_u32_do((const char *)p - (const char *)slab, &c->size_divisor);
+    bool is_quarantined = false;
+#if SLAB_QUARANTINE
+    is_quarantined = is_quarantine_slot(metadata, slot);
+#endif
+    if (likely(slot_pointer(c->size, slab, slot) == p && is_used_slot(metadata, slot) && !is_quarantined)) {
+        verify_pointer_tag(orig_p, metadata, slot);
+    }
+
+    mutex_unlock(&c->lock);
+}
+#endif
+
 static void enqueue_free_slab(struct size_class *c, struct slab_metadata *metadata) {
     metadata->next = NULL;
 
@@ -792,7 +824,8 @@ static void enqueue_free_slab(struct size_class *c, struct slab_metadata *metada
 }
 
 // preserves errno
-static inline void deallocate_small(void *p, const size_t *expected_size) {
+static inline void deallocate_small(void *orig_p, const size_t *expected_size) {
+    void *p = untag_pointer(orig_p);
     struct slab_size_class_info size_class_info = slab_size_class(p);
     size_t class = size_class_info.class;
 
@@ -821,7 +854,18 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
         fatal_error("double free");
     }
 
+#if SLAB_QUARANTINE
+    if (unlikely(is_quarantine_slot(metadata, slot))) {
+        fatal_error("double free (quarantine)");
+    }
+#endif
+
     if (likely(!is_zero_size)) {
+#ifdef HAS_ARM_MTE
+        if (likely51(is_memtag_enabled())) {
+            verify_pointer_tag(orig_p, metadata, slot);
+        }
+#endif
         check_canary(metadata, p, size);
 
         bool skip_zero = false;
@@ -839,10 +883,6 @@ static inline void deallocate_small(void *p, const size_t *expected_size) {
     }
 
 #if SLAB_QUARANTINE
-    if (unlikely(is_quarantine_slot(metadata, slot))) {
-        fatal_error("double free (quarantine)");
-    }
-
     set_quarantine_slot(metadata, slot);
 
     size_t quarantine_shift = clz64(size) - (63 - MAX_SLAB_SIZE_CLASS_SHIFT);
@@ -1712,9 +1752,21 @@ EXPORT void *h_realloc(void *old, size_t size) {
     if (old_in_slab_region) {
         old_size = slab_usable_size(old);
         if (size <= max_slab_size_class && get_size_info(size).size == old_size) {
+#ifdef HAS_ARM_MTE
+            if (likely51(is_memtag_enabled())) {
+                thread_unseal_metadata();
+                verify_small_pointer_tag(old_orig, old);
+                thread_seal_metadata();
+            }
+#endif
             return old_orig;
         }
         thread_unseal_metadata();
+#ifdef HAS_ARM_MTE
+        if (likely51(is_memtag_enabled())) {
+            verify_small_pointer_tag(old_orig, old);
+        }
+#endif
     } else {
         enforce_init();
         thread_unseal_metadata();
@@ -1860,7 +1912,7 @@ EXPORT void *h_realloc(void *old, size_t size) {
     }
     memcpy(new, old_orig, copy_size);
     if (old_in_slab_region) {
-        deallocate_small(old, NULL);
+        deallocate_small(old_orig, NULL);
     } else {
         deallocate_large(old, NULL);
     }
@@ -1911,11 +1963,12 @@ EXPORT void h_free(void *p) {
         return;
     }
 
+    void *orig_p = p;
     p = untag_pointer(p);
 
     if (p < get_slab_region_end() && p >= ro.slab_region_start) {
         thread_unseal_metadata();
-        deallocate_small(p, NULL);
+        deallocate_small(orig_p, NULL);
         thread_seal_metadata();
         return;
     }
@@ -1936,6 +1989,7 @@ EXPORT void h_free_sized(void *p, size_t expected_size) {
         return;
     }
 
+    void *orig_p = p;
     p = untag_pointer(p);
 
     expected_size = adjust_size_for_canary(expected_size);
@@ -1947,7 +2001,7 @@ EXPORT void h_free_sized(void *p, size_t expected_size) {
         expected_size = get_size_info(expected_size).size;
 
         thread_unseal_metadata();
-        deallocate_small(p, &expected_size);
+        deallocate_small(orig_p, &expected_size);
         thread_seal_metadata();
         return;
     }
@@ -1964,6 +2018,7 @@ EXPORT void h_free_aligned_sized(void *p, size_t alignment, size_t expected_size
         return;
     }
 
+    void *orig_p = p;
     p = untag_pointer(p);
 
     expected_size = adjust_size_for_canary(expected_size);
@@ -1984,7 +2039,7 @@ EXPORT void h_free_aligned_sized(void *p, size_t alignment, size_t expected_size
         }
 
         thread_unseal_metadata();
-        deallocate_small(p, &expected_size);
+        deallocate_small(orig_p, &expected_size);
         thread_seal_metadata();
         return;
     }
@@ -1996,7 +2051,8 @@ EXPORT void h_free_aligned_sized(void *p, size_t alignment, size_t expected_size
     thread_seal_metadata();
 }
 
-static inline void memory_corruption_check_small(const void *p) {
+static inline void memory_corruption_check_small(const void *orig_p) {
+    const void *p = untag_const_pointer(orig_p);
     struct slab_size_class_info size_class_info = slab_size_class(p);
     size_t class = size_class_info.class;
     struct size_class *c = &ro.size_class_metadata[size_class_info.arena][class];
@@ -2018,15 +2074,20 @@ static inline void memory_corruption_check_small(const void *p) {
         fatal_error("invalid malloc_usable_size");
     }
 
-    if (likely(!is_zero_size)) {
-        check_canary(metadata, p, size);
-    }
-
 #if SLAB_QUARANTINE
     if (unlikely(is_quarantine_slot(metadata, slot))) {
         fatal_error("invalid malloc_usable_size (quarantine)");
     }
 #endif
+
+    if (likely(!is_zero_size)) {
+#ifdef HAS_ARM_MTE
+        if (likely51(is_memtag_enabled())) {
+            verify_pointer_tag(orig_p, metadata, slot);
+        }
+#endif
+        check_canary(metadata, p, size);
+    }
 
     mutex_unlock(&c->lock);
 }
@@ -2040,7 +2101,7 @@ EXPORT size_t h_malloc_usable_size(H_MALLOC_USABLE_SIZE_CONST void *arg) {
 
     if (p < get_slab_region_end() && p >= ro.slab_region_start) {
         thread_unseal_metadata();
-        memory_corruption_check_small(p);
+        memory_corruption_check_small(arg);
         thread_seal_metadata();
 
         size_t size = slab_usable_size(p);
@@ -2068,6 +2129,7 @@ EXPORT size_t h_malloc_object_size(const void *p) {
         return 0;
     }
 
+    UNUSED const void *orig_p = p;
     p = untag_const_pointer(p);
 
     const void *slab_region_end = get_slab_region_end();
@@ -2092,6 +2154,13 @@ EXPORT size_t h_malloc_object_size(const void *p) {
 #if SLAB_QUARANTINE
         if (unlikely(is_quarantine_slot(metadata, slot))) {
             fatal_error("invalid malloc_object_size (quarantine)");
+        }
+#endif
+
+#ifdef HAS_ARM_MTE
+        bool is_zero_size = class == 0;
+        if (likely51(is_memtag_enabled()) && likely(!is_zero_size)) {
+            verify_pointer_tag(orig_p, metadata, slot);
         }
 #endif
 

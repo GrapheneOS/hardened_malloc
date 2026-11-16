@@ -1,6 +1,7 @@
 // needed to unconditionally enable assertions
 #undef NDEBUG
 #include <assert.h>
+#include <fcntl.h>
 #include <malloc.h>
 #include <signal.h>
 #include <stdio.h>
@@ -8,8 +9,10 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/utsname.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
+#include <functional>
 #include <map>
 #include <set>
 #include <string>
@@ -139,7 +142,7 @@ void tag_distinctness() {
                     p[j]++;
                 }
 
-                allocations[i] = addr;
+                allocations[i] = (uptr) p;
             }
 
             // free some of allocations to allow their slots to be reused
@@ -270,6 +273,91 @@ void untagged_write() {
     expect_write_segv(p[0] = 1);
 }
 
+void expect_abort(const function<void()> &fn) {
+    pid_t pid = fork();
+    assert(pid >= 0);
+    if (pid == 0) {
+        int devnull = open("/dev/null", O_WRONLY);
+        if (devnull >= 0) {
+            dup2(devnull, STDERR_FILENO);
+            close(devnull);
+        }
+        fn();
+        _exit(1);
+    }
+
+    int status = 0;
+    assert(waitpid(pid, &status, 0) == pid);
+    assert(WIFSIGNALED(status));
+    assert(WTERMSIG(status) == SIGABRT);
+}
+
+void untagged_free() {
+    expect_abort([]() {
+        u8 *p = alloc_default();
+        free(untag_pointer(p));
+    });
+}
+
+void mistagged_free() {
+    expect_abort([]() {
+        u8 *p = alloc_default();
+        u8 bad_tag = (get_pointer_tag(p) % 0xf) + 1;
+        free(set_pointer_tag(p, bad_tag));
+    });
+}
+
+void upper_bits_tagged_free() {
+    expect_abort([]() {
+        u8 *p = alloc_default();
+        free((void *) ((uptr) p | (1ULL << 60)));
+    });
+}
+
+void stale_tag_free() {
+    expect_abort([]() {
+        const size_t reuse_alloc_size = 10240 - CANARY_SIZE;
+        u8 *stale = (u8 *) malloc(reuse_alloc_size);
+        assert(stale != nullptr);
+        uptr target_addr = (uptr) untag_pointer(stale);
+        free(stale);
+
+        for (int i = 0; i < 10000; ++i) {
+            u8 *p = (u8 *) malloc(reuse_alloc_size);
+            assert(p != nullptr);
+            if ((uptr) untag_pointer(p) == target_addr) {
+                assert(get_pointer_tag(p) != get_pointer_tag(stale));
+                free(stale);
+                _exit(2);
+            }
+            free(p);
+        }
+        _exit(3);
+    });
+}
+
+void mistagged_realloc() {
+    expect_abort([]() {
+        u8 *p = alloc_default();
+        u8 bad_tag = (get_pointer_tag(p) % 0xf) + 1;
+        void *q = realloc(set_pointer_tag(p, bad_tag), DEFAULT_ALLOC_SIZE);
+        (void) q;
+    });
+    expect_abort([]() {
+        u8 *p = alloc_default();
+        void *q = realloc(untag_pointer(p), DEFAULT_ALLOC_SIZE * 8);
+        (void) q;
+    });
+}
+
+void mistagged_usable_size() {
+    expect_abort([]() {
+        u8 *p = alloc_default();
+        size_t s = malloc_usable_size(untag_pointer(p));
+        (void) s;
+    });
+}
+
 // checks that each of memory locations inside the buffer is tagged with expected_tag
 void check_tag(void *buf, size_t len, u8 expected_tag) {
     for (size_t i = 0; i < len; ++i) {
@@ -314,6 +402,12 @@ map<string, function<void()>> tests = {
     TEST(underflow_write),
     TEST(untagged_read),
     TEST(untagged_write),
+    TEST(untagged_free),
+    TEST(mistagged_free),
+    TEST(upper_bits_tagged_free),
+    TEST(stale_tag_free),
+    TEST(mistagged_realloc),
+    TEST(mistagged_usable_size),
     TEST(madvise_dontneed),
 #undef TEST
 };

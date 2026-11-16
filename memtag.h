@@ -38,12 +38,22 @@ static inline void *set_pointer_tag(void *ptr, u8 tag) {
 #endif
 }
 
-static inline u8 get_pointer_tag(void *ptr) {
+static inline u8 get_pointer_tag(const void *ptr) {
 #ifdef HAS_ARM_MTE
     return (((uintptr_t) ptr) >> 56) & 0xf;
 #else
     (void) ptr;
     return 0;
+#endif
+}
+
+static inline bool is_pointer_tag_valid(const void *ptr, u8 expected_tag) {
+#ifdef HAS_ARM_MTE
+    return (((uintptr_t) ptr >> 60) == 0) && (get_pointer_tag(ptr) == expected_tag);
+#else
+    (void) ptr;
+    (void) expected_tag;
+    return true;
 #endif
 }
 
