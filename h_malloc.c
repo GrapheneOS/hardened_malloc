@@ -1234,6 +1234,8 @@ static inline void thread_seal_metadata(void) {
 #endif
 }
 
+static struct mutex init_lock = MUTEX_INITIALIZER;
+
 static void full_lock(void) {
     thread_unseal_metadata();
     mutex_lock(&ro.region_allocator->lock);
@@ -1259,6 +1261,7 @@ static void full_unlock(void) {
 static void post_fork_child(void) {
     thread_unseal_metadata();
 
+    mutex_init(&init_lock);
     mutex_init(&ro.region_allocator->lock);
     random_state_init(&ro.region_allocator->rng);
     for (unsigned arena = 0; arena < N_ARENA; arena++) {
@@ -1281,8 +1284,6 @@ static inline void enforce_init(void) {
     }
 }
 
-static struct mutex init_lock = MUTEX_INITIALIZER;
-
 COLD static void init_slow_path(void) {
 
     mutex_lock(&init_lock);
@@ -1294,6 +1295,9 @@ COLD static void init_slow_path(void) {
 
 #ifdef USE_PKEY
     ro.metadata_pkey = pkey_alloc(0, 0);
+    if (unlikely(ro.metadata_pkey == -1)) {
+        fatal_error("pkey_alloc failed");
+    }
 #endif
 
     if (unlikely(sysconf(_SC_PAGESIZE) != PAGE_SIZE)) {
@@ -1470,6 +1474,16 @@ COLD static void init_slow_path(void) {
 
     deallocate_pages(rng, sizeof(struct random_state), PAGE_SIZE);
 
+#ifdef __ANDROID__
+    static bool atfork_registered = false;
+    if (!atfork_registered) {
+        if (unlikely(pthread_atfork(full_lock, full_unlock, post_fork_child))) {
+            fatal_error("pthread_atfork failed");
+        }
+        atfork_registered = true;
+    }
+#endif
+
     atomic_store_explicit(&ro.slab_region_end, slab_region_end, memory_order_release);
 
     if (unlikely(memory_protect_ro(&ro, sizeof(ro)))) {
@@ -1479,10 +1493,12 @@ COLD static void init_slow_path(void) {
 
     mutex_unlock(&init_lock);
 
+#ifndef __ANDROID__
     // may allocate, so wait until the allocator is initialized to avoid deadlocking
     if (unlikely(pthread_atfork(full_lock, full_unlock, post_fork_child))) {
         fatal_error("pthread_atfork failed");
     }
+#endif
 }
 
 static inline unsigned init(void) {
@@ -1491,11 +1507,13 @@ static inline unsigned init(void) {
     if (likely(arena < N_ARENA)) {
         return arena;
     }
-    thread_arena = arena = thread_arena_counter++ % N_ARENA;
 #endif
     if (unlikely(!is_init())) {
         init_slow_path();
     }
+#if N_ARENA > 1
+    thread_arena = arena = thread_arena_counter++ % N_ARENA;
+#endif
     return arena;
 }
 
@@ -1503,6 +1521,7 @@ static inline unsigned init(void) {
 // trigger early initialization to set up pthread_atfork and protect state as soon as possible
 COLD __attribute__((constructor(101), used)) static void trigger_early_init(void) {
     init();
+    thread_seal_metadata();
 }
 #endif
 
@@ -2456,11 +2475,7 @@ COLD EXPORT int h_malloc_set_state(UNUSED void *state) {
 #ifdef __ANDROID__
 COLD EXPORT void h_malloc_disable_memory_tagging(void) {
 #ifdef HAS_ARM_MTE
-    bool need_init_lock = !is_init();
-
-    if (need_init_lock) {
-        mutex_lock(&init_lock);
-    }
+    mutex_lock(&init_lock);
 
     if (is_init()) {
         full_lock();
@@ -2479,9 +2494,7 @@ COLD EXPORT void h_malloc_disable_memory_tagging(void) {
         ro.is_memtag_disabled = true;
     }
 
-    if (need_init_lock) {
-        mutex_unlock(&init_lock);
-    }
+    mutex_unlock(&init_lock);
 #endif
 }
 #endif
