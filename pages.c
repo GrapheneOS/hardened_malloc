@@ -74,7 +74,7 @@ void *allocate_pages_aligned(size_t usable_size, size_t alignment, size_t guard_
 
     if (trail_size) {
         if (unlikely(memory_unmap((char *)base + usable_size + guard_size, trail_size))) {
-            memory_unmap(real, real_alloc_size);
+            memory_unmap((char *)real + lead_size, real_alloc_size - lead_size);
             return NULL;
         }
     }
