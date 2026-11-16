@@ -631,6 +631,8 @@ static inline void *allocate_small(unsigned arena, size_t requested_size) {
             c->empty_slabs = c->empty_slabs->next;
             c->empty_slabs_total -= slab_size;
 
+            set_slab_canary_value(metadata, &c->rng);
+
             metadata->next = NULL;
             metadata->prev = NULL;
 
@@ -1237,9 +1239,12 @@ static inline void thread_seal_metadata(void) {
 static void full_lock(void) {
     thread_unseal_metadata();
     mutex_lock(&ro.region_allocator->lock);
+    random_state_flush(&ro.region_allocator->rng);
     for (unsigned arena = 0; arena < N_ARENA; arena++) {
         for (unsigned class = 0; class < N_SIZE_CLASSES; class++) {
-            mutex_lock(&ro.size_class_metadata[arena][class].lock);
+            struct size_class *c = &ro.size_class_metadata[arena][class];
+            mutex_lock(&c->lock);
+            random_state_flush(&c->rng);
         }
     }
     thread_seal_metadata();
@@ -1266,6 +1271,9 @@ static void post_fork_child(void) {
             struct size_class *c = &ro.size_class_metadata[arena][class];
             mutex_init(&c->lock);
             random_state_init(&c->rng);
+            for (struct slab_metadata *metadata = c->empty_slabs; metadata != NULL; metadata = metadata->next) {
+                set_slab_canary_value(metadata, &c->rng);
+            }
         }
     }
     thread_seal_metadata();
@@ -1468,6 +1476,7 @@ COLD static void init_slow_path(void) {
         }
     }
 
+    wipe_memory(rng, sizeof(*rng));
     deallocate_pages(rng, sizeof(struct random_state), PAGE_SIZE);
 
     atomic_store_explicit(&ro.slab_region_end, slab_region_end, memory_order_release);

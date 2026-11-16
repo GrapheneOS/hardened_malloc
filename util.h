@@ -82,6 +82,11 @@ static inline u8 u4_arr_get(const u8 *arr, size_t idx) {
     return (u8) ((arr[off] >> shift) & 0xf);
 }
 
+static inline void wipe_memory(void *ptr, size_t size) {
+    __builtin_memset(ptr, 0, size);
+    __asm__ __volatile__("" : : "r"(ptr) : "memory");
+}
+
 COLD noreturn void fatal_error(const char *s);
 
 #if CONFIG_SEAL_METADATA
